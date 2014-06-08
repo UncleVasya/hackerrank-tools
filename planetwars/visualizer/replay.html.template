@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>PlanetWars  revisited : visualizer</title>
+	<style type="text/css">
+		html { margin:0; padding:0; }
+		body { margin:0; padding:0; overflow:hidden; background-color:#444}
+		a { color:#777 }
+		a:hover { color:#ddd }
+	</style>
+</head>
+<body>
+<div id="main">
+<!-- <div id="wrapper"> -->
+<div id="visualizer">
+  <table id="players">
+    <tr>
+      <td width='40%' style="text-align:right" class="player1Name"></td>
+      <td width='20%' style="text-align:center" class="playerVs">Loading</td>
+      <td width='40%' style="text-align:left" class="player2Name"></td>
+    </tr>
+  </table>
+        
+  <canvas id="display" width="600" height="600"></canvas>
+  <p id="error_message"></p>
+  <p id="turnCounter"></p>
+  <p id="controls">
+      <a href="#" id="start-button" title="To start"><span class="small">|</span>&laquo;</a> | 
+      <a href="#" id="prev-frame-button" title="Step back (left arrow)">&laquo;</a> | 
+      <a href="#" id="play-button" title="Play/Pause (spacebar)">&#9654;</a> | 
+      <a href="#" id="next-frame-button" title="Step forward (right arrow)">&raquo;</a> | 
+      <a href="#" id="end-button" title="To end">&raquo;<span class="small">|</span></a>
+      <a href="#" id="speeddown" title="Slow down (down arrow)">-</a>
+      <a href="#" id="speedup" title="Speed up (up arrow)">+</a>
+  </p>
+  <p>
+    <canvas id="chart" width="600" height="100" ></canvas>
+  </p>
+        
+</div>
+    
+    </div>
+<!-- /div -->
+</div>
+
+</body>
+</html>
+
+<script>!window.jQuery && document.write('<script src="js/jquery-1.4.2.min.js"><\/script>')</script>
+  
+<script>
+	replay_data = ## REPLAY PLACEHOLDER ##;
+	data = ""
+	function init() {
+		r_data = replay_data["replaydata"]["data"]
+		playernames = replay_data["playernames"]
+		data =  "player_one=" + playernames[0] + "\n" + 
+				"player_two=" + playernames[1] + "\n" +
+				"playback_string=" + r_data
+	}
+	init()
+</script>	
+	
+<script src="js/visualizer.js?v=3"> </script>
