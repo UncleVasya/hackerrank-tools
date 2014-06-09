@@ -12,6 +12,8 @@ try:
     from sys import maxint
 except ImportError:
     from sys import maxsize as maxint
+    
+EMPTY = -1
 
 class LifeGame(Game):
     def __init__(self, options=None):
@@ -33,11 +35,9 @@ class LifeGame(Game):
         
         self.turn = 0
         self.num_players = map_data["players"]
-        self.planets = deepcopy(map_data["planets"])
-        self.fleets = []
-        self.temp_fleets = {}
+        self.cells = {}
         
-        self.player_to_begin = randint(0, self.num_players)
+        self.player_to_begin = 0
         # used to cutoff games early
         self.cutoff = None
         self.cutoff_bot = None # Can be ant owner, FOOD or LAND
@@ -48,6 +48,23 @@ class LifeGame(Game):
         # used to calculate when the player rank last changed
         self.ranking_bots = None
         self.ranking_turn = 0
+        
+        # initialize size
+        self.height, self.width = map_data['size']
+
+        # initialize map
+        self.map = [[EMPTY]*self.width for _ in range(self.height)]
+
+        # for new games alive cells are ignored 
+        # for scenarios, the map file is followed exactly
+        if self.scenario:
+            # initialize alive cells
+            for player, player_cells in map_data['cells'].items():
+                for cell_loc in player_cells:
+                    self.add_initial_ant(ant_loc, player)
+            self.original_map = []
+            for map_row in self.map:
+                self.original_map.append(map_row[:])
 
         # initialize scores
         self.score = [0]*self.num_players
@@ -78,37 +95,53 @@ class LifeGame(Game):
 
     def parse_map(self, map_text):
         """ Parse the map_text into a more friendly data structure """
-        planets = []
+        cell_owners = None
+        width = height = None
+        cells = defaultdict(list)
+        row = 0
         num_players = None
-        
-        for line in map_text.split("\n"):
+        char_empty = '-'
+
+        for line in map_text.split('\n'):
             line = line.strip()
 
             # ignore blank lines and comments
-            if not line or line[0] == "#":
+            if not line or line[0] == '#':
                 continue
 
-            key, value = line.split(" ", 1)
+            key, value = line.split(' ', 1)
             key = key.lower()
-
-            if key == "players":
+            if key == 'cols':
+                width = int(value)
+            elif key == 'rows':
+                height = int(value)
+            elif key == 'players':
                 num_players = int(value)
-            elif key == "p":
-                values = value.split()
-                planets.append({
-                    "x" : float(values[0]),
-                    "y" : float(values[1]),
-                    "owner" : int(values[2]),
-                    "num_ships" : int(values[3]),
-                    "growth_rate" : int(values[4])
-                })
-        if num_players is None:
+                if num_players < 1 or num_players > 2:
                     raise Exception("map",
-                                    "players count expected")
-        # TODO: raise exception if planet owners do not match num_players
-        return {
-            "players": num_players,
-            "planets": planets}
+                                    "player count must be 1 or 2")
+            elif key == 'm':
+                if cell_owners is None:
+                    if num_players is None:
+                        raise Exception("map",
+                                        "players count expected before map lines")
+                    cell_owners = ['w', 'b'][:num_players]
+                if len(value) != width:
+                    raise Exception("map",
+                                    "Incorrect number of cols in row %s. "
+                                    "Got %s, expected %s."
+                                    %(row, len(value), width))
+                for col, c in enumerate(value):
+                    if c in cell_owners:
+                        cells[cell_owners.index(c)].append((row,col))
+                    elif c != char_empty:
+                        raise Exception("map",
+                                        "Invalid character in map: %s" % c)
+                row += 1
+        if height != row:
+            raise Exception("map",
+                            "Incorrect number of rows.  Expected %s, got %s"
+                            % (height, row))
 
     def render_changes(self, player):
         """ Create a string which communicates the updates to the state
@@ -120,6 +153,16 @@ class LifeGame(Game):
             visible_updates.append(update)
         visible_updates.append([]) # newline
         return '\n'.join(' '.join(map(str,s)) for s in visible_updates)
+        # look for alive cells to invalidate map for a game
+        if not self.scenario && len(cells) > 0:
+            raise Exception("map", 
+                            "Only scenarios support alive cells in map files" % hill)
+
+        return {
+            'size':        (height, width),
+            'num_players': num_players,
+            'cells':       cells
+        }
         
     def switch_pov(self, player_id, pov):
         if pov < 0:
