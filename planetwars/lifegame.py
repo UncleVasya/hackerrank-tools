@@ -260,86 +260,61 @@ class LifeGame(Game):
             # # for a in self.killed_agents))
         # return changes
 
-    # def parse_orders(self, player, lines):
-        # """ Parse orders from the given player
+    def parse_orders(self, player, lines):
+        """ Parse orders from the given player
 
-            # Orders must be of the form: source destination num_ships
-            # row and col refer to the location of the agent you are ordering.
-        # """
-        # # TODO: change format to: o source destination num_ships
-        # #       old format is kept for compatibility with old bots
-        # orders = []
-        # valid = []
-        # ignored = []
-        # invalid = []
+            Orders must be of the form: source destination num_ships
+            row and col refer to the location of the agent you are ordering.
+        """
+        orders = []
+        valid = []
+        ignored = []
+        invalid = []
 
-        # for line in lines:
-            # line = line.strip().lower()
-            # # ignore blank lines and comments
-            # if not line: # or line[0] == '#':
-                # continue
+        line = lines[0]
+        line = line.strip().lower()
+        data = line.split()
 
-            # if line[0] == '#':
-                # ignored.append((line))
-                # continue
-
-            # data = line.split()
-
-            # # validate data format
-            # #if data[0] != 'o':
-            # #    invalid.append((line, 'unknown action'))
-            # #    continue
-            # #else:
-                # #row, col, heading = data[1:]
+        # validate data format
+        if len(data) != 2:
+            invalid.append((line, 'incorrectly formatted order'))
+        else:
+            row, col = data
             
-            # src, dest, num_ships = data
-            
-            # # validate the data types
-            # try:
-                # src, dest, num_ships = int(src), int(dest), int(num_ships)  
-            # except ValueError:
-                # invalid.append((line, "orders should be integers"))
-                # continue
+            # validate the data types
+            try:
+                row, col = int(row), int(col)
+            except ValueError:
+                invalid.append((line, "orders should be integers"))
+                continue
 
-            # # if all is well, append to orders
-            # orders.append((player, src, dest, num_ships))
-            # valid.append(line)
+            # if all is well, append to orders
+            orders.append((player, row, col))
+            valid.append(line)
 
-        # return orders, valid, ignored, invalid
+        return orders, valid, ignored, invalid
 
-    # def validate_orders(self, player, orders, lines, ignored, invalid):
-        # """ Validate orders from a given player
+    def validate_orders(self, player, orders, lines, ignored, invalid):
+        """ Validate orders from a given player
 
-            # Source and destination planets must exist
-            # Source planet must belong to the player
-            # Source planet must have this amount of ships
-        # """
-        # valid = []
-        # valid_orders = []
-        # for line, (player, src, dest, num_ships) in zip(lines, orders):
-            # if src < 0 or src >= len(self.planets):
-                # invalid.append((line,'source planet does not exist'))
-                # continue
-            # if dest < 0 or dest >= len(self.planets):
-                # invalid.append((line,'destination planet does not exist'))
-                # continue
-            # source_planet = self.planets[src]
-            # # +1 because in Planet Wars player 0 is Neutral player
-            # if (player+1) != source_planet["owner"]:
-                # invalid.append((line,'source planet does not belongs to you'))
-                # continue
-            # if num_ships > source_planet["num_ships"]:
-                # invalid.append((line,'source does not have this amount of ships'))
-                # continue
-            # if num_ships < 0:
-                # invalid.append((line,'number of ships can not be negative'))
-                # continue
+            Cell location must exist
+            Cell location must be empty
+        """
+        valid = []
+        valid_orders = []
+        for line, (player, row, col) in zip(lines, orders):
+            if (row < 0 or row >= self.height or col < 0 or col >= self.width):
+                invalid.append((line,'out of bounds'))
+                continue
+            if self.map[row][col] != EMPTY:
+                invalid.append((line,'cell already occupied'))
+                continue
 
-            # # this order is valid!
-            # valid_orders.append((player, src, dest, num_ships))
-            # valid.append(line)
+            # this order is valid!
+            valid_orders.append((player, row, col))
+            valid.append(line)
 
-        # return valid_orders, valid, ignored, invalid
+        return valid_orders, valid, ignored, invalid
 
     # def planetwars_orders(self, player):
         # """ Enacts orders for the Planet Wars game
@@ -437,15 +412,14 @@ class LifeGame(Game):
                         # "turns_remaining" : t
                     # })
         
-    # def do_orders(self):
-        # """ Execute player orders and handle conflicts
-        # """
-        # for player in range(self.num_players):
-            # if self.is_alive(player):
-                # self.planetwars_orders(player)
-# #            else: self.killed[player] == True
-        # self.process_new_fleets()
-        # self.do_time_step()
+    def do_orders(self):
+        """ Execute player orders and handle conflicts
+        """
+        for player in range(self.num_players):
+            if self.is_alive(player) and self.is_his_turn(player):
+                self.planetwars_orders(player)
+        self.process_new_fleets()
+        self.do_time_step()
 
     # def remaining_players(self):
         # """ Return the players still alive """
@@ -453,36 +427,23 @@ class LifeGame(Game):
 
     # # Common functions for all games
 
-    # def game_over(self):
-        # """ Determine if the game is over
+    def game_over(self):
+        """ Determine if the game is over
 
-            # Used by the engine to determine when to finish the game.
-            # A game is over when there are no players remaining, or a single
-              # winner remaining.
-        # """
-        # if len(self.remaining_players()) < 1:
-            # self.cutoff = 'extermination'
-            # return True
-        # elif len(self.remaining_players()) == 1:
-            # self.cutoff = 'lone survivor'
-            # return True
-        # else: return False
+            Used by the engine to determine when to finish the game.
+        """
+        return False
 
-    # def kill_player(self, player):
-        # """ Used by engine to signal that a player is out of the game """
-        # self.killed[player] = True
+    def kill_player(self, player):
+        """ Used by engine to signal that a player is out of the game """
+        self.killed[player] = True
 
-    # def start_game(self):
-        # """ Called by engine at the start of the game """
-        # self.game_started = True
+    def start_game(self):
+        """ Called by engine at the start of the game """
+        self.game_started = True
         
-        # ### append turn 0 to replay
-        # self.replay_data = self.planet_to_playback_format() + "|"
-        # result = []
-# #        for row, col in self.water:
-# #            result.append(['w', row, col])
-# #        result.append([]) # newline
-# #        self.replay_data.append(result)
+        # append turn 0 to replay
+        #self.replay_data = self.planet_to_playback_format() + "|"
 
     # def finish_game(self):
         # """ Called by engine at the end of the game """
@@ -500,13 +461,12 @@ class LifeGame(Game):
         # if self.cutoff is None:
             # self.cutoff = 'turn limit reached'
 
-    # def start_turn(self):
-        # """ Called by engine at the start of the turn """
-        # self.turn += 1
-        # self.orders = [[] for _ in range(self.num_players)]
-        # self.temp_fleets = {}
-# #        for player in self.players:
-# #            self.begin_player_turn(player)
+    def start_turn(self):
+        """ Called by engine at the start of the turn """
+        self.turn += 1
+        self.orders = [[] for _ in range(self.num_players)]
+#        for player in self.players:
+#            self.begin_player_turn(player)
 
     # def update_scores(self):
         # """ Update the record of players' scores
@@ -514,35 +474,11 @@ class LifeGame(Game):
         # for p in range(self.num_players):
             # self.score[p] = self.num_ships_for_player(p)
 
-    # def finish_turn(self):
-        # """ Called by engine at the end of the turn """
-        # self.do_orders()
-        # # record score in score history
-        # for i, s in enumerate(self.score):
-            # if self.is_alive(i):
-                # self.score_history[i].append(s)
-            # elif s != self.score_history[i][-1]:
-                # # score has changed, increase history length to proper amount
-                # last_score = self.score_history[i][-1]
-                # score_len = len(self.score_history[i])
-                # self.score_history[i].extend([last_score]*(self.turn-score_len))
-                # self.score_history[i].append(s)
-        # self.calc_significant_turns()
-        # self.update_scores()
-
-        # ### append turn to replay
-        # self.turn_strings.append(self.get_state_changes())
-
-    # def calc_significant_turns(self):
-        # ranking_bots = [sorted(self.score, reverse=True).index(x) for x in self.score]
-        # if self.ranking_bots != ranking_bots:
-            # self.ranking_turn = self.turn
-        # self.ranking_bots = ranking_bots
-
-        # winning_bot = [p for p in range(len(self.score)) if self.score[p] == max(self.score)]
-        # if self.winning_bot != winning_bot:
-            # self.winning_turn = self.turn
-        # self.winning_bot = winning_bot
+    def finish_turn(self):
+        """ Called by engine at the end of the turn """
+        self.do_orders()
+        ### append turn to replay
+        self.turn_strings.append(self.get_state_changes())
 
     # def get_state(self):
         # """ Get all state changes
@@ -558,35 +494,26 @@ class LifeGame(Game):
 
             Used by engine to send bots startup info on turn 0
         """
-        # +1 because in Planet Wars player 0 is Neutral player
-        return self.serialize_game_state(player+1)
+        return self.serialize_game_state(player)
 
-    # def get_player_state(self, player):
-        # """ Get state changes visible to player
+    def get_player_state(self, player):
+        """ Get state changes visible to player
 
-            # Used by engine to send state to bots
-        # """
-        # # return self.render_changes(player)
-        # return self.serialize_game_state(player+1)
+            Used by engine to send state to bots
+        """
+        # return self.render_changes(player)
+        return self.serialize_game_state(player)
         
     # def num_ships_for_player(self, player):
         # return sum([p["num_ships"] for p in self.planets if p["owner"] == player+1]) + \
             # sum([f["num_ships"] for f in self.fleets if f["owner"] == player+1])
 
-    # def is_alive(self, player):
-        # """ Determine if player is still alive
+    def is_alive(self, player):
+        """ Determine if player is still alive
 
-            # Used by engine to determine players still in the game
-        # """
-        # if self.killed[player]:
-            # return False
-        # for p in self.planets:
-            # if p["owner"] == player+1:
-                # return True
-        # for f in self.fleets:
-            # if f["owner"] == player+1:
-                # return True
-        # return False
+            Used by engine to determine players still in the game
+        """
+        return True
 
     # def get_error(self, player):
         # """ Returns the reason a player was killed
@@ -596,12 +523,12 @@ class LifeGame(Game):
         # """
         # return ''
 
-    # def do_moves(self, player, moves):
-        # """ Called by engine to give latest player orders """
-        # orders, valid, ignored, invalid = self.parse_orders(player, moves)
-        # orders, valid, ignored, invalid = self.validate_orders(player, orders, valid, ignored, invalid)
-        # self.orders[player] = orders
-        # return valid, ['%s # %s' % ignore for ignore in ignored], ['%s # %s' % error for error in invalid]
+    def do_moves(self, player, moves):
+        """ Called by engine to give latest player orders """
+        orders, valid, ignored, invalid = self.parse_orders(player, moves)
+        orders, valid, ignored, invalid = self.validate_orders(player, orders, valid, ignored, invalid)
+        self.orders[player] = orders
+        return valid, ['%s # %s' % ignore for ignore in ignored], ['%s # %s' % error for error in invalid]
 
     # def get_scores(self, player=None):
         # """ Gets the scores of all players
