@@ -34,7 +34,7 @@ class LifeGame(Game):
         map_data = self.parse_map(map_text)
         
         self.turn = 0
-        self.num_players = map_data["players"]
+        self.num_players = map_data["num_players"]
         self.cells = {}
         
         self.player_to_begin = 0
@@ -144,7 +144,7 @@ class LifeGame(Game):
                             % (height, row))
 
         # look for alive cells to invalidate map for a game
-        if not self.scenario && len(cells) > 0:
+        if not self.scenario and len(cells) > 0:
             raise Exception("map", 
                             "Only scenarios support alive cells in map files" % hill)
 
