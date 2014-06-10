@@ -159,7 +159,7 @@ class LifeGame(Game):
         row, col = loc
         self.map[row][col] = owner
         self.cells[loc] = cell
-        return ant
+        return cell
     
     def kill_cell(self, cell, ignore_error=False):
         loc = cell.loc
@@ -191,31 +191,15 @@ class LifeGame(Game):
         # return player_id
         # # return player_id
   
-    # def serialize_planet(self, p, pov):
-        # """ Generates a string representation of a planet. This is 
-            # used to send data about the planets to the client programs.
-        # """
-        # owner = self.switch_pov(int(p["owner"]), pov)
-        # message = "P " + str(p["x"]) + " " + str(p["y"]) + " " + str(owner) + \
-                  # " " + str(int(p["num_ships"])) + " " + str(int(p["growth_rate"]))
-        # return message.replace(".0 ", " ")
-
-    # def serialize_fleet(self, f, pov):
-        # """ Generates a string representation of a fleet. This is used 
-            # to send data about the fleets to the client programs
-        # """
-        # owner = self.switch_pov(int(f["owner"]), pov)
-        # message = "F " + str(owner) + " " + str(int(f["num_ships"])) + " " + \
-                  # str(int(f["source"])) + " " + str(int(f["destination"])) + " " + \
-                  # str(int(f["total_trip_length"])) + " " + str(int(f["turns_remaining"]))
-        # return message.replace(".0 ", " ")
-  
-    # def serialize_game_state(self, pov):
-        # """ Returns a string representation of the entire game state
-        # """
-        # message = "\n".join([self.serialize_planet(p, pov) for p in self.planets]) + \
-                  # "\n" + "\n".join([self.serialize_fleet(f, pov) for f in self.fleets]) + "\n"
-        # return message.replace("\n\n", "\n")
+    def serialize_game_state(self, pov):
+        """ Returns a string representation of the entire game state
+        """
+        cell_char = 'wb-'
+        # first row contains character of the player 
+        message = cell_char[pov] + '\n'
+        # here goes game grid
+        message += '\n'.join(''.join(cell_char[cell] for cell in row) for row in self.map) + '\n'
+        return message.replace("\n\n", "\n")
   
     # # Turns a list of planets into a string in playback format. This is the initial
     # # game state part of a game playback string.
@@ -271,26 +255,26 @@ class LifeGame(Game):
         ignored = []
         invalid = []
 
-        line = lines[0]
-        line = line.strip().lower()
-        data = line.split()
+        for line in lines:
+            line = line.strip().lower()
+            data = line.split()
 
-        # validate data format
-        if len(data) != 2:
-            invalid.append((line, 'incorrectly formatted order'))
-        else:
-            row, col = data
-            
-            # validate the data types
-            try:
-                row, col = int(row), int(col)
-            except ValueError:
-                invalid.append((line, "orders should be integers"))
-                continue
+            # validate data format
+            if len(data) != 2:
+                invalid.append((line, 'incorrectly formatted order'))
+            else:
+                row, col = data
+                
+                # validate the data types
+                try:
+                    row, col = int(row), int(col)
+                except ValueError:
+                    invalid.append((line, "orders should be integers"))
+                    continue
 
-            # if all is well, append to orders
-            orders.append((player, row, col))
-            valid.append(line)
+                # if all is well, append to orders
+                orders.append((row, col))
+                valid.append(line)
 
         return orders, valid, ignored, invalid
 
@@ -302,7 +286,7 @@ class LifeGame(Game):
         """
         valid = []
         valid_orders = []
-        for line, (player, row, col) in zip(lines, orders):
+        for line, (row, col) in zip(lines, orders):
             if (row < 0 or row >= self.height or col < 0 or col >= self.width):
                 invalid.append((line,'out of bounds'))
                 continue
@@ -311,7 +295,7 @@ class LifeGame(Game):
                 continue
 
             # this order is valid!
-            valid_orders.append((player, row, col))
+            valid_orders.append((row, col))
             valid.append(line)
 
         return valid_orders, valid, ignored, invalid
@@ -330,100 +314,18 @@ class LifeGame(Game):
             # if dest not in self.temp_fleets[src]:
                 # self.temp_fleets[src][dest] = 0
             # self.temp_fleets[src][dest] += num_ships
-
-    # def travel_time(self, a, b):
-        # """ Calculates the travel time between two planets. This is 
-            # the cartesian distance, rounded up to the nearest integer
-        # """
-        # dx = b["x"] - a["x"]
-        # dy = b["y"] - a["y"]
-        # return int(ceil(sqrt(dx * dx + dy * dy)))
-
-    # def fight_battle(self, pid, p):
-        # """ Resolves the battle at planet p, if there is one.
-            # Removes all fleets involved in the battle sets the number 
-            # of ships and owner of the planet according the outcome
-        # """
-        # fleets = self.fleets
-        # participants = {p["owner"]: p["num_ships"]}
-        # for i in range (len(fleets) - 1, -1, -1):
-            # f = fleets[i]
-            # ow = f["owner"]
-            # if f["turns_remaining"] <= 0 and f["destination"] == pid:
-                # if ow in participants:
-                    # participants[ow] += f["num_ships"]
-                # else:
-                    # participants[ow] = f["num_ships"]
-                # del fleets[i]
-
-        # winner = {"owner": 0, "ships": 0}
-        # second = {"owner": 0, "ships": 0}
-        # for owner, ships in participants.items():
-            # if ships >= second["ships"]:
-                # if ships >= winner["ships"]:
-                    # second = winner
-                    # winner = {"owner": owner, "ships": ships}
-                # else:
-                    # second = {"owner": owner, "ships": ships}
-
-        # if winner["ships"] > second["ships"]:
-            # p["num_ships"] = winner["ships"] - second["ships"]
-            # p["owner"] = winner["owner"]
-        # else:
-            # p["num_ships"] = 0
-        
-        # self.fleets = fleets
-        # self.planets[pid] = p
-   
-    # def do_time_step(self):
-        # """ Performs the logic needed to advance the state of the game by one turn.
-            # Fleets move forward one tick. Any fleets reaching their destinations are
-            # dealt with. If there are any battles to be resolved, then they're taken
-            # care of.
-        # """
-        # for p in self.planets:
-            # if p["owner"] > 0:
-                # p["num_ships"] += p["growth_rate"]
-        # for f in self.fleets:
-            # f["turns_remaining"] -= 1
-        # for i in range(len(self.planets)):
-            # self.fight_battle(i, self.planets[i])
-  
-    # def process_new_fleets(self):
-        # """ Processes fleets launched this turn into the normal
-            # fleets array
-        # """
-        # for src, destd in self.temp_fleets.iteritems():
-            # source_planet = self.planets[src]
-            # owner = source_planet["owner"]
-            # if owner == 0:
-                # # player launched fleets then died, so "erase" these fleets
-                # continue
-            # for dest, num_ships in destd.iteritems():
-                # if num_ships > 0:
-                    # destination_planet = self.planets[dest]
-                    # t = self.travel_time(source_planet, destination_planet)
-                    # self.fleets.append({
-                        # "source" : src,
-                        # "destination" : dest,
-                        # "num_ships" : num_ships,
-                        # "owner" : owner,
-                        # "total_trip_length" : t,
-                        # "turns_remaining" : t
-                    # })
         
     def do_orders(self):
         """ Execute player orders and handle conflicts
         """
         for player in range(self.num_players):
-            if self.is_alive(player) and self.is_his_turn(player):
-                self.planetwars_orders(player)
-        self.process_new_fleets()
-        self.do_time_step()
+            if self.is_alive(player): #and self.is_his_turn(player):
+                for loc in self.orders[player]:
+                    born_cell(loc, player)
 
-    # def remaining_players(self):
-        # """ Return the players still alive """
-        # return [p for p in range(self.num_players) if self.is_alive(p)]
+    def remaining_players(self):
+        """ Return the players still alive """
+        return [p for p in range(self.num_players) if self.is_alive(p)]
 
     # # Common functions for all games
 
@@ -431,8 +333,16 @@ class LifeGame(Game):
         """ Determine if the game is over
 
             Used by the engine to determine when to finish the game.
+            A game is over when there are no players remaining, or a single
+              winner remaining.
         """
-        return False
+        if len(self.remaining_players()) < 1:
+            self.cutoff = 'extermination'
+            return True
+        elif len(self.remaining_players()) == 1:
+            self.cutoff = 'lone survivor'
+            return True
+        else: return False
 
     def kill_player(self, player):
         """ Used by engine to signal that a player is out of the game """
@@ -445,21 +355,20 @@ class LifeGame(Game):
         # append turn 0 to replay
         #self.replay_data = self.planet_to_playback_format() + "|"
 
-    # def finish_game(self):
-        # """ Called by engine at the end of the game """
-# #        players = self.remaining_players()
-# #        if len(players) == 1:
-# #            for player in range(self.num_players):
-# #                self.score[player] += self.bonus[player]
+    def finish_game(self):
+        """ Called by engine at the end of the game """
+#        players = self.remaining_players()
+#        if len(players) == 1:
+#            for player in range(self.num_players):
+#                self.score[player] += self.bonus[player]
 
-        # self.calc_significant_turns()
         # for i, s in enumerate(self.score):
             # self.score_history[i].append(s)
         # self.replay_data += ":".join(self.turn_strings)
 
-        # # check if a rule change lengthens games needlessly
-        # if self.cutoff is None:
-            # self.cutoff = 'turn limit reached'
+        # check if a rule change lengthens games needlessly
+        if self.cutoff is None:
+            self.cutoff = 'turn limit reached'
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
@@ -478,7 +387,7 @@ class LifeGame(Game):
         """ Called by engine at the end of the turn """
         self.do_orders()
         ### append turn to replay
-        self.turn_strings.append(self.get_state_changes())
+        # self.turn_strings.append(self.get_state_changes())
 
     # def get_state(self):
         # """ Get all state changes
@@ -494,14 +403,13 @@ class LifeGame(Game):
 
             Used by engine to send bots startup info on turn 0
         """
-        return self.serialize_game_state(player)
+        return ''
 
     def get_player_state(self, player):
         """ Get state changes visible to player
 
             Used by engine to send state to bots
         """
-        # return self.render_changes(player)
         return self.serialize_game_state(player)
         
     # def num_ships_for_player(self, player):
