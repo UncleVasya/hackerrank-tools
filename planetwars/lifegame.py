@@ -321,7 +321,7 @@ class LifeGame(Game):
         for player in range(self.num_players):
             if self.is_alive(player): #and self.is_his_turn(player):
                 for loc in self.orders[player]:
-                    born_cell(loc, player)
+                    self.born_cell(loc, player)
 
     def remaining_players(self):
         """ Return the players still alive """
