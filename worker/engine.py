@@ -116,7 +116,7 @@ def run_game(game, botcmds, options):
 
             # send game state to each player
             for b, bot in enumerate(bots):
-                if game.is_alive(b):
+                if game.is_alive(b) and game.is_his_turn(b):
                     if turn == 0:
                         start = game.get_player_start(b) + 'ready\n'
                         bot.write(start)
@@ -154,7 +154,7 @@ def run_game(game, botcmds, options):
             error_lines = [[] for b in bots]
             statuses = [None for b in bots]
             bot_list = [(b, bot) for b, bot in enumerate(bots)
-                        if game.is_alive(b)]
+                        if game.is_alive(b) and game.is_his_turn(b)]
             random.shuffle(bot_list)
             for group_num in range(0, len(bot_list), simul_num):
                 pnums, pbots = zip(*bot_list[group_num:group_num + simul_num])

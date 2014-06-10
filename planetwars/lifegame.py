@@ -314,12 +314,17 @@ class LifeGame(Game):
             # if dest not in self.temp_fleets[src]:
                 # self.temp_fleets[src][dest] = 0
             # self.temp_fleets[src][dest] += num_ships
+            
+    def is_his_turn(self, player):
+        """ Used to determine if player has right to make moves this turn
+        """
+        return len(self.cells) % 2 == player
         
     def do_orders(self):
         """ Execute player orders and handle conflicts
         """
         for player in range(self.num_players):
-            if self.is_alive(player): #and self.is_his_turn(player):
+            if self.is_alive(player) and self.is_his_turn(player):
                 for loc in self.orders[player]:
                     self.born_cell(loc, player)
 
