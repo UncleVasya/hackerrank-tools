@@ -426,7 +426,7 @@ class LifeGame(Game):
 
             Used by engine to determine players still in the game
         """
-        return True
+        return not self.killed[player]
 
     # def get_error(self, player):
         # """ Returns the reason a player was killed
