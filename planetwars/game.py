@@ -45,7 +45,11 @@ class Game:
     # when passed none, the output is used at the start of the streaming format
     def get_player_start(self, player=None):
         pass
-
+    
+    #  Used to determine if player has right to make moves this turn
+    def is_his_turn(self, player):
+        pass
+        
     # used for sending state to bots for each turn
     def get_player_state(self, player):
         pass

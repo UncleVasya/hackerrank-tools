@@ -20,6 +20,10 @@ def doTurn(state):
     for row_num, row in enumerate(state._map):
         for col_num, cell in enumerate(row):
             if cell == '-':
+                # make bot crash
+                # if state._my_char == 'w' and col_num == 7: 
+                    # state.blabla()
+                
                 state.issueOrder((lambda: row_num if state._my_char == 'w' else row_num+10)(), 
                                  col_num)
                 return

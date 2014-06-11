@@ -74,24 +74,12 @@ class LifeGame(Game):
         # cache used by neighbourhood_offsets() to determine nearby squares
         self.offsets_cache = {}
 
-        # used to track dead players, ants may still exist, but orders are not processed
+        # used to track dead players
         self.killed = [False for _ in range(self.num_players)]
-
-        # used to give a different ordering of players to each player;
-        # initialized to ensure that each player thinks they are player 0
-        self.switch = [[None]*self.num_players + list(range(-5,0))
-                       for i in range(self.num_players)]
-        for i in range(self.num_players):
-            self.switch[i][i] = 0
 
         # the engine may kill players before the game starts and this is needed
         # to prevent errors
         self.orders = [[] for i in range(self.num_players)]
-
-#        raise Exception(self.grid)
-        ### collect turns for the replay
-        self.replay_data = ""
-        self.turn_strings = []
 
     def parse_map(self, map_text):
         """ Parse the map_text into a more friendly data structure """
@@ -154,95 +142,46 @@ class LifeGame(Game):
             'cells':       cells
         }
         
-    def born_cell(self, loc, owner):
-        cell = Cell(loc, owner, self.turn)
-        row, col = loc
-        self.map[row][col] = owner
-        self.cells[loc] = cell
-        return cell
-    
-    def kill_cell(self, cell, ignore_error=False):
-        loc = cell.loc
-        self.map[loc[0]][loc[1]] = EMPTY
-        return self.cells.pop(loc)
+    def cnt_neighs(self, (row, col)):
+        neighs = [(dx, dy) for dx in (-1,0,1) for dy in (-1,0,1) 
+                 if not dx == dy == 0] # do not add original cell to its neigbours
+                 
+        cnt_neighs = [0] * self.num_players
+        for (dx, dy) in neighs:
+            if 0 <= row+dx < self.height and 0 <= col+dy < self.width: # check for boundary
+                owner = self.map[row+dx][col+dy]
+                if owner != EMPTY: 
+                    cnt_neighs[owner] += 1
+                    
+        return cnt_neighs
+                
+        
+    def simulate(self, steps_left):
+        if steps_left <= 0:
+            return
+            
+        to_kill, to_born = [],[]      
+        for row_num, row in enumerate(self.map):
+            for col_num, cell in enumerate(row):
+                loc = (row_num, col_num)
+                cnt_neighs = self.cnt_neighs(loc)
+                # alive cells to kill
+                if cell != EMPTY and not 1 < sum(cnt_neighs) < 4:
+                    to_kill.append(loc)
+                # new cells to born
+                elif cell == EMPTY and sum(cnt_neighs) == 3:
+                    to_born.append((loc, cnt_neighs.index(max(cnt_neighs))))
+                    
+        # apply changes
+        for (row, col) in to_kill:
+            self.map[row][col] = EMPTY
+        for (row, col), owner in to_born:
+            self.map[row][col] = owner
+            
+        self.simulate(steps_left-1)
 
     def player_cells(self, player):
         return [cell for cell in self.cells.values() if player == cell.owner]
-
-
-    # def render_changes(self, player):
-        # """ Create a string which communicates the updates to the state
-        # """
-        # updates = self.get_state_changes()
-        # visible_updates = []
-        # # next list all transient objects
-        # for update in updates:
-            # visible_updates.append(update)
-        # visible_updates.append([]) # newline
-        # return '\n'.join(' '.join(map(str,s)) for s in visible_updates)
-        
-    # def switch_pov(self, player_id, pov):
-        # if pov < 0:
-            # return player_id
-        # if player_id == pov:
-            # return 1
-        # if player_id == 1:
-            # return pov
-        # return player_id
-        # # return player_id
-  
-    def serialize_game_state(self, pov):
-        """ Returns a string representation of the entire game state
-        """
-        cell_char = 'wb-'
-        # first row contains character of the player 
-        message = cell_char[pov] + '\n'
-        # here goes game grid
-        message += '\n'.join(''.join(cell_char[cell] for cell in row) for row in self.map) + '\n'
-        return message.replace("\n\n", "\n")
-  
-    # # Turns a list of planets into a string in playback format. This is the initial
-    # # game state part of a game playback string.
-    # def planet_to_playback_format(self):
-        # planet_strings = []
-        # for p in self.planets:
-            # planet_strings.append(str(p["x"]) + "," + str(p["y"]) + "," + \
-                # str(p["owner"]) + "," + str(p["num_ships"]) + "," + \
-                # str(p["growth_rate"]))
-        # return ":".join(planet_strings)
-    
-    # # Turns a list of fleets into a string in playback format. 
-    # def fleets_to_playback_format(self):
-        # fleet_strings = []
-        # for p in self.fleets:
-            # fleet_strings.append(str(p["owner"]) + "." + str(p["num_ships"]) + "." + \
-                # str(p["source"]) + "." + str(p["destination"]) + "." + \
-                # str(p["total_trip_length"]) + "." + str(p["turns_remaining"]))
-        # return ",".join(fleet_strings)
-
-    # # Represents the game state in frame format. Represents one frame.
-    # def frame_representation(self):
-        # planet_string = \
-            # ",".join([str(p["owner"]) + "." + str(p["num_ships"]) for p in self.planets])
-        # return planet_string + "," + self.fleets_to_playback_format()
-  
-    # def get_state_changes(self):
-        # """ Return a list of all transient objects on the map.
-
-            # Changes are sorted so that the same state will result in the same
-            # output.
-        # """
-        # changes = self.frame_representation()
-# #        changes.extend(sorted(
-# #            ['p', p["player_id"]]
-# #            for p in self.players if self.is_alive(p["player_id"])))
-        # # changes.extend(sorted(
-            # # ['a', a["row"], a["col"], a["heading"], a["owner"]]
-            # # for a in self.agents))
-        # # changes.extend(sorted(
-            # # ['d', a["row"], a["col"], a["heading"], a["owner"]]
-            # # for a in self.killed_agents))
-        # return changes
 
     def parse_orders(self, player, lines):
         """ Parse orders from the given player
@@ -299,21 +238,6 @@ class LifeGame(Game):
             valid.append(line)
 
         return valid_orders, valid, ignored, invalid
-
-    # def planetwars_orders(self, player):
-        # """ Enacts orders for the Planet Wars game
-        # """
-        # player_orders = self.orders[player]
-        # for order in player_orders:
-            # (player_id, src, dest, num_ships) = order
-            # source_planet = self.planets[src]
-            # source_planet["num_ships"] -= num_ships
-            # self.planets[src] = source_planet # not sure this is needed
-            # if src not in self.temp_fleets:
-                # self.temp_fleets[src] = {}
-            # if dest not in self.temp_fleets[src]:
-                # self.temp_fleets[src][dest] = 0
-            # self.temp_fleets[src][dest] += num_ships
             
     def is_his_turn(self, player):
         """ Used to determine if player has right to make moves this turn
@@ -326,7 +250,9 @@ class LifeGame(Game):
         for player in range(self.num_players):
             if self.is_alive(player) and self.is_his_turn(player):
                 for loc in self.orders[player]:
-                    self.born_cell(loc, player)
+                    row, col = loc
+                    self.map[row][col] = player
+                    self.cells[loc] = Cell(loc, player, self.turn)
 
     def remaining_players(self):
         """ Return the players still alive """
@@ -356,58 +282,46 @@ class LifeGame(Game):
     def start_game(self):
         """ Called by engine at the start of the game """
         self.game_started = True
-        
-        # append turn 0 to replay
-        #self.replay_data = self.planet_to_playback_format() + "|"
 
     def finish_game(self):
         """ Called by engine at the end of the game """
-#        players = self.remaining_players()
-#        if len(players) == 1:
-#            for player in range(self.num_players):
-#                self.score[player] += self.bonus[player]
 
-        # for i, s in enumerate(self.score):
-            # self.score_history[i].append(s)
-        # self.replay_data += ":".join(self.turn_strings)
-
-        # check if a rule change lengthens games needlessly
         if self.cutoff is None:
+            # game ended normally, we can make life simulation
             self.cutoff = 'turn limit reached'
+            self.simulate(500) # TODO: get 500 from launch options
+            # calculate scores (number of living cells for each player)      
+            for player in range(self.num_players):
+                for row in self.map:
+                    self.score[player] += sum(cell == player for cell in row)
+        else:
+            # game ended because of bots failure
+            for p in self.remaining_players():
+                self.score[p] = 100
 
     def start_turn(self):
         """ Called by engine at the start of the turn """
         self.turn += 1
         self.orders = [[] for _ in range(self.num_players)]
-#        for player in self.players:
-#            self.begin_player_turn(player)
-
-    # def update_scores(self):
-        # """ Update the record of players' scores
-        # """
-        # for p in range(self.num_players):
-            # self.score[p] = self.num_ships_for_player(p)
 
     def finish_turn(self):
         """ Called by engine at the end of the turn """
         self.do_orders()
-        ### append turn to replay
-        # self.turn_strings.append(self.get_state_changes())
 
-    # def get_state(self):
-        # """ Get all state changes
+    def get_state(self):
+        """ Get all state changes
 
-            # Used by engine for streaming playback
-        # """
-        # updates = self.get_state_changes()
-        # updates.append([]) # newline
-        # return '\n'.join(' '.join(map(str,s)) for s in updates)
+            Used by engine for streaming playback
+        """
+        # no streaming for this game
+        return ''
 
     def get_player_start(self, player):
         """ Get game parameters visible to players
 
             Used by engine to send bots startup info on turn 0
         """
+        # hackerrank bots don't use it
         return ''
 
     def get_player_state(self, player):
@@ -415,11 +329,12 @@ class LifeGame(Game):
 
             Used by engine to send state to bots
         """
-        return self.serialize_game_state(player)
-        
-    # def num_ships_for_player(self, player):
-        # return sum([p["num_ships"] for p in self.planets if p["owner"] == player+1]) + \
-            # sum([f["num_ships"] for f in self.fleets if f["owner"] == player+1])
+        cell_char = 'wb-'
+        # first row contains character of the player 
+        message = cell_char[player] + '\n'
+        # here goes game grid
+        message += '\n'.join(''.join(cell_char[cell] for cell in row) for row in self.map) + '\n'
+        return message.replace("\n\n", "\n")
 
     def is_alive(self, player):
         """ Determine if player is still alive
@@ -428,13 +343,13 @@ class LifeGame(Game):
         """
         return not self.killed[player]
 
-    # def get_error(self, player):
-        # """ Returns the reason a player was killed
+    def get_error(self, player):
+        """ Returns the reason a player was killed
 
-            # Used by engine to report the error that kicked a player
-              # from the game
-        # """
-        # return ''
+            Used by engine to report the error that kicked a player
+              from the game
+        """
+        return ''
 
     def do_moves(self, player, moves):
         """ Called by engine to give latest player orders """
@@ -443,30 +358,26 @@ class LifeGame(Game):
         self.orders[player] = orders
         return valid, ['%s # %s' % ignore for ignore in ignored], ['%s # %s' % error for error in invalid]
 
-    # def get_scores(self, player=None):
-        # """ Gets the scores of all players
+    def get_scores(self, player=None):
+        """ Gets the scores of all players
 
-            # Used by engine for ranking
-        # """
-        # if player is None:
-            # return self.score
-        # else:
-            # return self.order_for_player(player, self.score)
+            Used by engine for ranking
+        """
+        return self.score
 
-    # def order_for_player(self, player, data):
-        # """ Orders a list of items for a players perspective of player #
+    def order_for_player(self, player, data):
+        """ Orders a list of items for a players perspective of player #
 
-            # Used by engine for ending bot states
-        # """
-        # s = self.switch[player]
-        # return [None if i not in s else data[s.index(i)]
-                # for i in range(max(len(data),self.num_players))]
+            Used by engine for ending bot states
+        """
+        # no ordering needed for this game
+        return data
 
     def get_stats(self):
         """  Used by engine to report stats
         """
-        stats = {}
-        return stats
+        # not stats for this game
+        return {}
 
     def get_replay(self):
         """ Return a summary of the entire game
@@ -485,6 +396,10 @@ class LifeGame(Game):
         replay['turns'] = self.turns
         replay['engine_seed'] = self.engine_seed
         replay['player_seed'] = self.player_seed
+        
+        # cells data
+        replay['cells'] = [[cell.loc[0], cell.loc[1], cell.spawn_turn, cell.owner] 
+                          for cell in self.cells.values()]
 
         # scores
         replay['scores'] = self.score_history
@@ -493,8 +408,6 @@ class LifeGame(Game):
         replay['ranking_turn'] = self.ranking_turn
         replay['cutoff'] =  self.cutoff
         
-        ### 
-        replay['data'] = self.replay_data
         return replay
         
 class Cell:
