@@ -102,7 +102,7 @@ def main(argv):
 
     # maximum number of turns that the game will be played
     parser.add_option("-t", "--turns", dest="turns",
-                      default=1000, type="int",
+                      default=80, type="int",
                       help="Number of turns in the game")
 
     parser.add_option("--serial", dest="serial",
@@ -144,11 +144,11 @@ def main(argv):
                       default=0, type='int',
                       help='Player position for first bot specified')
 
-    # asteroids specific game options
-    game_group = OptionGroup(parser, "Game Options", "Options that affect the game mechanics for asteroids")
-    game_group.add_option("--kill_points", dest="kill_points",
-                          default=2, type="int",
-                          help="Points awarded for killing a hill")
+    # Game of Life specific options
+    game_group = OptionGroup(parser, "Game Options", "Options that affect the game mechanics for game of life")
+    game_group.add_option("--sim_steps", dest="sim_steps",
+                          default=500, type="int",
+                          help="Duration of the life simulation after all moves made")
     game_group.add_option("--cutoff_turn", dest="cutoff_turn", type="int", default=150,
                           help="Number of turns cutoff percentage is maintained to end game early")
     game_group.add_option("--cutoff_percent", dest="cutoff_percent", type="float", default=0.85,
@@ -258,7 +258,7 @@ def run_rounds(opts,args):
 # this split of options is not needed, but left for documentation
     game_options = {
         "map": opts.map,
-        "kill_points": opts.kill_points,
+        "sim_steps": opts.sim_steps,
         "loadtime": opts.loadtime,
         "turntime": opts.turntime,
         "turns": opts.turns,

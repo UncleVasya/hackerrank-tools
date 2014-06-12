@@ -20,6 +20,7 @@ class LifeGame(Game):
         # setup options
         map_text = options['map']
         self.turns = int(options['turns'])
+        self.sim_steps = int(options['sim_steps'])
         self.loadtime = int(options['loadtime'])
         self.turntime = int(options['turntime'])
         self.engine_seed = options.get('engine_seed', randint(-maxint-1, maxint))
@@ -289,7 +290,7 @@ class LifeGame(Game):
         if self.cutoff is None:
             # game ended normally, we can make life simulation
             self.cutoff = 'turn limit reached'
-            self.simulate(500) # TODO: get 500 from launch options
+            self.simulate(self.sim_steps)
             # calculate scores (number of living cells for each player)      
             for player in range(self.num_players):
                 for row in self.map:
