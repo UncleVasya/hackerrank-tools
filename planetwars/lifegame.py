@@ -81,9 +81,19 @@ class LifeGame(Game):
         # the engine may kill players before the game starts and this is needed
         # to prevent errors
         self.orders = [[] for i in range(self.num_players)]
+        
+    def get_default_map(self):
+        return {
+            'size':        (29, 29),
+            'num_players': 2,
+            'cells':       []
+        }
 
     def parse_map(self, map_text):
         """ Parse the map_text into a more friendly data structure """
+        if map_text is None:
+            return self.get_default_map()
+        
         cell_owners = None
         width = height = None
         cells = defaultdict(list)

@@ -92,12 +92,12 @@ class Tee(object):
             file.close()
 
 def main(argv):
-    usage ="Usage: %prog [options] --map_file <map file>  bot1 ... botN\n\nYou must specify a map file."
+    usage ="Usage: %prog [options] bot1 ... botN\n\n"
     parser = OptionParser(usage=usage)
 
     # map to be played
     # number of players is determined by the map file
-    parser.add_option("-m", "--map_file", dest="map",
+    parser.add_option("-m", "--map_file", dest="map", default=None,
                       help="Name of the map file")
 
     # maximum number of turns that the game will be played
@@ -205,7 +205,8 @@ def main(argv):
     parser.add_option_group(log_group)
 
     (opts, args) = parser.parse_args(argv)
-    if opts.map is None or not os.path.exists(opts.map):
+    if opts.map is not None and not os.path.exists(opts.map):
+        print('Can not access the map file')
         parser.print_help()
         return -1
     try:
@@ -287,8 +288,9 @@ def run_rounds(opts,args):
     for round in range(opts.rounds):
         # initialize game
         game_id = round + opts.game_id
-        with open(opts.map, 'r') as map_file:
-            game_options['map'] = map_file.read()
+        if opts.map is not None:
+            with open(opts.map, 'r') as map_file:
+                game_options['map'] = map_file.read()
         if opts.engine_seed:
             game_options['engine_seed'] = opts.engine_seed + round
         game = LifeGame(game_options)
