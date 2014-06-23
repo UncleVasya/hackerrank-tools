@@ -252,7 +252,7 @@ CanvasElementMiniMap.prototype.checkState = function() {
  * top of it.
  */
 CanvasElementMiniMap.prototype.draw = function() {
-	var i, ant, color, hills, hill, x, y;
+	var i, ant, color;
 	CanvasElementAbstractMap.prototype.draw.call(this);
 	for (i = this.ants.length - 1; i >= 0; i--) {
 		if ((ant = this.ants[i].interpolate(this.turn))) {
@@ -262,18 +262,6 @@ CanvasElementMiniMap.prototype.draw = function() {
 			color += INT_TO_HEX[ant['b']];
 			this.ctx.fillStyle = color;
 			this.ctx.fillRect(ant['x'], ant['y'], 1, 1);
-		}
-	}
-	hills = this.state.replay.meta['replaydata']['hills'];
-	for (i = 0; i < hills.length; i++) {
-		hill = hills[i];
-		x = (hill[1] + 0.5);
-		y = (hill[0] + 0.5);
-		if (this.turn < hill[3]) {
-			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
-			this.ctx.beginPath();
-			this.ctx.arc(x, y, 1.4, 0, 2 * Math.PI, false);
-			this.ctx.fill();
 		}
 	}
 };
@@ -329,7 +317,6 @@ function CanvasElementAntsMap(state, map) {
 	this.mouseOverVis = false;
 	this.mouseCol = 0;
 	this.mouseRow = 0;
-	this.hillImage = null;
 }
 CanvasElementAntsMap.extend(CanvasElement);
 
@@ -483,94 +470,13 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
  */
 CanvasElementAntsMap.prototype.draw = function() {
 	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order, razed;
-	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r, hill, hills, i;
+	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r, i;
 	var hash = undefined;
 
 	// draw map
 	this.ctx.drawImage(this.map.canvas, 0, 0);
 
-	// hills
 	halfScale = 0.5 * this.scale;
-	hills = this.state.replay.meta['replaydata']['hills'];
-	for (i = 0; i < hills.length; i++) {
-		hill = hills[i];
-		x1 = (hill[1] - 1) * this.scale;
-		y1 = (hill[0] - 1) * this.scale;
-		x2 = (hill[1] + 0.5) * this.scale;
-		y2 = (hill[0] + 0.5) * this.scale;
-		w = 3 * this.scale;
-		dx = 60 * hill[2];
-		if (this.turn >= hill[3]) {
-			// dead
-			this.drawWrapped(x1, y1, 3 * this.scale, 3 * this.scale, this.w, this.h, function() {
-				this.ctx.drawImage(this.hillImage, dx, 60, 60, 60, x1, y1, w, w);
-			}, []);
-		} else {
-			// or alive ...
-			this.ctx.strokeStyle = this.state.replay.htmlPlayerColors[hill[2]];
-			this.ctx.fillStyle = this.state.replay.htmlPlayerColors[hill[2]];
-			// draw dashed circle around hill, if low resolution
-			if (this.scale < 5) {
-				this.drawWrapped(x2 - 3 * this.scale, y2 - 3 * this.scale, 6 * this.scale,
-						6 * this.scale, this.w, this.h, function() {
-							var m;
-							var pieces = Math.max(4 * this.scale, 8);
-							this.ctx.lineWidth = 1;
-							this.ctx.globalAlpha = 0.5;
-							for (m = 0; m < 2 * pieces; m += 2) {
-								this.ctx.beginPath();
-								this.ctx.arc(x2, y2, 3 * this.scale, (m - 0.3) * Math.PI / pieces,
-										(m + 0.3) * Math.PI / pieces, false);
-								this.ctx.stroke();
-							}
-						}, []);
-			}
-			razed = hill[3] <= this.state.replay.duration;
-			if (razed && this.turn >= hill[3] - 30 || this.turn <= 10) {
-				// draw proximity indicator just before the hill is captured
-				r = this.scale * Math.max(3, hill[3] - this.time - 17);
-				sr = this.scale * (3 + this.time);
-				ar = 99;
-				outer: for (hash in this.drawStates) {
-					drawList = this.drawStates[hash];
-					for (n = drawList.length - 1; n >= 0; n--) {
-						kf = drawList[n];
-						if (kf['owner'] !== undefined && kf['owner'] !== hill[2]) {
-							d = Math.dist_2(this.scale * hill[1], this.scale * hill[0], kf.mapX,
-									kf.mapY, this.w, this.h);
-							if (!(ar * ar < d)) {
-								ar = Math.sqrt(d);
-								if (ar < 3 * this.scale) {
-									ar = 3 * this.scale;
-									break outer;
-								}
-							}
-						}
-					}
-				}
-				r = Math.min(Math.max(r, ar), sr) - this.scale;
-				this.drawWrapped(x2 - r - halfScale, y2 - r - halfScale, 2 * r + this.scale, 2 * r
-						+ this.scale, this.w, this.h, function() {
-					var alpha = r / halfScale;
-					if (alpha < 25 && this.state.replay.hasDuration) {
-						this.ctx.lineWidth = 2 * halfScale;
-						this.ctx.globalAlpha = Math.max(0, 1.0 - 0.04 * alpha);
-						this.ctx.beginPath();
-						this.ctx.arc(x2, y2, r, 0, 2 * Math.PI, false);
-						this.ctx.stroke();
-						this.ctx.globalAlpha = Math.max(0, 0.5 - 0.02 * alpha);
-						this.ctx.beginPath();
-						this.ctx.arc(x2, y2, r - this.scale, 0, 2 * Math.PI, false);
-						this.ctx.stroke();
-					}
-				}, []);
-			}
-			this.ctx.globalAlpha = 1;
-			this.drawWrapped(x1, y1, 3 * this.scale, 3 * this.scale, this.w, this.h, function() {
-				this.ctx.drawImage(this.hillImage, dx, 0, 60, 60, x1, y1, w, w);
-			}, []);
-		}
-	}
 
 	// draw ants sorted by color
 	for (hash in this.drawStates) {
@@ -706,16 +612,6 @@ CanvasElementAntsMap.prototype.draw = function() {
 		}
 		this.ctx.restore();
 	}
-};
-
-/**
- * Sets the ant hill image to use when drawing the map.
- * 
- * @param {HTMLCanvasElement}
- *        hillImage a colorized hill graphic.
- */
-CanvasElementAntsMap.prototype.setHillImage = function(hillImage) {
-	this.hillImage = hillImage;
 };
 
 /**
@@ -878,7 +774,7 @@ CanvasElementGraph.prototype.checkState = function() {
  * it's last turn.
  */
 CanvasElementGraph.prototype.draw = function() {
-	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx, hills, razed;
+	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx, razed;
 	var w = this.w - 1;
 	var h = this.h - 1;
 	var replay = this.state.replay;
@@ -917,24 +813,6 @@ CanvasElementGraph.prototype.draw = function() {
 	this.ctx.lineTo(0.5 + scaleX * (this.duration + 1), h + 0.5);
 	this.ctx.stroke();
 	scaleY = h / (max - min);
-
-	// hill razes
-	this.ctx.textAlign = 'center';
-	hills = this.state.replay.meta['replaydata']['hills'];
-	for (k = 0; k < hills.length; k++) {
-		razed = hills[k][3] < this.state.replay.duration;
-		if (razed && values[hills[k][3]]) {
-			x = 0.5 + scaleX * hills[k][3];
-			y = 0.5 + scaleY * (max - scaleFn(values[hills[k][3]][hills[k][2]]));
-			this.ctx.fillStyle = replay.htmlPlayerColors[hills[k][2]];
-			this.ctx.beginPath();
-			this.ctx.moveTo(x, y);
-			this.ctx.lineTo(x - 4, y - 8);
-			this.ctx.lineTo(x + 4, y - 8);
-			this.ctx.lineTo(x, y);
-			this.ctx.fill();
-		}
-	}
 
 	// time line
 	this.ctx.textAlign = 'left';

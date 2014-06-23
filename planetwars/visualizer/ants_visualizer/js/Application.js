@@ -145,7 +145,6 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		/** @private */
 		this.imgMgr = new ImageManager(imgDir, new Delegate(this, this.completedImages));
 		this.imgMgr.add('water.png', 'water');
-		this.imgMgr.add('hill.png', 'hill');
 		if (this.state.options['decorated']) {
 			this.imgMgr.add('playback.png', 'playback');
 			this.imgMgr.add('toolbar.png', 'toolbar');
@@ -563,13 +562,6 @@ Visualizer.prototype.tryStart = function() {
 	if (this.state.replay) {
 		if (!this.main.ctx) return;
 		if (this.imgMgr.pending !== 0) return;
-		// colorize ant hill
-		colors = [];
-		for (i = 0; i < this.state.replay.players; i++) {
-			colors.push(this.state.replay.meta['playercolors'][i]);
-		}
-		this.imgMgr.colorize('hill', colors);
-		this.antsMap.setHillImage(this.imgMgr.getPattern('hill'));
 		// add GUI
 		if (this.state.options['decorated']) {
 			if (this.imgMgr.error) return;
