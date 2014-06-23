@@ -77,11 +77,7 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		/** @private */
 		this.map = new CanvasElementMap(this.state);
 		/** @private */
-		this.fogPattern = new CanvasElementFogPattern(this.state);
-		/** @private */
-		this.fog = new CanvasElementFog(this.state, this.fogPattern);
-		/** @private */
-		this.antsMap = new CanvasElementAntsMap(this.state, this.map, this.fog);
+		this.antsMap = new CanvasElementAntsMap(this.state, this.map);
 		/** @private */
 		this.shiftedMap = new CanvasElementShiftedMap(this.state, this.antsMap);
 		/** @private */
@@ -700,21 +696,6 @@ Visualizer.prototype.tryStart = function() {
 						bg.addButton(8, dlg, 'regenerates bot input from this replay');
 					}
 				}
-				// generate fog images
-				if (this.state.replay.hasDuration) {
-					this.imgMgr.colorize(3, colors);
-					bg = this.btnMgr.addImageGroup('fog', this.imgMgr.patterns[3],
-							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_RADIO, 2);
-					var buttonAdder = function(fog) {
-						var dlg = new Delegate(vis, vis.showFog);
-						var hint = 'show/clear fog of war for ';
-						hint += vis.state.replay.meta['playernames'][fog];
-						return bg.addButton(fog, dlg, hint);
-					};
-					for (i = 0; i < colors.length; i++) {
-						buttonAdder(this.state.order[i]);
-					}
-				}
 			}
 		}
 		// calculate speed from duration and config settings
@@ -1042,8 +1023,6 @@ Visualizer.prototype.setZoom = function(zoom) {
 	this.map.x = (((this.shiftedMap.w - this.map.w) >> 1) + this.shiftedMap.x) | 0;
 	this.map.y = (((this.shiftedMap.h - this.map.h) >> 1) + this.shiftedMap.y) | 0;
 	this.antsMap.setSize(this.map.w, this.map.h);
-	this.fog.setSize(Math.min(this.map.w, this.shiftedMap.w), Math.min(this.map.h,
-			this.shiftedMap.h));
 	if (this.state.options['interactive'] && this.state.options['decorated']) {
 		var zoomInBtn = this.btnMgr.groups['toolbar'].getButton(2);
 		zoomInBtn.enabled = !(this.state.scale === ZOOM_SCALE);
@@ -1144,8 +1123,6 @@ Visualizer.prototype.resize = function(forced) {
 				bg.x = Math.min(bg.x, this.shiftedMap.x + this.shiftedMap.w - w);
 				bg.x = Math.max(bg.x, 0);
 				bg.y = this.shiftedMap.y + this.shiftedMap.h;
-				bg = this.btnMgr.groups['fog'];
-				bg.y = this.shiftedMap.y + 8;
 			} else {
 				this.shiftedMap.x = 0;
 				this.shiftedMap.y = y;
@@ -1156,8 +1133,6 @@ Visualizer.prototype.resize = function(forced) {
 			bg.y = this.shiftedMap.y + 8;
 			// set button group extents
 			if (this.state.replay.hasDuration) {
-				bg = this.btnMgr.groups['fog'];
-				bg.h = newSize.h - this.shiftedMap.y - 8;
 				bg = this.btnMgr.groups['playback'];
 				bg.w = this.shiftedMap.x + this.shiftedMap.w - bg.x;
 			}
@@ -1177,18 +1152,6 @@ Visualizer.prototype.resize = function(forced) {
 		this.director.draw(true);
 		this.resizing = false;
 	}
-};
-
-/**
- * Enables or disables fog of war display.
- * 
- * @private
- * @param idx
- *        {Number} The index of the player for which fog is to be displayed or undefined.
- */
-Visualizer.prototype.showFog = function(idx) {
-	this.state.fogPlayer = idx;
-	this.director.draw();
 };
 
 /**
@@ -1635,8 +1598,6 @@ Options.toBool = function(value) {
  * @property {Array} ranks Stores the rank of each player.
  * @property {Array} order Stores the ranking order of each player.
  * @property {Replay} replay The currently loaded replay.
- * @property {Number} fogPlayer The array index of the player for which fog of war is enabled. It is
- *           undefined if fog of war is disabled.
  * @property {Number} time The current visualizer time or position in turns, starting with 0 at the
  *           start of 'turn 1'.
  * @property {Number} shiftX X coordinate displacement of the map.
@@ -1667,7 +1628,6 @@ State.prototype.cleanUp = function() {
 	this.ranks = undefined;
 	this.order = undefined;
 	this.replay = null;
-	this.fogPlayer = undefined;
 	this.time = 0;
 	this.shiftX = 0;
 	this.shiftY = 0;
@@ -1676,14 +1636,4 @@ State.prototype.cleanUp = function() {
 	this.mouseRow = undefined;
 	this.isStreaming = false;
 	this.fade = undefined;
-};
-
-/**
- * Helper function to ask the {@link Replay} for the fog of war of the chosen
- * {@link State#fogPlayer} at the current {@link State#time}.
- * 
- * @returns {Boolean[][]} See {@link Replay#getFog}.
- */
-State.prototype.getFogMap = function() {
-	return this.replay.getFog(this.fogPlayer, this.time | 0);
 };
