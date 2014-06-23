@@ -144,12 +144,11 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		imgDir = (this.state.options['data_dir'] || '') + 'img/';
 		/** @private */
 		this.imgMgr = new ImageManager(imgDir, new Delegate(this, this.completedImages));
-		this.imgMgr.add('water.png');
-		this.imgMgr.add('hill.png');
+		this.imgMgr.add('water.png', 'water');
+		this.imgMgr.add('hill.png', 'hill');
 		if (this.state.options['decorated']) {
-			this.imgMgr.add('playback.png');
-			this.imgMgr.add('fog.png');
-			this.imgMgr.add('toolbar.png');
+			this.imgMgr.add('playback.png', 'playback');
+			this.imgMgr.add('toolbar.png', 'toolbar');
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
 			/** @private */
@@ -542,7 +541,7 @@ Visualizer.prototype.completedImages = function(error) {
 	if (error) {
 		this.errorOut(error, true);
 	} else {
-		this.map.water = this.imgMgr.images[0];
+		this.map.water = this.imgMgr.get('water');
 		this.miniMap.water = this.map.water;
 		this.tryStart();
 	}
@@ -569,8 +568,8 @@ Visualizer.prototype.tryStart = function() {
 		for (i = 0; i < this.state.replay.players; i++) {
 			colors.push(this.state.replay.meta['playercolors'][i]);
 		}
-		this.imgMgr.colorize(1, colors);
-		this.antsMap.setHillImage(this.imgMgr.patterns[1]);
+		this.imgMgr.colorize('hill', colors);
+		this.antsMap.setHillImage(this.imgMgr.getPattern('hill'));
 		// add GUI
 		if (this.state.options['decorated']) {
 			if (this.imgMgr.error) return;
@@ -608,7 +607,7 @@ Visualizer.prototype.tryStart = function() {
 			if (this.state.options['interactive']) {
 				if (!this.btnMgr.groups['playback']) {
 					if (this.state.replay.hasDuration) {
-						bg = this.btnMgr.addImageGroup('playback', this.imgMgr.images[2],
+						bg = this.btnMgr.addImageGroup('playback', this.imgMgr.get('playback'),
 								ImageButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
 						dlg = new Delegate(this, function() {
@@ -641,7 +640,7 @@ Visualizer.prototype.tryStart = function() {
 						bg.addButton(2, dlg, 'jump to end of the last turn');
 					}
 
-					bg = this.btnMgr.addImageGroup('toolbar', this.imgMgr.images[4],
+					bg = this.btnMgr.addImageGroup('toolbar', this.imgMgr.get('toolbar'),
 							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
 					if (this.state.config.hasLocalStorage()) {
@@ -705,7 +704,7 @@ Visualizer.prototype.tryStart = function() {
 			if (this.state.options['decorated']) {
 				this.director.onstate = function() {
 					var btn = vis.btnMgr.groups['playback'].buttons[4];
-					btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.images[2].height;
+					btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.get('playback').height;
 					if (btn === vis.btnMgr.pinned) {
 						vis.btnMgr.pinned = null;
 					}

@@ -9,8 +9,9 @@
  * @param {String}
  *        src The image source.
  */
-function ImageInfo(src) {
+function ImageInfo(src, name) {
 	this.src = src;
+    this.name = name;
 	this.success = undefined;
 }
 
@@ -44,10 +45,55 @@ function ImageManager(dataDir, callback) {
  *        source The image name relative to the data directory.
  * @see #startRequests
  */
-ImageManager.prototype.add = function(source) {
-	this.info.push(new ImageInfo(this.dataDir + source));
+ImageManager.prototype.add = function(source, name) {
+	this.info.push(new ImageInfo(this.dataDir + source, name));
 	this.images.push(null);
 	this.patterns.push(null);
+};
+
+/**
+ * Returns image specified by name or null if image is not found (or is not loaded yet)
+ * 
+ * @param {String}
+ *        name The image name given in ImageManager#add.
+ */
+ImageManager.prototype.get = function(name) {
+	for (var i = 0; i < this.images.length; i++) {
+		if (this.info[i].name === name) {
+			return this.images[i];
+		}
+	}
+	return null;
+};
+
+/**
+ * Returns pattern specified by image name or null if image is not found (or is not loaded yet)
+ * 
+ * @param {String}
+ *        name The image name given in ImageManager#add.
+ */
+ImageManager.prototype.getPattern = function(name) {
+	for (var i = 0; i < this.images.length; i++) {
+		if (this.info[i].name === name) {
+			return this.patterns[i];
+		}
+	}
+	return null;
+};
+
+/**
+ * Returns id of image specified by name or -1 if image is not found (or is not loaded yet)
+ * 
+ * @param {String}
+ *        name The image name given in ImageManager#add.
+ */
+ImageManager.prototype.getId = function(name) {
+	for (var i = 0; i < this.images.length; i++) {
+		if (this.info[i].name === name) {
+			return i;
+		}
+	}
+	return -1;
 };
 
 /**
@@ -141,20 +187,22 @@ ImageManager.prototype.pattern = function(idx, ctx, repeat) {
  * Sets the pattern of an image to a set of colorized copies of itself. Only gray pixels will be
  * touched. The new pattern overrides the current pattern slot for the image.
  * 
- * @param {Number}
- *        idx The index of the image.
+ * @param {String}
+ *        name The name of the image.
  * @param {Array}
  *        colors An array of colors to use. Every array slot can be either an array of rgb values
  *        ([31, 124, 59]) or HTML color string ("#f90433").
  */
-ImageManager.prototype.colorize = function(idx, colors) {
+ImageManager.prototype.colorize = function(name, colors) {
+    var image_id = this.getId(name);
+    var image = this.get(name);
 	var d, ox, dx, c, i, y, p, data, g;
 	var canvas = document.createElement('canvas');
 	var ctx = canvas.getContext('2d');
-	this.patterns[idx] = canvas;
-	canvas.width = this.images[idx].width * colors.length;
-	canvas.height = this.images[idx].height;
-	ctx.fillStyle = ctx.createPattern(this.images[idx], 'repeat');
+	this.patterns[image_id] = canvas;
+	canvas.width = image.width * colors.length;
+	canvas.height = image.height;
+	ctx.fillStyle = ctx.createPattern(image, 'repeat');
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	if (!this.restrictSecurity) {
 		try {
@@ -176,7 +224,7 @@ ImageManager.prototype.colorize = function(idx, colors) {
 		}
 		d = data.data;
 		ox = 0;
-		dx = 4 * this.images[idx].width;
+		dx = 4 * image.width;
 		for (i = 0; i < colors.length; i++) {
 			c = colors[i];
 			if (c) {
