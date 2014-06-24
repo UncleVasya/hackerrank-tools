@@ -1560,7 +1560,7 @@ Options = function() {
 	this['data_dir'] = '';
 	this['interactive'] = true;
 	this['decorated'] = true;
-	this['debug'] = false;
+	this['debug'] = true;
 	this['profile'] = false;
 	this['embedded'] = false;
 	this['game'] = '';
@@ -1568,7 +1568,7 @@ Options = function() {
 	this['row'] = NaN;
 	this['turn'] = NaN;
 	this['user'] = '';
-	this['loop'] = false;
+	this['loop'] = true;
 };
 
 /**

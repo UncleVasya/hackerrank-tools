@@ -120,6 +120,132 @@ Director.prototype.slowmoTo = function(time) {
 	}
 };
 
+Director.prototype.fixSpeedForFade = function(timeStep, lastTime) {
+    do {
+        var timeLeft = undefined;
+        var repeat = false;
+        if (timeStep !== 0) {
+            if (this.speed > 0) { // playing forward
+                if (this.time < 0) {
+                    timeLeft = 0 - this.time;
+                    if (timeLeft <= timeStep) {
+                        this.time += timeLeft;
+                        this.speed = this.defaultSpeed;
+                        repeat = true;
+                    }
+                } else if (this.time < this.duration) {
+                    timeLeft = this.duration - this.time;
+                    if (timeLeft <= timeStep) {
+                        this.time += timeLeft;
+                        this.speed = 1;
+                        repeat = true;
+                    }
+                } else {
+                    timeLeft = this.duration + 1.5 - this.time;
+                    if (timeLeft <= timeStep) {
+                        this.time = -1.5;
+                        repeat = true;
+                    }
+                }
+            } else { // playing backward
+                if (this.time > this.duration) {
+                    timeLeft = this.duration - this.time;
+                    if (timeLeft >= timeStep) {
+                        this.time += timeLeft;
+                        this.speed = this.defaultSpeed;
+                        repeat = true;
+                    }
+                } else if (this.time > 0) {
+                    timeLeft = 0 - this.time;
+                    if (timeLeft >= timeStep) {
+                        this.time += timeLeft;
+                        this.speed = -1;
+                        repeat = true;
+                    }
+                } else {
+                    timeLeft = -1.5 - this.time;
+                    if (timeLeft >= timeStep) {
+                        this.time = this.duration + 1.5;
+                        repeat = true;
+                    }
+                }
+            }
+        }
+        if (repeat) {
+            lastTime += (this.lastTime - lastTime) * (timeLeft / timeStep);
+            timeStep = (this.lastTime - lastTime) * this.speed * 0.001;
+        }
+    } while (repeat);
+    return {timeStep: timeStep, lastTime: lastTime};
+};
+
+Director.prototype.getFadeColor = function () {
+    var color, alpha; 
+    if (this.time < -1) {
+        color = Math.round(255 * (2 + this.time));
+        alpha = 1;
+    } else if (this.time < 0) {
+        color = 255;
+        alpha = -this.time;
+    } else if (this.time > this.duration + 1) {
+        color = Math.round(255 * (this.time - this.duration - 1));
+        alpha = 1;
+    } else {
+        color = 0;
+        alpha = this.time - this.duration;
+    }
+    return 'rgba(' + color + ',' + color + ',' + color + ',' + alpha + ')';
+};
+
+Director.prototype.showFps = function() {
+    var delta = (this.lastTime - this.frameStart);
+    var fps = Math.round(1000 * this.frameCounter / delta);
+    var cpu = Math.round(100 * this.frameCpu / delta);
+    document.title = fps + ' fps @ ' + cpu + '% cpu';
+};
+
+Director.prototype.newFpsCounter = function(startTime) {
+    this.frameStart = startTime;
+    this.frameCounter = 0;
+    this.frameCpu = 0;
+};
+
+Director.prototype.doFpsStuff = function(lastTime, cpuTime) {
+    if (this.frameStart === undefined) {
+        this.newFpsCounter(lastTime); 
+    }
+    this.frameCounter++;
+    this.frameCpu += cpuTime;
+    if (this.lastTime >= this.frameStart + 1000) {
+        this.showFps();    
+        this.newFpsCounter(this.lastTime);
+    }
+};
+
+Director.prototype.doDelay = function(delay, cpuTime) {
+    var useMaxCpu;
+    if (this.fixedFpt === undefined) {
+        useMaxCpu = (this.cpu <= 0 || this.cpu > 1) || cpuTime === undefined;
+    } else {
+        useMaxCpu = true;
+    }
+    var that = this;
+    if (useMaxCpu) {
+        that.timeout = window.setTimeout(function() {
+            that.loop(delay);
+        }, 0);
+    } else {
+        var newDelay = useMaxCpu ? 0 : Math.ceil(cpuTime / this.cpu - cpuTime);
+        // looks odd, but synchronizes JS and rendering threads so we get
+        // accurate CPU times
+        this.timeout = window.setTimeout(function() {
+            that.timeout = window.setTimeout(function() {
+                that.loop(newDelay);
+            }, newDelay);
+        }, 0);
+    }
+};
+
 /**
  * Performs one playback step. Basically it calls {@link Visualizer#draw}, and will schedule the
  * next call to itself if the playback hasn't met an end condition (like the target time for a
@@ -132,7 +258,6 @@ Director.prototype.slowmoTo = function(time) {
  *        in the {@link Config}. It is used to calculate a CPU usage estimate.
  */
 Director.prototype.loop = function(delay) {
-	var newDelay, i, a, repeat, useMax;
 	var cpuTime = undefined;
 	var lastTime = this.lastTime;
 	if (this.speed === 0) {
@@ -142,63 +267,13 @@ Director.prototype.loop = function(delay) {
 		this.lastTime = new Date().getTime();
 		if (lastTime !== undefined) {
 			cpuTime = this.lastTime - lastTime - delay;
-			do {
-				a = (this.lastTime - lastTime) * this.speed * 0.001;
-				i = undefined;
-				repeat = false;
-				if (this.vis.state.options['loop'] && a !== 0) {
-					if (this.speed > 0) {
-						if (this.time < 0) {
-							i = 0 - this.time;
-							if (i <= a) {
-								this.time += i;
-								this.speed = this.defaultSpeed;
-								repeat = true;
-							}
-						} else if (this.time < this.duration) {
-							i = this.duration - this.time;
-							if (i <= a) {
-								this.time += i;
-								this.speed = 1;
-								repeat = true;
-							}
-						} else {
-							i = this.duration + 1.5 - this.time;
-							if (i <= a) {
-								this.time = -1.5;
-								repeat = true;
-							}
-						}
-					} else {
-						if (this.time > this.duration) {
-							i = this.duration - this.time;
-							if (i >= a) {
-								this.time += i;
-								this.speed = this.defaultSpeed;
-								repeat = true;
-							}
-						} else if (this.time > 0) {
-							i = 0 - this.time;
-							if (i >= a) {
-								this.time += i;
-								this.speed = -1;
-								repeat = true;
-							}
-						} else {
-							i = -1.5 - this.time;
-							if (i >= a) {
-								this.time = this.duration + 1.5;
-								repeat = true;
-							}
-						}
-					}
-				}
-				if (repeat) {
-					lastTime += (this.lastTime - lastTime) * (i / a);
-				} else {
-					this.time += a;
-				}
-			} while (repeat);
+            var timeStep = (this.lastTime - lastTime) * this.speed * 0.001;
+            if (this.vis.state.options['loop']) {
+                var vals = this.fixSpeedForFade(timeStep, lastTime);
+                timeStep = vals.timeStep;
+                lastTime = vals.lastTime;
+            }
+            this.time += timeStep;
 		}
 	} else {
 		this.frameCounter++;
@@ -221,64 +296,19 @@ Director.prototype.loop = function(delay) {
 	}
 	// check for fade out color
 	if (this.vis.state.options['loop'] && (this.time < 0 || this.time > this.duration)) {
-		if (this.time < -1) {
-			i = Math.round(255 * (2 + this.time));
-			a = 1;
-		} else if (this.time < 0) {
-			i = 255;
-			a = -this.time;
-		} else if (this.time > this.duration + 1) {
-			i = Math.round(255 * (this.time - this.duration - 1));
-			a = 1;
-		} else {
-			i = 0;
-			a = this.time - this.duration;
-		}
-		this.vis.state.fade = 'rgba(' + i + ',' + i + ',' + i + ',' + a + ')';
+		this.vis.state.fade = this.getFadeColor();
 	} else {
 		this.vis.state.fade = undefined;
 	}
 	this.vis.state.time = Math.clamp(this.time, 0, this.duration);
 	this.vis.draw();
 	if (goOn) {
-		if (this.fixedFpt === undefined) {
-			if (this.vis.state.options['debug'] && cpuTime !== undefined) {
-				if (this.frameStart === undefined) {
-					this.frameStart = lastTime;
-					this.frameCounter = 0;
-					this.frameCpu = 0;
-				}
-				this.frameCounter++;
-				this.frameCpu += cpuTime;
-				if (this.lastTime >= this.frameStart + 1000) {
-					var delta = (this.lastTime - this.frameStart);
-					var fps = Math.round(1000 * this.frameCounter / delta);
-					var cpu = Math.round(100 * this.frameCpu / delta);
-					document.title = fps + ' fps @ ' + cpu + '% cpu';
-					this.frameStart = this.lastTime;
-					this.frameCounter = 0;
-					this.frameCpu = 0;
-				}
-			}
-			useMax = (this.cpu <= 0 || this.cpu > 1) || cpuTime === undefined;
-		} else {
-			useMax = true;
-		}
-		var that = this;
-		if (useMax) {
-			that.timeout = window.setTimeout(function() {
-				that.loop(delay);
-			}, 0);
-		} else {
-			newDelay = useMax ? 0 : Math.ceil(cpuTime / this.cpu - cpuTime);
-			// looks odd, but synchronizes JS and rendering threads so we get
-			// accurate CPU times
-			this.timeout = window.setTimeout(function() {
-				that.timeout = window.setTimeout(function() {
-					that.loop(newDelay);
-				}, newDelay);
-			}, 0);
-		}
+        if (this.vis.state.options['debug']) {
+            if (this.fixedFpt === undefined && cpuTime !== undefined) {
+                this.doFpsStuff(lastTime, cpuTime);
+            }
+        }
+        this.doDelay(delay, cpuTime);
 	}
 };
 
