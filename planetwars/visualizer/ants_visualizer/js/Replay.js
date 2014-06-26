@@ -754,8 +754,6 @@ Replay.prototype.getTurn = function(n) {
 				// spawn this ant
 				if (this.revision >= 3) {
 					aniAnt = this.spawnAnt(i, ant[0], ant[1], ant[2], ant[4]);
-				} else {
-					aniAnt = this.spawnFood(i, ant[0], ant[1], ant[2], ant[5]);
 				}
 			} else if (this.aniAnts[i]) {
 				// load existing state
@@ -768,10 +766,6 @@ Replay.prototype.getTurn = function(n) {
 				moves = ant[5];
 				activation = ant[2];
 			} else {
-				if (ant[5] !== undefined && (ant[3] === n + 1 || n === 0 && ant[3] === 0)) {
-					// fade to player color
-					this.convertAnt(aniAnt, ant[3] == ant[2], ant[3], ant[5]);
-				}
 				moves = ant[6];
 				activation = ant[3];
 			}
@@ -818,71 +812,8 @@ Replay.prototype.getTurn = function(n) {
 				turn.push(aniAnt);
 			}
 		}
-		if (this.revision >= 3) {
-			for (i = 0; i < food.length; i++) {
-				ant = food[i];
-				idx = i + ants.length;
-				if (ant[2] === n + 1 || n === 0 && ant[2] === 0) {
-					// spawn this food
-					aniAnt = this.spawnFood(idx, ant[0], ant[1], ant[2], undefined);
-				} else if (this.aniAnts[idx]) {
-					// load existing state
-					aniAnt = this.aniAnts[idx];
-				} else {
-					// continue with next ant
-					continue;
-				}
-				dead = ant[3];
-				if (dead === n + 1) {
-					// end of life
-					this.killAnt(aniAnt, dead);
-				}
-				if (dead === undefined || n < dead) {
-					// assign ant to display list
-					turn.push(aniAnt);
-				}
-			}
-		}
 	}
 	return this.turns[n];
-};
-
-/**
- * Spawns a new food item that may eventually be turned into an ant at any time.<br>
- * <b>Called by the Java streaming visualizer.</b>
- * 
- * @param {Number}
- *        id Global ant id, an auto-incrementing number for each new ant. See {@link Config#label}
- * @param {Number}
- *        row Map row to spawn the ant on.
- * @param {Number}
- *        col Map column to spawn the ant on.
- * @param {Number}
- *        spawn Turn to spawn the ant at.
- * @param {Number}
- *        owner the owning player index
- * @returns {Ant} The new animation ant object.
- */
-Replay.prototype.spawnFood = function(id, row, col, spawn, owner) {
-	var aniAnt = this.aniAnts[id] = new Ant(id, spawn - 0.25);
-	var f = aniAnt.frameAt(spawn - 0.25);
-	aniAnt.owner = owner;
-	f['x'] = col;
-	f['y'] = row;
-	f['r'] = FOOD_COLOR[0];
-	f['g'] = FOOD_COLOR[1];
-	f['b'] = FOOD_COLOR[2];
-	if (spawn !== 0) {
-		f = aniAnt.frameAt(spawn);
-		f['size'] = 1.0;
-		f = aniAnt.frameAt(spawn + 0.125);
-		f['size'] = 1.5;
-		f = aniAnt.frameAt(spawn + 0.25);
-		f['size'] = 0.7;
-		f = aniAnt.frameAt(spawn + 0.5);
-	}
-	f['size'] = 1;
-	return aniAnt;
 };
 
 /**
@@ -922,34 +853,6 @@ Replay.prototype.spawnAnt = function(id, row, col, spawn, owner) {
 	}
 	f['size'] = 1;
 	return aniAnt;
-};
-
-/**
- * Animates food conversion to a player ant.<br>
- * <b>Called by the Java streaming visualizer.</b>
- * 
- * @private
- * @param {Ant}
- *        aniAnt The ant to be worked on.
- * @param {Boolean}
- *        instantly This is set to true for the initial player ants and leaves out one animation
- *        step that will have no effect in this case.
- * @param {Number}
- *        turn The zero-based turn, that the ant was converted in.
- * @param {Number}
- *        owner The player index of the new owner.
- */
-Replay.prototype.convertAnt = function(aniAnt, instantly, turn, owner) {
-	var color = this.meta['playercolors'][owner];
-	if (!instantly) {
-		aniAnt.fade('r', 255, turn - 0.5, turn - 0.25);
-		aniAnt.fade('g', 255, turn - 0.5, turn - 0.25);
-		aniAnt.fade('b', 255, turn - 0.5, turn - 0.25);
-	}
-	aniAnt.frameAt(turn - 0.25)['owner'] = owner;
-	aniAnt.fade('r', color[0], turn - 0.25, turn);
-	aniAnt.fade('g', color[1], turn - 0.25, turn);
-	aniAnt.fade('b', color[2], turn - 0.25, turn);
 };
 
 /**

@@ -160,43 +160,15 @@ function CanvasElementAbstractMap(state) {
 CanvasElementAbstractMap.extend(CanvasElement);
 
 /**
- * Draws a red marker on the map. Used when coordinates are given in the replay URL.
- * 
- * @param {Number}
- *        xs the x pixel position
- * @param {Number}
- *        ys the y pixel position
- */
-CanvasElementAbstractMap.prototype.redFocusRectFun = function(xs, ys) {
-	var x, y, w, i;
-	for (i = 0; i < 5; i++) {
-		this.ctx.strokeStyle = 'rgba(255,0,0,' + (i + 1) / 5 + ')';
-		w = this.scale + 9 - 2 * i;
-		x = xs + i;
-		y = ys + i;
-		this.ctx.strokeRect(x, y, w, w);
-	}
-};
-
-/**
  * Draws the terrain map.
  */
 CanvasElementAbstractMap.prototype.draw = function() {
-	var row, col, start, isWall, xs, ys;
 	var rows = this.state.replay.rows;
 	var cols = this.state.replay.cols;
 	var rowOpt = this.state.options['row'];
 	var colOpt = this.state.options['col'];
 	this.ctx.fillStyle = SAND_COLOR;
 	this.ctx.fillRect(0, 0, this.w, this.h);
-	
-	// marker
-	if (!isNaN(rowOpt) && !isNaN(colOpt)) {
-		xs = (colOpt % cols) * this.scale - 4.5;
-		ys = (rowOpt % rows) * this.scale - 4.5;
-		this.drawWrapped(xs, ys, this.scale + 9, this.scale + 9, this.w, this.h,
-				this.redFocusRectFun, [ xs, ys ]);
-	}
 };
 
 /**
@@ -295,7 +267,6 @@ function CanvasElementAntsMap(state, map) {
 	this.drawStates = new Object();
 	this.pairing = [];
 	this.scale = 1;
-	this.circledAnts = [];
 	this.mouseOverVis = false;
 	this.mouseCol = 0;
 	this.mouseRow = 0;
@@ -325,50 +296,6 @@ CanvasElementAntsMap.prototype.checkState = function() {
 			rows = this.state.replay.rows;
 			this.turn = this.time | 0;
 			this.ants = this.state.replay.getTurn(this.turn);
-			this.pairing = new Array(this.ants.length);
-			for (i = this.ants.length - 1; i >= 0; i--) {
-				if ((kf = this.ants[i].interpolate(this.turn))) {
-					owner = kf['owner'];
-					kf = this.ants[i].interpolate(this.turn + 1);
-					this.pairing[this.ants[i].id] = {
-						kf : kf,
-						owner : owner,
-						x : Math.wrapAround(kf['x'], cols),
-						y : Math.wrapAround(kf['y'], rows),
-						targets : []
-					};
-				}
-			}
-			if ((ar = this.state.replay.meta['replaydata']['attackradius2'])) {
-				for (i = this.ants.length - 1; i >= 0; i--) {
-					if (this.ants[i].death === this.turn + 1) {
-						p_i = this.pairing[this.ants[i].id];
-						if (p_i !== undefined && p_i.owner !== undefined) {
-							for (k = this.ants.length - 1; k >= 0; k--) {
-								// this check looks odd, but accounts for
-								// surviving ants
-								if (this.ants[k].death !== this.turn + 1 || k < i) {
-									p_k = this.pairing[this.ants[k].id];
-									if (p_k !== undefined && p_k.owner !== undefined
-											&& p_i.owner !== p_k.owner) {
-										// distance between ants' end-points
-										dx = Math.wrapAround(p_k.x - p_i.x, cols);
-										if (2 * dx > cols) dx -= cols;
-										dy = Math.wrapAround(p_k.y - p_i.y, rows);
-										if (2 * dy > rows) dy -= rows;
-										if (dx * dx + dy * dy <= ar) {
-											// these two ants will be in attack
-											// range
-											p_i.targets.push(p_k.kf);
-											p_k.targets.push(p_i.kf);
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
 		}
 
 		// interpolate ants for this point in time
@@ -385,65 +312,6 @@ CanvasElementAntsMap.prototype.checkState = function() {
 			}
 		}
 	}
-
-	// find ants in range of mouse cursor
-	if (this.mouseOverVis !== this.state.mouseOverVis
-			|| this.mouseOverVis
-			&& (timeChanged || this.mouseCol !== this.state.mouseCol || this.mouseRow !== this.state.mouseRow)) {
-		this.mouseOverVis = this.state.mouseOverVis;
-		this.mouseCol = this.state.mouseCol;
-		this.mouseRow = this.state.mouseRow;
-		if (this.collectAntsAroundCursor()) this.invalid = true;
-	}
-};
-
-/**
- * Builds the internal list of ants and food that need a circle drawn around them because the mouse
- * cursor is within their radius of effect (either attack or spawn).
- * 
- * @returns {Boolean} true, if the internal list has changed since the last call of this method
- */
-CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
-	var col, row, ar, sr, colPixels, rowPixels, drawList, i, k, ant, d, owned;
-	var found;
-	var circledAnts = [];
-	var hash = undefined;
-	var same = true;
-	if (this.mouseOverVis) {
-		col = this.scale * this.mouseCol;
-		row = this.scale * this.mouseRow;
-		ar = this.state.replay.meta['replaydata']['attackradius2'];
-		ar *= this.scale * this.scale;
-		sr = this.state.replay.meta['replaydata']['spawnradius2'];
-		sr *= this.scale * this.scale;
-		colPixels = this.scale * this.state.replay.cols;
-		rowPixels = this.scale * this.state.replay.rows;
-		for (hash in this.drawStates) {
-			drawList = this.drawStates[hash];
-			for (i = drawList.length - 1; i >= 0; i--) {
-				ant = drawList[i];
-				d = Math.dist_2(col, row, ant.mapX, ant.mapY, colPixels, rowPixels);
-				owned = ant['owner'] !== undefined;
-				if (!owned && (d <= sr) || owned && (d <= ar)) {
-					if (same) {
-						found = false;
-						for (k = 0; k < this.circledAnts.length; k++) {
-							if (this.circledAnts[k] === ant) {
-								found = true;
-								break;
-							}
-						}
-						same &= found;
-					}
-					circledAnts.push(ant);
-				}
-			}
-		}
-	}
-	same &= circledAnts.length === this.circledAnts.length;
-	if (same) return false;
-	this.circledAnts = circledAnts;
-	return true;
 };
 
 /**
@@ -451,8 +319,7 @@ CanvasElementAntsMap.prototype.collectAntsAroundCursor = function() {
  * and finally the fog of war.
  */
 CanvasElementAntsMap.prototype.draw = function() {
-	var halfScale, drawList, n, kf, w, dx, dy, d, fontSize, label, caption, order, razed;
-	var target, rows, cols, x1, y1, x2, y2, rowPixels, colPixels, ar, sr, r, i;
+	var halfScale, drawList, n, kf, d, fontSize, label, caption, order;
 	var hash = undefined;
 
 	// draw map
@@ -473,80 +340,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 							this.ctx.arc(x, y, width, 0, 2 * Math.PI, false);
 							this.ctx.fill();
 						}, [ kf.mapX + halfScale, kf.mapY + halfScale, halfScale * kf['size'] ]);
-			} else {
-				w = this.scale;
-				dx = kf.mapX;
-				dy = kf.mapY;
-				if (kf['size'] !== 1) {
-					d = 0.5 * (1.0 - kf['size']) * this.scale;
-					dx += d;
-					dy += d;
-					w *= kf['size'];
-				}
-				this.ctx.fillRect(dx, dy, w, w);
 			}
-		}
-	}
-
-	// draw battle indicators
-	rows = this.state.replay.rows;
-	rowPixels = rows * this.scale;
-	cols = this.state.replay.cols;
-	colPixels = cols * this.scale;
-	this.ctx.lineWidth = Math.pow(this.scale, 0.3);
-	for (hash in this.drawStates) {
-		drawList = this.drawStates[hash];
-		this.ctx.strokeStyle = hash;
-		this.ctx.beginPath();
-		for (n = drawList.length - 1; n >= 0; n--) {
-			kf = drawList[n];
-			if (this.pairing[kf.antId] !== undefined) {
-				for (d = this.pairing[kf.antId].targets.length - 1; d >= 0; d--) {
-					target = this.pairing[kf.antId].targets[d];
-					x1 = kf.mapX + halfScale;
-					y1 = kf.mapY + halfScale;
-					dx = Math.wrapAround(target.mapX - kf.mapX, colPixels);
-					if (2 * dx > colPixels) dx -= colPixels;
-					x2 = x1 + 0.5 * dx;
-					dy = Math.wrapAround(target.mapY - kf.mapY, rowPixels);
-					if (2 * dy > rowPixels) dy -= rowPixels;
-					y2 = y1 + 0.5 * dy;
-					this.drawWrapped(Math.min(x1, x2) - 1, Math.min(y1, y2) - 1,
-							Math.abs(x2 - x1) + 2, Math.abs(y2 - y1) + 2, colPixels, rowPixels,
-							function(fx1, fy1, fx2, fy2) {
-								this.ctx.moveTo(fx1, fy1);
-								this.ctx.lineTo(fx2, fy2);
-							}, [ x1, y1, x2, y2 ]);
-				}
-			}
-		}
-		this.ctx.stroke();
-	}
-
-	// draw attack and spawn radiuses
-	if (this.mouseOverVis) {
-		ar = this.state.replay.meta['replaydata']['attackradius2'];
-		ar = this.scale * Math.sqrt(ar);
-		sr = this.state.replay.meta['replaydata']['spawnradius2'];
-		sr = this.scale * Math.sqrt(sr);
-		for (n = this.circledAnts.length - 1; n >= 0; --n) {
-			kf = this.circledAnts[n];
-			hash = '#';
-			hash += INT_TO_HEX[kf['r']];
-			hash += INT_TO_HEX[kf['g']];
-			hash += INT_TO_HEX[kf['b']];
-			this.ctx.strokeStyle = hash;
-			this.ctx.beginPath();
-			dx = kf.mapX + halfScale;
-			dy = kf.mapY + halfScale;
-			r = (kf['owner'] === undefined) ? sr : ar;
-			x1 = dx - r;
-			y1 = dy - r;
-			this.drawWrapped(x1, y1, 2 * r, 2 * r, colPixels, rowPixels, function() {
-				this.ctx.moveTo(dx + r, dy);
-				this.ctx.arc(dx, dy, r, 0, 2 * Math.PI, false);
-			});
-			this.ctx.stroke();
 		}
 	}
 
