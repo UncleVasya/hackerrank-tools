@@ -156,7 +156,6 @@ CanvasElement.prototype.drawWrapped = function(x, y, w, h, wField, hField, func,
 function CanvasElementAbstractMap(state) {
 	this.upper();
 	this.state = state;
-	this.water = null;
 }
 CanvasElementAbstractMap.extend(CanvasElement);
 
@@ -190,24 +189,7 @@ CanvasElementAbstractMap.prototype.draw = function() {
 	var colOpt = this.state.options['col'];
 	this.ctx.fillStyle = SAND_COLOR;
 	this.ctx.fillRect(0, 0, this.w, this.h);
-	this.ctx.fillStyle = this.ctx.createPattern(this.water, 'repeat');
-	for (row = 0; row < rows; row++) {
-		start = undefined;
-		for (col = 0; col < cols; col++) {
-			isWall = this.state.replay.walls[row][col];
-			if (start === undefined && isWall) {
-				start = col;
-			} else if (start !== undefined && !isWall) {
-				this.ctx.fillRect(this.scale * start, this.scale * row, this.scale * (col - start),
-						this.scale);
-				start = undefined;
-			}
-		}
-		if (start !== undefined) {
-			this.ctx.fillRect(this.scale * start, this.scale * row, this.scale * (col - start),
-					this.scale);
-		}
-	}
+	
 	// marker
 	if (!isNaN(rowOpt) && !isNaN(colOpt)) {
 		xs = (colOpt % cols) * this.scale - 4.5;

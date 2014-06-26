@@ -144,7 +144,6 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		imgDir = (this.state.options['data_dir'] || '') + 'img/';
 		/** @private */
 		this.imgMgr = new ImageManager(imgDir, new Delegate(this, this.completedImages));
-		this.imgMgr.add('water.png', 'water');
 		if (this.state.options['decorated']) {
 			this.imgMgr.add('playback.png', 'playback');
 			this.imgMgr.add('toolbar.png', 'toolbar');
@@ -540,8 +539,6 @@ Visualizer.prototype.completedImages = function(error) {
 	if (error) {
 		this.errorOut(error, true);
 	} else {
-		this.map.water = this.imgMgr.get('water');
-		this.miniMap.water = this.map.water;
 		this.tryStart();
 	}
 };
