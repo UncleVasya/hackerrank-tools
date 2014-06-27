@@ -102,51 +102,6 @@ CanvasElement.prototype.dependsOn = function(element) {
 };
 
 /**
- * For cases where a drawn object would cross the border of the canvas and it is desirable to have
- * it wrap around and come in again on the other side, this method can be called with a given
- * function that contains the drawing commands. The wrapping will be simulated by repeatedly calling
- * the function and using matrix translations on the drawing context in between.
- * 
- * @param {Number}
- *        x the left coordinate
- * @param {Number}
- *        y the top coordinate
- * @param {Number}
- *        w the drawing width
- * @param {Number}
- *        h the drawing height
- * @param {Number}
- *        wField the width of the whole field on which wrapping should occur
- * @param {Number}
- *        hField the height of the field
- * @param {Function}
- *        func the drawing routine
- * @param {Array}
- *        args parameters for the drawing routine
- */
-CanvasElement.prototype.drawWrapped = function(x, y, w, h, wField, hField, func, args) {
-	var delta_x, delta_y, tx, ty, sum;
-	if (x < 0 || y < 0 || x + w > wField || y + h > hField) {
-		this.ctx.save();
-		delta_x = -Math.floor((x + w) / wField) * wField;
-		delta_y = -Math.floor((y + h) / hField) * hField;
-		this.ctx.translate(delta_x, delta_y);
-		for (ty = y + delta_y; ty < hField; ty += hField) {
-			sum = 0;
-			for (tx = x + delta_x; tx < wField; tx += wField) {
-				func.apply(this, args);
-				this.ctx.translate(wField, 0);
-				sum -= wField;
-			}
-			this.ctx.translate(sum, hField);
-		}
-		this.ctx.restore();
-	} else {
-		func.apply(this, args);
-	}
-};
-
-/**
  * @class Base class for maps
  * @extends CanvasElement
  * @constructor
@@ -346,12 +301,10 @@ CanvasElementAntsMap.prototype.draw = function() {
 		for (n = drawList.length - 1; n >= 0; n--) {
 			kf = drawList[n];
 			if (kf['owner'] !== undefined) {
-				this.drawWrapped(kf.mapX, kf.mapY, this.scale, this.scale, this.w, this.h,
-						function(x, y, width) {
-							this.ctx.beginPath();
-							this.ctx.arc(x, y, width, 0, 2 * Math.PI, false);
-							this.ctx.fill();
-						}, [ kf.mapX + halfScale, kf.mapY + halfScale, halfScale * kf['size'] ]);
+				this.ctx.beginPath();
+				this.ctx.arc(kf.mapX + halfScale, kf.mapY + halfScale, halfScale * kf['size'], 
+                             0, 2 * Math.PI, false);
+				this.ctx.fill();
 			}
 		}
 	}
@@ -465,7 +418,7 @@ CanvasElementShiftedMap.prototype.draw = function() {
 	// fade out
 	if (this.fade) {
 		this.ctx.fillStyle = this.fade;
-		this.ctx.fillRect(0, 0, this.w, this.h);
+		this.ctx.fillRect(mx, my, this.antsMap.w, this.antsMap.h);
 	}
 	// game cut-off reason
 	cutoff = this.state.replay.meta['replaydata']['cutoff'];

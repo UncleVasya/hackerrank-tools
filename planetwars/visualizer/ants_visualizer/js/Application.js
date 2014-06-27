@@ -1263,10 +1263,8 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 	var btn = null;
 	this.mouseX = mx;
 	this.mouseY = my;
-	this.state.mouseCol = (Math.wrapAround(mx - this.map.x - this.state.shiftX, this.state.scale
-			* this.state.replay.cols) / this.state.scale) | 0;
-	this.state.mouseRow = (Math.wrapAround(my - this.map.y - this.state.shiftY, this.state.scale
-			* this.state.replay.rows) / this.state.scale) | 0;
+	this.state.mouseCol = (mx - this.map.x - this.state.shiftX) / this.state.scale | 0;
+	this.state.mouseRow = (my - this.map.y - this.state.shiftY) / this.state.scale | 0;
 	this.hint = '';
 	if (this.state.options['interactive']) {
 		if ((this.state.mouseOverVis = this.map.contains(this.mouseX, this.mouseY)
