@@ -163,12 +163,25 @@ CanvasElementAbstractMap.extend(CanvasElement);
  * Draws the terrain map.
  */
 CanvasElementAbstractMap.prototype.draw = function() {
+    var row, col;
 	var rows = this.state.replay.rows;
 	var cols = this.state.replay.cols;
-	var rowOpt = this.state.options['row'];
-	var colOpt = this.state.options['col'];
 	this.ctx.fillStyle = SAND_COLOR;
 	this.ctx.fillRect(0, 0, this.w, this.h);
+    
+    // draw grid
+    this.ctx.strokeStyle = '#fff';
+    this.ctx.lineWidth = 0.5;
+    this.ctx.beginPath();
+    for (row = 0; row <= rows; row++) {   
+        this.ctx.moveTo(0, this.scale * row);
+        this.ctx.lineTo(this.scale * cols, this.scale * row);
+	}
+    for (col = 0; col <= cols; col++) {   
+        this.ctx.moveTo(this.scale * col, 0);
+        this.ctx.lineTo(this.scale * col, this.scale * rows);
+	}
+    this.ctx.stroke();
 };
 
 /**
@@ -268,8 +281,6 @@ function CanvasElementAntsMap(state, map) {
 	this.pairing = [];
 	this.scale = 1;
 	this.mouseOverVis = false;
-	this.mouseCol = 0;
-	this.mouseRow = 0;
 }
 CanvasElementAntsMap.extend(CanvasElement);
 
