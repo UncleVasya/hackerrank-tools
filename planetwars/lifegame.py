@@ -15,6 +15,10 @@ except ImportError:
     
 EMPTY = -1
 
+PLAYER_CELL = 'wb'
+MAP_OBJECT = '-'
+MAP_RENDER = PLAYER_CELL + MAP_OBJECT
+
 class LifeGame(Game):
     def __init__(self, options=None):
         # setup options
@@ -62,11 +66,13 @@ class LifeGame(Game):
             # initialize alive cells
             for player, player_cells in map_data['cells'].items():
                 for cell_loc in player_cells:
-                    self.add_initial_ant(ant_loc, player)
-            self.original_map = []
-            for map_row in self.map:
-                self.original_map.append(map_row[:])
+                    self.map[cell_loc[0]][cell_loc[1]] = player
 
+        # original map to put in a replay data
+        self.original_map = []
+        for map_row in self.map:
+            self.original_map.append(map_row[:])
+                
         # initialize scores
         self.score = [0]*self.num_players
         self.bonus = [0]*self.num_players
@@ -152,6 +158,12 @@ class LifeGame(Game):
             'num_players': num_players,
             'cells':       cells
         }
+        
+    def get_map_output(self):
+        result = []
+        for row in self.original_map:
+            result.append(''.join([MAP_RENDER[col] for col in row]))
+        return result
         
     def cnt_neighs(self, (row, col)):
         neighs = [(dx, dy) for dx in (-1,0,1) for dy in (-1,0,1) 
@@ -407,6 +419,12 @@ class LifeGame(Game):
         replay['turns'] = self.turns
         replay['engine_seed'] = self.engine_seed
         replay['player_seed'] = self.player_seed
+        
+        # map
+        replay['map'] = {}
+        replay['map']['rows'] = self.height
+        replay['map']['cols'] = self.width
+        replay['map']['data'] = self.get_map_output()
         
         # cells data
         replay['cells'] = [[cell.loc[0], cell.loc[1], cell.spawn_turn, cell.owner] 
