@@ -1165,19 +1165,9 @@ Visualizer.prototype.draw = function() {
 		my = this.mouseY - this.map.y - this.state.shiftY;
 		mx = Math.floor(mx / this.state.scale) * this.state.scale + this.map.x + this.state.shiftX;
 		my = Math.floor(my / this.state.scale) * this.state.scale + this.map.y + this.state.shiftY;
-		mx -= loc.x - this.state.scale + 1;
-		my -= loc.y - this.state.scale + 1;
-		mx = Math.wrapAround(mx, this.map.w);
-		my = Math.wrapAround(my, this.map.h);
-		mx += loc.x - this.state.scale + 1;
-		my += loc.y - this.state.scale + 1;
-		ctx.strokeStyle = '#fff';
+		ctx.strokeStyle = '#0';
 		ctx.beginPath();
-		for (y = my; y < loc.y + loc.h; y += this.map.h) {
-			for (x = mx; x < loc.x + loc.w; x += this.map.w) {
-				ctx.rect(x + 0.5, y + 0.5, this.state.scale - 1, this.state.scale - 1);
-			}
-		}
+		ctx.rect(mx + 0.5, my + 0.5, this.state.scale - 1, this.state.scale - 1);
 		ctx.stroke();
 		ctx.restore();
 	}

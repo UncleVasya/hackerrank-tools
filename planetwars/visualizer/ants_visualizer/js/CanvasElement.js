@@ -162,25 +162,26 @@ CanvasElementAbstractMap.extend(CanvasElement);
 /**
  * Draws the terrain map.
  */
-CanvasElementAbstractMap.prototype.draw = function() {
+CanvasElementAbstractMap.prototype.draw = function(drawGrid = true) {
     var row, col;
 	var rows = this.state.replay.rows;
 	var cols = this.state.replay.cols;
 	this.ctx.fillStyle = SAND_COLOR;
 	this.ctx.fillRect(0, 0, this.w, this.h);
     
-    // draw grid
-    this.ctx.strokeStyle = '#fff';
-    this.ctx.lineWidth = 0.5;
-    this.ctx.beginPath();
-    for (row = 0; row <= rows; row++) {   
-        this.ctx.moveTo(0, this.scale * row);
-        this.ctx.lineTo(this.scale * cols, this.scale * row);
-	}
-    for (col = 0; col <= cols; col++) {   
-        this.ctx.moveTo(this.scale * col, 0);
-        this.ctx.lineTo(this.scale * col, this.scale * rows);
-	}
+    if (drawGrid) {
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 0.5;
+        this.ctx.beginPath();
+        for (row = 0; row <= rows; row++) {   
+            this.ctx.moveTo(0, this.scale * row);
+            this.ctx.lineTo(this.scale * cols, this.scale * row);
+        }
+        for (col = 0; col <= cols; col++) {   
+            this.ctx.moveTo(this.scale * col, 0);
+            this.ctx.lineTo(this.scale * col, this.scale * rows);
+        }
+    }
     this.ctx.stroke();
 };
 
@@ -220,7 +221,7 @@ CanvasElementMiniMap.prototype.checkState = function() {
  */
 CanvasElementMiniMap.prototype.draw = function() {
 	var i, ant, color;
-	CanvasElementAbstractMap.prototype.draw.call(this);
+	CanvasElementAbstractMap.prototype.draw.call(this, false);
 	for (i = this.ants.length - 1; i >= 0; i--) {
 		if ((ant = this.ants[i].interpolate(this.turn))) {
 			color = '#';
@@ -447,44 +448,20 @@ CanvasElementShiftedMap.prototype.draw = function() {
 	var x, y, dx, dy, cutoff;
 	var mx = (this.w - this.antsMap.w) >> 1;
 	var my = (this.h - this.antsMap.h) >> 1;
-	// map backdrop
-	dx = mx + this.shiftX;
-	dy = my + this.shiftY;
-	dx -= Math.ceil(dx / this.antsMap.w) * this.antsMap.w;
-	dy -= Math.ceil(dy / this.antsMap.h) * this.antsMap.h;
-	for (x = dx; x < this.w; x += this.antsMap.w) {
-		for (y = dy; y < this.h; y += this.antsMap.h) {
-			this.ctx.drawImage(this.antsMap.canvas, x, y);
-		}
-	}
-	// map border if moved
-	if (this.shiftX !== 0 || this.shiftY !== 0) {
-		this.ctx.strokeStyle = '#000';
-		this.ctx.lineWidth = 0.5;
-		this.ctx.beginPath();
-		for (x = dx; x <= this.w; x += this.antsMap.w) {
-			this.ctx.moveTo(x, 0);
-			this.ctx.lineTo(x, this.h);
-		}
-		for (y = dy; y <= this.h; y += this.antsMap.h) {
-			this.ctx.moveTo(0, y);
-			this.ctx.lineTo(this.w, y);
-		}
-		this.ctx.stroke();
-	}
-	// shaded static borders
-	if (this.w > this.antsMap.w) {
-		dx = mx + this.antsMap.w;
-		this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
-		this.ctx.fillRect(0, 0, mx, this.h);
-		this.ctx.fillRect(dx, 0, this.w - dx, this.h);
-	}
-	if (this.h > this.antsMap.h) {
-		dy = my + this.antsMap.h;
-		this.ctx.fillStyle = 'rgba(0,0,0,0.3)';
-		this.ctx.fillRect(0, 0, this.w, my);
-		this.ctx.fillRect(0, dy, this.w, this.h - dy);
-	}
+	// max allowed shift
+    dx = -Math.min(0, this.w - this.antsMap.w) >> 1;
+    dy = -Math.min(0, this.h - this.antsMap.h) >> 1;
+    // correct shift if needed
+    this.shiftX = Math.clamp(this.shiftX, -dx, dx);
+    this.shiftY = Math.clamp(this.shiftY, -dy, dy);
+    this.state.shiftX = this.shiftX;
+    this.state.shiftY = this.shiftY;
+    // draw map
+	mx += this.shiftX;
+	my += this.shiftY;
+    this.ctx.fillStyle = '#fff';
+    this.ctx.fillRect(0,0,this.w,this.h);
+	this.ctx.drawImage(this.antsMap.canvas, mx, my);
 	// fade out
 	if (this.fade) {
 		this.ctx.fillStyle = this.fade;
