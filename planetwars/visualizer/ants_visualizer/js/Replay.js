@@ -159,12 +159,7 @@ function Replay(replay, debug, highlightUser) {
 		this.hasDuration = true;
 		this.aniAnts = [];
 	} else {
-		// check for a replay from the pre-JSON era and convert it.
-		if (replay.search(/^\s*{/) === -1) {
-			replay = this.txtToJson(replay);
-		} else {
-			replay = JSON.parse(replay);
-		}
+		replay = JSON.parse(replay);
 		// check if we have meta data or just replay data
 		if (replay['challenge'] === undefined) {
 			this.meta = new Object();
@@ -173,10 +168,6 @@ function Replay(replay, debug, highlightUser) {
 			this.meta['replaydata'] = replay;
 		} else {
 			this.meta = replay;
-			if (typeof this.meta['replaydata'] == 'string') {
-				format = 'storage';
-				this.meta['replaydata'] = this.txtToJson(this.meta['replaydata']);
-			}
 			replay = this.meta['replaydata'];
 		}
 		// validate meta data
@@ -266,7 +257,7 @@ function Replay(replay, debug, highlightUser) {
 
 			// options
 			enterObj(this.meta, 'replaydata');
-			keyRange(replay, 'revision', 2, 3);
+			keyRange(replay, 'revision', 3, 3);
 			this.revision = replay['revision'];
 			keyRange(replay, 'players', 1, 26);
 			this.players = replay['players'];
@@ -284,11 +275,7 @@ function Replay(replay, debug, highlightUser) {
 			this.cols = map['cols'];
 			var mapdata = enterObj(map, 'data');
 			this.walls = new Array(mapdata.length);
-			if (this.revision >= 3) {
-				regex = /[^%*.a-zA-Z0-9]/;
-			} else {
-				regex = /[^%*.a-z]/;
-			}
+            regex = /[^%*.a-zA-Z0-9]/;
 			for (r = 0; r < mapdata.length; r++) {
 				keyIsStr(mapdata, r, map['cols'], map['cols']);
 				var maprow = new String(mapdata[r]);
@@ -305,33 +292,29 @@ function Replay(replay, debug, highlightUser) {
 			stack.pop();
 
 			// hills
-			if (this.revision >= 3) {
-				keyIsArr(replay, 'hills', 0, undefined);
-				stack.push('hills');
-				var hills = replay['hills'];
-				for (n = 0; n < hills.length; n++) {
-					keyIsArr(hills, n, 4, 5);
-					stack.push(n);
-					var obj = hills[n];
-					// row must be within map height
-					keyRange(obj, 0, 0, map['rows'] - 1);
-					// col must be within map width
-					keyRange(obj, 1, 0, map['cols'] - 1);
-					// player index must match player count
-					keyRange(obj, 2, 0, this.players - 1);
-					// destruction turn must be >= 0
-					keyRange(obj, 3, 0, undefined);
-					setReplayDuration(obj[3] - 1, false);
-					if (obj.length > 4) {
-						// destroying player index must match player count
-						keyRange(obj, 4, 0, this.players - 1);
-					}
-					stack.pop();
+			keyIsArr(replay, 'hills', 0, undefined);
+			stack.push('hills');
+			var hills = replay['hills'];
+			for (n = 0; n < hills.length; n++) {
+				keyIsArr(hills, n, 4, 5);
+				stack.push(n);
+				var obj = hills[n];
+				// row must be within map height
+				keyRange(obj, 0, 0, map['rows'] - 1);
+				// col must be within map width
+				keyRange(obj, 1, 0, map['cols'] - 1);
+				// player index must match player count
+				keyRange(obj, 2, 0, this.players - 1);
+				// destruction turn must be >= 0
+				keyRange(obj, 3, 0, undefined);
+				setReplayDuration(obj[3] - 1, false);
+				if (obj.length > 4) {
+					// destroying player index must match player count
+					keyRange(obj, 4, 0, this.players - 1);
 				}
 				stack.pop();
-			} else {
-				replay['hills'] = [];
 			}
+			stack.pop();
 
 			// ants
 			keyIsArr(replay, 'ants', 0, undefined);
@@ -348,70 +331,52 @@ function Replay(replay, debug, highlightUser) {
 				keyRange(obj, 1, 0, map['cols'] - 1);
 				// start must be >= 0
 				keyRange(obj, 2, 0, undefined);
-				if (this.revision <= 2) {
-					// revision 2 has food and ant info in the same object
-					if (obj[2] === 0) {
-						// conversion must be >= 0
-						keyRange(obj, 3, 0, undefined);
-					} else {
-						// conversion must be > start
-						keyRange(obj, 3, obj[2] + 1, undefined);
-					}
-					k = 4;
-				} else {
-					k = 3;
-				}
-				if (this.revision <= 2 && obj.length > 4 || this.revision >= 3) {
-					// end turn must be > conversion turn (or start turn for rev. 3 and up)
-					keyRange(obj, k, obj[k - 1] + 1, undefined);
-					// player index must match player count
-					keyRange(obj, k + 1, 0, this.players - 1);
-					// moves must be valid
-					var lifespan = obj[k] - obj[k - 1];
-					keyIsStr(obj, k + 2, lifespan - 1, lifespan);
-					setReplayDuration(obj[k] - 1, obj[k + 2].length !== lifespan);
-					if ((i = obj[k + 2].search(regex)) !== -1 && !this.debug) {
-						throw new Error('Invalid character "' + obj[k + 2].charAt(i)
-								+ '" in move orders at index ' + i + ' in the string "'
-								+ obj[k + 2] + '"');
-					}
-				} else {
-					setReplayDuration(obj[3] - 1, false);
+				k = 3;
+				// end turn must be > conversion turn (or start turn for rev. 3 and up)
+				keyRange(obj, k, obj[k - 1] + 1, undefined);
+				// player index must match player count
+				keyRange(obj, k + 1, 0, this.players - 1);
+				// moves must be valid
+				var lifespan = obj[k] - obj[k - 1];
+				keyIsStr(obj, k + 2, lifespan - 1, lifespan);
+				setReplayDuration(obj[k] - 1, obj[k + 2].length !== lifespan);
+				if ((i = obj[k + 2].search(regex)) !== -1 && !this.debug) {
+					throw new Error('Invalid character "' + obj[k + 2].charAt(i)
+							+ '" in move orders at index ' + i + ' in the string "'
+							+ obj[k + 2] + '"');
 				}
 				stack.pop();
 			}
 			stack.pop();
 
 			// food
-			if (this.revision >= 3) {
-				keyIsArr(replay, 'food', 0, undefined);
-				stack.push('food');
-				var food = replay['food'];
-				for (n = 0; n < food.length; n++) {
-					keyIsArr(food, n, 3, 5);
-					stack.push(n);
-					var obj = food[n];
-					// row must be within map height
-					keyRange(obj, 0, 0, map['rows'] - 1);
-					// col must be within map width
-					keyRange(obj, 1, 0, map['cols'] - 1);
-					// start must be >= 0
-					keyRange(obj, 2, 0, undefined);
-					if (obj.length > 3) {
-						// end turn must be > start turn
-						keyRange(obj, 3, obj[2] + 1, undefined);
-						if (obj.length > 4) {
-							// eating player index must match player count
-							keyRange(obj, 4, 0, this.players - 1);
-						}
-						setReplayDuration(obj[3] - 1, false);
-					} else {
-						setReplayDuration(obj[2] - 1, false);
+			keyIsArr(replay, 'food', 0, undefined);
+			stack.push('food');
+			var food = replay['food'];
+			for (n = 0; n < food.length; n++) {
+				keyIsArr(food, n, 3, 5);
+				stack.push(n);
+				var obj = food[n];
+				// row must be within map height
+				keyRange(obj, 0, 0, map['rows'] - 1);
+				// col must be within map width
+				keyRange(obj, 1, 0, map['cols'] - 1);
+				// start must be >= 0
+				keyRange(obj, 2, 0, undefined);
+				if (obj.length > 3) {
+					// end turn must be > start turn
+					keyRange(obj, 3, obj[2] + 1, undefined);
+					if (obj.length > 4) {
+						// eating player index must match player count
+						keyRange(obj, 4, 0, this.players - 1);
 					}
-					stack.pop();
+					setReplayDuration(obj[3] - 1, false);
+				} else {
+					setReplayDuration(obj[2] - 1, false);
 				}
 				stack.pop();
 			}
+			stack.pop();
 
 			// scores
 			keyIsArr(replay, 'scores', this.players, this.players);
@@ -424,15 +389,13 @@ function Replay(replay, debug, highlightUser) {
 			if (replay['bonus']) {
 				keyIsArr(replay, 'bonus', this.players, this.players);
 			}
-			if (this.revision >= 3) {
-				keyIsArr(replay, 'hive_history', this.players, this.players);
-				stack.push('hive_history');
-				storeslist = replay['hive_history'];
-				for (i = 0; i < this.players; i++) {
-					setReplayDuration(storeslist[i].length - 1, false);
-				}
-				stack.pop();
+			keyIsArr(replay, 'hive_history', this.players, this.players);
+			stack.push('hive_history');
+			storeslist = replay['hive_history'];
+			for (i = 0; i < this.players; i++) {
+				setReplayDuration(storeslist[i].length - 1, false);
 			}
+			stack.pop();
 
 			// prepare score and count lists
 			this.turns = new Array(this.duration + 1);
@@ -457,36 +420,19 @@ function Replay(replay, debug, highlightUser) {
 					this['scores'][k][i] = player_scores[player_scores.length - 1];
 				}
 				// convert stores from per-player to per-turn
-				if (this.revision >= 3) {
-					player_stores = storeslist[i];
-					for (k = 0; k < player_stores.length; k++) {
-						this['stores'][k][i] = player_stores[k];
-					}
-					for (; k <= this.duration; k++) {
-						this['stores'][k][i] = player_stores[player_stores.length - 1];
-					}
-				} else {
-					for (k = 0; k <= this.duration; k++) {
-						this['stores'][k][i] = 0;
-					}
+				player_stores = storeslist[i];
+				for (k = 0; k < player_stores.length; k++) {
+					this['stores'][k][i] = player_stores[k];
+				}
+				for (; k <= this.duration; k++) {
+					this['stores'][k][i] = player_stores[player_stores.length - 1];
 				}
 				this.fogs[i] = new Array(this.duration + 1);
 			}
 			// account ants their owners
-			if (this.revision >= 3) {
-				for (i = 0; i < ants.length; i++) {
-					for (n = ants[i][2]; n < ants[i][3]; n++) {
-						this['counts'][n][ants[i][4]]++;
-					}
-				}
-			} else {
-				for (i = 0; i < ants.length; i++) {
-					if (ants[i][5] !== undefined) {
-						// account ant to the owner
-						for (n = ants[i][3]; n < ants[i][4]; n++) {
-							this['counts'][n][ants[i][5]]++;
-						}
-					}
+			for (i = 0; i < ants.length; i++) {
+				for (n = ants[i][2]; n < ants[i][3]; n++) {
+					this['counts'][n][ants[i][4]]++;
 				}
 			}
 			this.aniAnts = new Array(ants.length);
@@ -580,154 +526,6 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 };
 
 /**
- * Converts a line old based replay file or a map into a JavaScript object. This method is used to
- * prepare the data for further parsing. The old formats are first converted to the new format.
- * 
- * @private
- * @param {String}
- *        replay The map or ancient replay file.
- * @returns {Object} The map or replay in a JavaScript object notation.
- */
-Replay.prototype.txtToJson = function(replay) {
-	var i, c, lit, tl, args, rows, cols, owner, row, col, isAnt, conv, end;
-	var orders, fixed, scores, result, isReplay;
-	lit = new LineIterator(replay);
-	result = {
-		'revision' : 3,
-		'map' : {
-			'data' : []
-		},
-		'hills' : [],
-		'ants' : [],
-		'food' : [],
-		'scores' : [],
-		'hive_history' : []
-	};
-	this.turns = [];
-	tl = lit.gimmeNext();
-	try {
-		// version check
-		isReplay = tl.keyword === 'v';
-		if (isReplay) {
-			tl.kw('v').as([ DataType.IDENT, DataType.POSINT ]);
-			tl.expectEq(0, 'ants'); // game name
-			tl.expectEq(1, 1); // file version
-			// players
-			tl = lit.gimmeNext();
-			tl.kw('players').as([ DataType.POSINT ]);
-			tl.expectLE(0, 26); // player count <= 26
-			result['players'] = tl.params[0];
-			// parameters
-			tl = lit.gimmeNext();
-		}
-		while (tl.keyword !== 'm') {
-			args = [ DataType.STRING ];
-			if (tl.keyword === 'viewradius2' || tl.keyword === 'rows' || tl.keyword === 'cols'
-					|| tl.keyword === 'players' || tl.keyword === 'turns') {
-				args[0] = DataType.UINT;
-			}
-			tl.as(args);
-			if (tl.keyword === 'rows' || tl.keyword === 'cols') {
-				result['map'][tl.keyword] = tl.params[0];
-			} else {
-				result[tl.keyword] = tl.params[0];
-			}
-			tl = lit.gimmeNext();
-		}
-		// map
-		cols = undefined;
-		rows = 0;
-		do {
-			tl.as([ DataType.STRING ]);
-			if (cols === undefined) {
-				cols = tl.params[0].length;
-			} else if (tl.params[0].length !== cols && !this.debug) {
-				throw new Error('Map lines have different lenghts');
-			}
-			result['map']['data'].push(tl.params[0]);
-			if (!isReplay) {
-				// in a map file we want to extract starting positions
-				for (col = 0; col < cols; col++) {
-					c = tl.params[0].charAt(col);
-					if (c >= 'a' && c <= 'z') {
-						c = c.charCodeAt(0) - 97;
-						result['ants'].push([ rows, col, 0, 1, c, '-' ]);
-					} else if (c >= 'A' && c <= 'Z') {
-						c = c.charCodeAt(0) - 65;
-						result['ants'].push([ rows, col, 0, 1, c, '-' ]);
-						result['hills'].push([ rows, col, c, 1 ]);
-					} else if (c >= '0' && c <= '9') {
-						c = c.charCodeAt(0) - 48;
-						result['hills'].push([ rows, col, c, 1 ]);
-					} else if (c === '*') {
-						result['food'].push([ rows, col, 0 ]);
-					}
-				}
-			}
-			rows++;
-			if (isReplay || lit.moar()) {
-				tl = lit.gimmeNext();
-			} else {
-				break;
-			}
-		} while (tl.keyword === 'm');
-		// food / ant
-		if (isReplay) {
-			while (tl.keyword === 'a') {
-				// row col start conversion
-				tl.as([ DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT, DataType.UINT,
-						DataType.UINT, DataType.STRING ], 3);
-				// end owner orders # optional
-				row = tl.params[0];
-				if (row >= this.rows) throw new Error('Row exceeds map width.');
-				col = tl.params[1];
-				if (col >= this.cols) throw new Error('Col exceeds map height.');
-				conv = tl.params[3];
-				end = tl.params[4];
-				if (end === undefined) end = conv;
-				owner = tl.params[5];
-				isAnt = owner !== undefined;
-				if (isAnt && owner >= this.players) {
-					throw new Error('Player index out of range.');
-				}
-				if (tl.params.length === 6) {
-					tl.params.push('');
-				}
-				orders = tl.params[6];
-				if (isAnt) {
-					fixed = orders.length !== end - conv;
-					if (fixed && orders.length + 1 !== end - conv) {
-						throw new Error('Number of orders does not match life span.');
-					}
-				}
-				result['ants'].push(tl.params);
-				tl = lit.gimmeNext();
-			}
-			// score
-			var players = this.players || result['players'];
-			for (i = 0; i < players; i++) {
-				scores = tl.kw('s').as([ DataType.SCORES ]).params[0];
-				result['scores'].push(scores);
-				if (i != players - 1) tl = lit.gimmeNext();
-			}
-		} else {
-			for (i = 0; i < result['players']; i++) {
-				result['scores'].push([ 0 ]);
-				result['hive_history'].push([ 0 ]);
-			}
-		}
-		if (lit.moar()) {
-			tl = lit.gimmeNext();
-			throw new Error('Extra data at end of file.');
-		}
-	} catch (error) {
-		error.message = tl.line + '\n' + error.message;
-		throw error;
-	}
-	return result;
-};
-
-/**
  * Computes a list of visible ants for a given turn. This list is then used to render the
  * visualization.
  * <ul>
@@ -752,9 +550,7 @@ Replay.prototype.getTurn = function(n) {
 			ant = ants[i];
 			if (ant[2] === n + 1 || n === 0 && ant[2] === 0) {
 				// spawn this ant
-				if (this.revision >= 3) {
-					aniAnt = this.spawnAnt(i, ant[0], ant[1], ant[2], ant[4]);
-				}
+				aniAnt = this.spawnAnt(i, ant[0], ant[1], ant[2], ant[4]);
 			} else if (this.aniAnts[i]) {
 				// load existing state
 				aniAnt = this.aniAnts[i];
@@ -762,17 +558,9 @@ Replay.prototype.getTurn = function(n) {
 				// continue with next ant
 				continue;
 			}
-			if (this.revision >= 3) {
-				moves = ant[5];
-				activation = ant[2];
-			} else {
-				moves = ant[6];
-				activation = ant[3];
-			}
+			moves = ant[5];
+			activation = ant[2];
 			if (moves !== undefined && n >= activation && n < activation + moves.length) {
-				if (this.revision <= 2) {
-					aniAnt.frameAt(n)['owner'] = ant[5];
-				}
 				// move
 				var dir = undefined;
 				switch (moves.charAt(n - activation)) {
@@ -798,11 +586,7 @@ Replay.prototype.getTurn = function(n) {
 					aniAnt.fade('y', lastFrame['y'] + dir.y, n, n + 0.5);
 				}
 			}
-			if (this.revision >= 3) {
-				dead = (ant[3] || activation);
-			} else {
-				dead = (ant[4] || activation);
-			}
+			dead = (ant[3] || activation);
 			if (dead === n + 1) {
 				// end of life
 				this.killAnt(aniAnt, dead);
@@ -1042,9 +826,6 @@ Replay.prototype.generateBotInput = function(player, min, max) {
 	};
 
 	// game settings (including numbers not usually send to the player)
-	if (this.meta['replaydata']['revision'] !== 3) {
-		throw new Error('Can only generate bot input for revision 3 replays!');
-	}
 	botInput += 'rows ' + this.rows + '\n';
 	botInput += 'cols ' + this.cols + '\n';
 	for (param in this.meta['replaydata']) {
@@ -1173,178 +954,4 @@ Replay.prototype.generateBotInput = function(player, min, max) {
 		}
 	}
 	return botInput;
-};
-
-/**
- * @class A highly optimized string tokenizer for replay files. It ignores blank lines and comment
- *        lines, trims and splits each line in two after the keyword. It processes a 220 KB file
- *        with over 27,000 lines in about 18 ms in Chromium on a 2,0 Ghz Core 2 Duo. This class is
- *        used by {@link Replay#txtToJson}.
- * @constructor
- * @param {String}
- *        text A replay string.
- */
-function LineIterator(text) {
-	// we keep a backup copy of the original for debugging purposes
-	this.text = text;
-	// eat comment lines and trim others; split text into lines
-	this.lines = text.replace(LineIterator.NORMALIZE_REGEXP, '').split('\n');
-	this.tokenLines = new Array(this.lines.length);
-	// separate keyword from parameter list
-	for ( var i = 0; i < this.lines.length; i++) {
-		this.tokenLines[i] = new TokenLine(this.lines[i]);
-	}
-	this.pos = 0;
-}
-
-/**
- * An ugly looking regexp that finds all extra whitespace and comment lines in a block of text.
- */
-LineIterator.NORMALIZE_REGEXP = /^([^\S\n]*(#.*)?\n)*|(\n[^\S\n]*(#.*)?)*$|\n[^\S\n]*(#.*)?(?=\n)/g;
-
-/**
- * Fetches the next line from the replay.
- * 
- * @throws {Error}
- *         If an attempt is made to read past the last line.
- * @returns {String} The next non-empty, non-comment line.
- */
-LineIterator.prototype.gimmeNext = function() {
-	if (this.pos < this.tokenLines.length) {
-		return this.tokenLines[this.pos++];
-	}
-	throw new Error('Tried to read past the end of the file. Is it truncated?');
-};
-
-/**
- * Checks for the end of file condition.
- * 
- * @returns {Boolean} True, if the end of the replay string has been reached.
- */
-LineIterator.prototype.moar = function() {
-	return this.pos < this.tokenLines.length;
-};
-
-/**
- * Splits a line of text into keyword and parameter block. Since the parameter block is allowed to
- * be a single string with spaces no further splitting is done.
- * 
- * @class A single line of replay / map text in the general format "keyword param1 param2 ...". The
- *        class offers methods to apply external splitting functions to it. And validate values.
- * @constructor
- * @param {String}
- *        line A replay / map line of text.
- */
-function TokenLine(line) {
-	this.line = line;
-	var match = line.match(TokenLine.KEYWORD_REGEXP);
-	this.keyword = match[1].toLowerCase();
-	this.params = match[2];
-}
-
-/**
- * Finds the first block of whitespace and splits the string into the part in front and after it.
- */
-TokenLine.KEYWORD_REGEXP = /(\S+)\s*(.*)/;
-
-/**
- * Enforces that this TokenLine starts with the expected keyword.
- * 
- * @param {String}
- *        keyword The expected keyword.
- * @throws {Error}
- *         If the TokenLine doesn't start with the keyword.
- * @returns {TokenLine} This object for cascading calls.
- */
-TokenLine.prototype.kw = function(keyword) {
-	if (this.keyword !== keyword) {
-		this.expected(keyword, this.keyword);
-	}
-	return this;
-};
-
-/**
- * Splits the parameter block of this object using given parsing-and-validation functions. Most of
- * those functions will split after the first white-space. Some will check for positive integers or
- * other constraints.
- * 
- * @param {Array}
- *        args A list of parsing-and-validation functions.
- * @param {Number}
- *        optional Number of optional parameters that need not exist at the end of the line. In that
- *        case 'args' contains the complete list of functions for all possible parameters, but the
- *        last 'optional' number of them may not be put to use if the TokenLine lacks these. This
- *        parameter itself is optional and defaults to 0.
- * @throws {Error}
- *         If the the functions did not parse all of the line. (To many parameters for a keyword in
- *         the replay.)
- * @returns {TokenLine} This object for cascading calls.
- */
-TokenLine.prototype.as = function(args, optional) {
-	if (optional === undefined) optional = 0;
-	var work = this.params;
-	this.params = [];
-	for ( var i = 0; i < args.length; i++) {
-		if (work || args.length - i > optional) {
-			var parts = args[i](work);
-			this.params.push(parts[0]);
-			work = parts[1];
-		}
-	}
-	if (work) throw new Error('The following unexpected additional parameter was found: ' + work);
-	return this;
-};
-
-/**
- * Helper function to construct an Error object with a message about keywords / parameters in the
- * replay / map that did not match a certain expectation.
- * 
- * @private
- * @throws {Error}
- *         Always.
- * @param expectation
- *        The expected value (that can be implicitly converted to string).
- * @param reality
- *        The value that was found in the replay (that can be implicitly converted to string).
- */
-TokenLine.prototype.expected = function(expectation, reality) {
-	throw new Error('Expected ' + expectation + ', but ' + reality + ' found.');
-};
-
-/**
- * Enforces that the n-th zero-based parameter matches a certain value.<br>
- * <h4>Example</h4>
- * "v ants 1" is a constant line in the replay. expectEq(0, 'ants') verifies that the first
- * parameter is the string 'ants' and expectEq(1, 1) validates the number 1 following it.
- * 
- * @throws {Error}
- *         If value !== params[idx]
- * @param {Number}
- *        idx The index of the parameter.
- * @param value
- *        Any comparison value that must be exactly matched by the parameter.
- */
-TokenLine.prototype.expectEq = function(idx, value) {
-	if (value !== this.params[idx]) {
-		this.expected(value, this.params[idx]);
-	}
-};
-
-/**
- * Enforces that the n-th zero-based parameter is less or equal to a certain value.<br>
- * <h4>Example</h4>
- * "v ants 1" is a constant line in the replay. expectEq(0, 'ants') verifies that the first
- * parameter is the string 'ants' and expectEq(1, 1) validates the number 1 following it.
- * 
- * @throws {Error}
- *         If value &lt; params[idx]
- * @param {Number}
- *        idx The index of the parameter.
- * @param {Number}
- *        value Any comparison value that must be greater or equal to the parameter.
- */
-TokenLine.prototype.expectLE = function(idx, value) {
-	if (value < this.params[idx]) {
-		this.expected('parameter ' + idx + ' to be <= ' + value, this.params[idx]);
-	}
 };
