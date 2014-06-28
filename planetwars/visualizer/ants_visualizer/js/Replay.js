@@ -4,117 +4,6 @@
  */
 
 /**
- * Constructs a new direction from the given coordinates. X points to the right and Y points to the
- * bottom. Up is 0°, Right is 90° and so on.
- * 
- * @class A compass direction
- * @constructor
- * @param {Number}
- *        x
- * @param {Number}
- *        y
- */
-function Direction(x, y) {
-	this['x'] = x;
-	this['y'] = y;
-	this.angle = Math.atan2(x, -y);
-}
-/**
- * Offset for ants moving north.
- */
-Direction.N = new Direction(0, -1);
-/**
- * Offset for ants moving east.
- */
-Direction.E = new Direction(+1, 0);
-/**
- * Offset for ants moving south.
- */
-Direction.S = new Direction(0, +1);
-/**
- * Offset for ants moving west.
- */
-Direction.W = new Direction(-1, 0);
-
-/**
- * @class Parsing functions and validators for various data types in streaming replays and maps.
- */
-DataType = {
-	STRING : function(p) {
-		return [ p, null ];
-	},
-	IDENT : function(p) {
-		p = p.match(DataType.MATCH);
-		return [ p[1], p[2] ];
-	},
-	UINT : function(p, n) {
-		p = p.match(DataType.MATCH);
-		p = [ parseInt(p[1]), p[2] ];
-		if (isNaN(p[0]) || p[0] < 0) {
-			throw new Error('Parameter ' + n + ' must be an unsigned integer.');
-		}
-		return p;
-	},
-	POSINT : function(p, n) {
-		p = DataType.UINT(p, n);
-		if (p[0] <= 0) {
-			throw new Error('Parameter ' + n + ' must be a positive integer.');
-		}
-		return p;
-	},
-	NUMBER : function(p, n) {
-		p = p.match(DataType.MATCH);
-		p = [ parseFloat(p[1]), p[2] ];
-		if (isNaN(p[0])) {
-			throw new Error('Parameter ' + n + ' is not a number.');
-		}
-		return p;
-	},
-	ORDERS : function(p) {
-		p = p.match(DataType.MATCH);
-		p[1] = p[1].split('');
-		p[0] = new Array(p[1].length);
-		for ( var turn = 0; turn < p[1].length; turn++) {
-			switch (p[1][turn]) {
-			case 'n':
-			case 'N':
-				p[0][turn] = Direction.N;
-				break;
-			case 'e':
-			case 'E':
-				p[0][turn] = Direction.E;
-				break;
-			case 's':
-			case 'S':
-				p[0][turn] = Direction.S;
-				break;
-			case 'w':
-			case 'W':
-				p[0][turn] = Direction.W;
-				break;
-			case '-':
-				p[0][turn] = null;
-				break;
-			default:
-				throw new Error('Invalid character in orders line: ' + p[1][turn]);
-			}
-		}
-		return [ p[0], p[2] ];
-	},
-	SCORES : function(p) {
-		p = p.replace(/\s+/g, ' ').replace(/\s*$/, '').split(' ');
-		for ( var i = 0; i < p.length; i++) {
-			p[i] = parseFloat(p[i]);
-			if (isNaN(p[i])) {
-				throw new Error('Score ' + i + ' is not a number.');
-			}
-		}
-		return [ p, null ];
-	},
-	MATCH : /(\S*)\s*(.*)/
-};
-
-/**
  * Loads a replay or map in text form. The streaming format is not supported directly, but can by
  * loaded by the Java wrapper. In the visualizer, ants are unique objects, that are mostly a list of
  * animation key-frames that are interpolated for any given time to produce a "tick-less" animation.<br>
@@ -136,6 +25,7 @@ DataType = {
  * @see Ant
  */
 function Replay(replay, debug, highlightUser) {
+    // alert('replay 1');
 	var i, k, player_scores, highlightPlayer, c, n, r, regex;
 	var format = 'json';
 	var storeslist = undefined;
@@ -147,23 +37,21 @@ function Replay(replay, debug, highlightUser) {
 		// This code path is taken by the Java wrapper for streaming replay and initializes only the
 		// basics. Most of the rest is faster done in native Java, than through Rhino.
 		this.meta = new Object();
-		this.meta['challenge'] = 'ants';
+		this.meta['challenge'] = 'lifegame';
 		this.meta['replayformat'] = format;
 		this.meta['replaydata'] = {
 			'map' : {},
-			'ants' : [],
-			'food' : [],
-			'hills' : []
+			'cells' : []
 		};
 		this.duration = -1;
 		this.hasDuration = true;
-		this.aniAnts = [];
+		this.aniCells = [];
 	} else {
 		replay = JSON.parse(replay);
 		// check if we have meta data or just replay data
 		if (replay['challenge'] === undefined) {
 			this.meta = new Object();
-			this.meta['challenge'] = 'ants';
+			this.meta['challenge'] = 'lifegame';
 			this.meta['replayformat'] = format;
 			this.meta['replaydata'] = replay;
 		} else {
@@ -171,8 +59,8 @@ function Replay(replay, debug, highlightUser) {
 			replay = this.meta['replaydata'];
 		}
 		// validate meta data
-		if (this.meta['challenge'] !== 'ants') {
-			throw new Error('This visualizer is for the ants challenge,' + ' but a "'
+		if (this.meta['challenge'] !== 'lifegame') {
+			throw new Error('This visualizer is for the Game of Life challenge,' + ' but a "'
 					+ this.meta['challenge'] + '" replay was loaded.');
 		} else if (this.meta['replayformat'] !== format) {
 			throw new Error('Replays in the format "' + this.meta['replayformat']
@@ -257,11 +145,10 @@ function Replay(replay, debug, highlightUser) {
 
 			// options
 			enterObj(this.meta, 'replaydata');
-			keyRange(replay, 'revision', 3, 3);
+			keyRange(replay, 'revision', 1, 1);
 			this.revision = replay['revision'];
-			keyRange(replay, 'players', 1, 26);
+			keyRange(replay, 'players', 1, 2);
 			this.players = replay['players'];
-			keyOption(replay, 'viewradius2', keyRange, [ 0, undefined ]);
 
 			// map
 			var map = enterObj(replay, 'map');
@@ -274,8 +161,7 @@ function Replay(replay, debug, highlightUser) {
 			keyDefault(map, 'cols', map['data'][0].length, keyEq, [ map['data'][0].length ]);
 			this.cols = map['cols'];
 			var mapdata = enterObj(map, 'data');
-			this.walls = new Array(mapdata.length);
-            regex = /[^%*.a-zA-Z0-9]/;
+            regex = /[^-wbz]/;
 			for (r = 0; r < mapdata.length; r++) {
 				keyIsStr(mapdata, r, map['cols'], map['cols']);
 				var maprow = new String(mapdata[r]);
@@ -283,159 +169,93 @@ function Replay(replay, debug, highlightUser) {
 					throw new Error('Invalid character "' + maprow.charAt(i)
 							+ '" in map. Zero based row/col: ' + r + '/' + i);
 				}
-				this.walls[r] = new Array(maprow.length);
-				for (c = 0; c < maprow.length; c++) {
-					this.walls[r][c] = (maprow.charAt(c) === '%');
-				}
 			}
-			stack.pop();
-			stack.pop();
+			stack.pop(); // pop 'data'
+			stack.pop(); // pop 'map'
 
-			// hills
-			keyIsArr(replay, 'hills', 0, undefined);
-			stack.push('hills');
-			var hills = replay['hills'];
-			for (n = 0; n < hills.length; n++) {
-				keyIsArr(hills, n, 4, 5);
+			// cells
+            // TODO: parse cells into dictionary so I can replace cell[1] with cell.col
+			keyIsArr(replay, 'cells', 0, undefined);
+			stack.push('cells');
+			var cells = replay['cells'];
+			for (n = 0; n < cells.length; n++) {
+				keyIsArr(cells, n, 4, 4);
 				stack.push(n);
-				var obj = hills[n];
-				// row must be within map height
-				keyRange(obj, 0, 0, map['rows'] - 1);
-				// col must be within map width
-				keyRange(obj, 1, 0, map['cols'] - 1);
-				// player index must match player count
-				keyRange(obj, 2, 0, this.players - 1);
-				// destruction turn must be >= 0
-				keyRange(obj, 3, 0, undefined);
-				setReplayDuration(obj[3] - 1, false);
-				if (obj.length > 4) {
-					// destroying player index must match player count
-					keyRange(obj, 4, 0, this.players - 1);
-				}
-				stack.pop();
-			}
-			stack.pop();
-
-			// ants
-			keyIsArr(replay, 'ants', 0, undefined);
-			stack.push('ants');
-			var ants = replay['ants'];
-			regex = /[^nsew-]/;
-			for (n = 0; n < ants.length; n++) {
-				keyIsArr(ants, n, 4, 7);
-				stack.push(n);
-				var obj = ants[n];
+				var obj = cells[n];
 				// row must be within map height
 				keyRange(obj, 0, 0, map['rows'] - 1);
 				// col must be within map width
 				keyRange(obj, 1, 0, map['cols'] - 1);
 				// start must be >= 0
 				keyRange(obj, 2, 0, undefined);
-				k = 3;
-				// end turn must be > conversion turn (or start turn for rev. 3 and up)
-				keyRange(obj, k, obj[k - 1] + 1, undefined);
-				// player index must match player count
-				keyRange(obj, k + 1, 0, this.players - 1);
-				// moves must be valid
-				var lifespan = obj[k] - obj[k - 1];
-				keyIsStr(obj, k + 2, lifespan - 1, lifespan);
-				setReplayDuration(obj[k] - 1, obj[k + 2].length !== lifespan);
-				if ((i = obj[k + 2].search(regex)) !== -1 && !this.debug) {
-					throw new Error('Invalid character "' + obj[k + 2].charAt(i)
-							+ '" in move orders at index ' + i + ' in the string "'
-							+ obj[k + 2] + '"');
-				}
+				// owner index must match player count
+				keyRange(obj, 3, 0, this.players - 1);
 				stack.pop();
 			}
 			stack.pop();
-
-			// food
-			keyIsArr(replay, 'food', 0, undefined);
-			stack.push('food');
-			var food = replay['food'];
-			for (n = 0; n < food.length; n++) {
-				keyIsArr(food, n, 3, 5);
-				stack.push(n);
-				var obj = food[n];
-				// row must be within map height
-				keyRange(obj, 0, 0, map['rows'] - 1);
-				// col must be within map width
-				keyRange(obj, 1, 0, map['cols'] - 1);
-				// start must be >= 0
-				keyRange(obj, 2, 0, undefined);
-				if (obj.length > 3) {
-					// end turn must be > start turn
-					keyRange(obj, 3, obj[2] + 1, undefined);
-					if (obj.length > 4) {
-						// eating player index must match player count
-						keyRange(obj, 4, 0, this.players - 1);
-					}
-					setReplayDuration(obj[3] - 1, false);
-				} else {
-					setReplayDuration(obj[2] - 1, false);
-				}
-				stack.pop();
-			}
-			stack.pop();
-
-			// scores
-			keyIsArr(replay, 'scores', this.players, this.players);
-			stack.push('scores');
-			var scoreslist = replay['scores'];
-			for (i = 0; i < this.players; i++) {
-				setReplayDuration(scoreslist[i].length - 1, false);
-			}
-			stack.pop();
-			if (replay['bonus']) {
-				keyIsArr(replay, 'bonus', this.players, this.players);
-			}
-			keyIsArr(replay, 'hive_history', this.players, this.players);
-			stack.push('hive_history');
-			storeslist = replay['hive_history'];
-			for (i = 0; i < this.players; i++) {
-				setReplayDuration(storeslist[i].length - 1, false);
-			}
-			stack.pop();
+            
+            this.duration = cells.length;
+            
+            // initialize cells dying turns with value beyond game length
+            for (n = 0; n < cells.length; n++) {
+                cells[n][4] = this.duration + 500 + 1;
+            }
+                
+            // simulate universe
+            // TODO: make Simulation class
+            var map = new Array(this.rows);
+            for (row = 0; row < this.rows; ++row) {
+                map[row] = new Array(this.cols);
+                for (col = 0; col < this.cols; ++col) {
+                    map[row][col] = -1; // TODO: make EMPTY constant
+                }
+            }
+            for (id = 0; id < cells.length; ++id) {
+                cell = cells[id];
+                map[cell[0]][cell[1]] = id;
+            }
+            this.simulate(map, 500);
+            this.duration += 500;
 
 			// prepare score and count lists
 			this.turns = new Array(this.duration + 1);
 			this['scores'] = new Array(this.duration + 1);
 			this['counts'] = new Array(this.duration + 1);
 			this['stores'] = new Array(this.duration + 1);
-			this.fogs = new Array(this.players);
 			for (n = 0; n <= this.duration; n++) {
 				this['scores'][n] = new Array(this.players);
-				this['counts'][n] = new Array(this.players);
-				this['stores'][n] = new Array(this.players);
-				for (i = 0; i < this.players; i++)
+                for (i = 0; i < this.players; i++)
+					this['scores'][n][i] = 0;
+				
+                this['counts'][n] = new Array(this.players);
+                for (i = 0; i < this.players; i++)
 					this['counts'][n][i] = 0;
+				
+                this['stores'][n] = new Array(this.players);
+                for (i = 0; i < this.players; i++)
+					this['stores'][n][i] = 0;
 			}
-			for (i = 0; i < this.players; i++) {
-				// convert scores from per-player to per-turn
-				player_scores = scoreslist[i];
-				for (k = 0; k < player_scores.length; k++) {
-					this['scores'][k][i] = player_scores[k];
-				}
-				for (; k <= this.duration; k++) {
-					this['scores'][k][i] = player_scores[player_scores.length - 1];
-				}
-				// convert stores from per-player to per-turn
-				player_stores = storeslist[i];
-				for (k = 0; k < player_stores.length; k++) {
-					this['stores'][k][i] = player_stores[k];
-				}
-				for (; k <= this.duration; k++) {
-					this['stores'][k][i] = player_stores[player_stores.length - 1];
-				}
-				this.fogs[i] = new Array(this.duration + 1);
-			}
-			// account ants their owners
-			for (i = 0; i < ants.length; i++) {
-				for (n = ants[i][2]; n < ants[i][3]; n++) {
-					this['counts'][n][ants[i][4]]++;
+			// for (i = 0; i < this.players; i++) {
+				// for (; k <= this.duration; k++) {
+					// this['scores'][k][i] = player_scores[player_scores.length - 1];
+				// }
+				// // convert stores from per-player to per-turn
+				// player_stores = storeslist[i];
+				// for (k = 0; k < player_stores.length; k++) {
+					// this['stores'][k][i] = player_stores[k];
+				// }
+				// for (; k <= this.duration; k++) {
+					// this['stores'][k][i] = player_stores[player_stores.length - 1];
+				// }
+			// }
+			// calculate cell counts per player per turn
+			for (i = 0; i < cells.length; i++) {
+				for (n = cells[i][2]; n < cells[i][4]; n++) {
+					this['counts'][n][cells[i][3]]++;
 				}
 			}
-			this.aniAnts = new Array(ants.length);
+            
+			this.aniCells = new Array(cells.length);
 		}
 		this.hasDuration = this.duration > 0 || this.meta['replaydata']['turns'] > 0;
 
@@ -447,6 +267,7 @@ function Replay(replay, debug, highlightUser) {
 		}
 		this.addMissingMetaData(highlightPlayer);
 	}
+    // alert('parse 1');
 }
 
 /**
@@ -523,6 +344,8 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 		this.htmlPlayerColors[i] += INT_TO_HEX[this.meta['playercolors'][i][1]];
 		this.htmlPlayerColors[i] += INT_TO_HEX[this.meta['playercolors'][i][2]];
 	}
+    
+    // alert('addMetaData');
 };
 
 /**
@@ -539,64 +362,39 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
  * @returns {Ant[]} The array of visible ants.
  */
 Replay.prototype.getTurn = function(n) {
-	var i, idx, turn, ants, ant, aniAnt, lastFrame, dead, food, moves, activation;
+    //alert('getTurn 1');
+	var i, idx, turn, cells, cell, aniCell, lastFrame, dead, food, moves, activation;
 	if (this.turns[n] === undefined) {
 		if (n !== 0) this.getTurn(n - 1);
 		turn = this.turns[n] = [];
-		// generate ants & keyframes
-		ants = this.meta['replaydata']['ants'];
-		food = this.meta['replaydata']['food'];
-		for (i = 0; i < ants.length; i++) {
-			ant = ants[i];
-			if (ant[2] === n + 1 || n === 0 && ant[2] === 0) {
-				// spawn this ant
-				aniAnt = this.spawnAnt(i, ant[0], ant[1], ant[2], ant[4]);
-			} else if (this.aniAnts[i]) {
+		// generate cells & keyframes
+		cells = this.meta['replaydata']['cells'];
+		for (i = 0; i < cells.length; i++) {
+			cell = cells[i];
+            spawnTurn = cell[2];
+			if (spawnTurn === n + 1 || n === 0 && spawnTurn === 0) {
+				// spawn this cell
+				aniCell = this.spawnCell(i, cell[0], cell[1], cell[2], cell[3]);
+			} else if (this.aniCells[i]) {
 				// load existing state
-				aniAnt = this.aniAnts[i];
+				aniCell = this.aniCells[i];
 			} else {
-				// continue with next ant
+				// continue with next cell
 				continue;
 			}
-			moves = ant[5];
-			activation = ant[2];
-			if (moves !== undefined && n >= activation && n < activation + moves.length) {
-				// move
-				var dir = undefined;
-				switch (moves.charAt(n - activation)) {
-				case 'n':
-				case 'N':
-					dir = Direction.N;
-					break;
-				case 'e':
-				case 'E':
-					dir = Direction.E;
-					break;
-				case 's':
-				case 'S':
-					dir = Direction.S;
-					break;
-				case 'w':
-				case 'W':
-					dir = Direction.W;
-				}
-				if (dir) {
-					lastFrame = aniAnt.keyFrames[aniAnt.keyFrames.length - 1];
-					aniAnt.fade('x', lastFrame['x'] + dir.x, n, n + 0.5);
-					aniAnt.fade('y', lastFrame['y'] + dir.y, n, n + 0.5);
-				}
-			}
-			dead = (ant[3] || activation);
+
+			dead = cell[4];
 			if (dead === n + 1) {
 				// end of life
-				this.killAnt(aniAnt, dead);
+				this.killCell(aniCell, dead);
 			}
 			if (n < dead) {
-				// assign ant to display list
-				turn.push(aniAnt);
+				// assign cell to display list
+				turn.push(aniCell);
 			}
 		}
 	}
+    // alert('getTurn 2');
 	return this.turns[n];
 };
 
@@ -615,11 +413,11 @@ Replay.prototype.getTurn = function(n) {
  *        owner the owning player index
  * @returns {Ant} The new animation ant object.
  */
-Replay.prototype.spawnAnt = function(id, row, col, spawn, owner) {
-	var aniAnt = this.aniAnts[id] = new Ant(id, spawn - 0.25);
+Replay.prototype.spawnCell = function(id, row, col, spawn, owner) {
+	var aniCell = this.aniCells[id] = new Cell(id, spawn - 0.25);
 	var color = this.meta['playercolors'][owner];
-	var f = aniAnt.frameAt(spawn - 0.25);
-	aniAnt.owner = owner;
+	var f = aniCell.frameAt(spawn - 0.25);
+	aniCell.owner = owner;
 	f['x'] = col;
 	f['y'] = row;
 	f['owner'] = owner;
@@ -627,16 +425,16 @@ Replay.prototype.spawnAnt = function(id, row, col, spawn, owner) {
 	f['g'] = color[1];
 	f['b'] = color[2];
 	if (spawn !== 0) {
-		f = aniAnt.frameAt(spawn);
+		f = aniCell.frameAt(spawn);
 		f['size'] = 1.0;
-		f = aniAnt.frameAt(spawn + 0.125);
+		f = aniCell.frameAt(spawn + 0.125);
 		f['size'] = 1.5;
-		f = aniAnt.frameAt(spawn + 0.25);
+		f = aniCell.frameAt(spawn + 0.25);
 		f['size'] = 0.7;
-		f = aniAnt.frameAt(spawn + 0.5);
+		f = aniCell.frameAt(spawn + 0.5);
 	}
 	f['size'] = 1;
-	return aniAnt;
+	return aniCell;
 };
 
 /**
@@ -649,134 +447,144 @@ Replay.prototype.spawnAnt = function(id, row, col, spawn, owner) {
  * @param {Number}
  *        death The zero-based turn, that the ant died in.
  */
-Replay.prototype.killAnt = function(aniAnt, death) {
-	var color;
-	var owner = aniAnt.frameAt(death)['owner'];
-	if (owner === undefined) {
-		color = FOOD_COLOR;
-	} else {
-		color = this.meta['playercolors'][owner];
-	}
-	aniAnt.fade('r', 255, death - 0.80, death - 0.60);
-	aniAnt.fade('g', 255, death - 0.80, death - 0.60);
-	aniAnt.fade('b', 255, death - 0.80, death - 0.60);
-	aniAnt.fade('r', color[0], death - 0.60, death - 0.40);
-	aniAnt.fade('g', color[1], death - 0.60, death - 0.40);
-	aniAnt.fade('b', color[2], death - 0.60, death - 0.40);
-	aniAnt.fade('r', 0.0, death - 0.40, death);
-	aniAnt.fade('g', 0.0, death - 0.40, death);
-	aniAnt.fade('b', 0.0, death - 0.40, death);
-	aniAnt.fade('size', 0.7, death - 0.80, death - 0.60);
-	aniAnt.fade('size', 0.0, death - 0.40, death);
-	aniAnt.death = death;
-};
-
-/**
- * Used by the Java live visualizer to add dead ants. Since the streaming replay doesn't contain
- * data about dying ants they cannot be animated in the usual way. Instead they are displayed as
- * darker, smaller squares for the duration of a turn.<br>
- * <b>Called by the Java streaming visualizer.</b>
- * 
- * @param {Ant}
- *        aniAnt The ant to be worked on.
- * @param {Number}
- *        dead The zero-based turn, that the ant died in.
- */
-Replay.prototype.deadAnt = function(aniAnt, dead) {
-	var f = aniAnt.frameAt(dead);
-	var owner = f['owner'];
+Replay.prototype.killCell = function(aniCell, death) {
+	var owner = aniCell.frameAt(death)['owner'];
 	var color = this.meta['playercolors'][owner];
-	var hr = color[0] >> 1;
-	var hg = color[1] >> 1;
-	var hb = color[2] >> 1;
-	f['r'] = hr;
-	f['g'] = hg;
-	f['b'] = hb;
-	f['size'] = 0.7;
+	aniCell.fade('r', 255, death - 0.80, death - 0.60);
+	aniCell.fade('g', 255, death - 0.80, death - 0.60);
+	aniCell.fade('b', 255, death - 0.80, death - 0.60);
+	aniCell.fade('r', color[0], death - 0.60, death - 0.40);
+	aniCell.fade('g', color[1], death - 0.60, death - 0.40);
+	aniCell.fade('b', color[2], death - 0.60, death - 0.40);
+	aniCell.fade('r', 0.0, death - 0.40, death);
+	aniCell.fade('g', 0.0, death - 0.40, death);
+	aniCell.fade('b', 0.0, death - 0.40, death);
+	aniCell.fade('size', 0.7, death - 0.80, death - 0.60);
+	aniCell.fade('size', 0.0, death - 0.40, death);
+	aniCell.death = death;
 };
 
-/**
- * Fetches a 2D-matrix (of map size) of boolean values in row/col structure, representing what is
- * covered by fog-of-war for a player. For an eleminated player this will be an all-true matrix.<br>
- * <ul>
- * <li>Once computed, the map will be cached.</li>
- * <li>Unlike the turn data, fog of war is not computed iteratively. So it does not depend on the
- * previous turn's fog data, but also doesn't use the optimization opportunity there.</li>
- * </ul>
- * 
- * @param {Number}
- *        player The index of the player.
- * @param {Number}
- *        turn The zero-based turn number for which the fog of war is to be computed.
- * @returns {Boolean[][]} The fog matrix.
- */
-Replay.prototype.getFog = function(player, turn) {
-	var i, fogs, fog, row, col, radius, radius2, row_wrap, col_wrap;
-	var fog_row, fog_row1, fog_row2, aniAnts, aniAnt;
-	fogs = this.fogs[player];
-	if (fogs[turn] === undefined) {
-		fogs[turn] = fog = new Array(this.rows);
-		for (row = 0; row < this.rows; row++) {
-			fog[row] = new Array(this.cols);
-			for (col = 0; col < this.cols; col++) {
-				fog[row][col] = true;
-			}
-		}
-		radius2 = this.meta['replaydata']['viewradius2'];
-		radius = Math.sqrt(radius2) | 0;
-		row_wrap = new Array(2 * radius + 1);
-		col_wrap = new Array(2 * radius + 1);
-		aniAnts = this.getTurn(turn);
-		for (i = 0; i < aniAnts.length; i++) {
-			aniAnt = aniAnts[i].interpolate(turn);
-			if (aniAnt && aniAnt['owner'] === player) {
-				for (row = 2 * radius; row >= 0; row--) {
-					row_wrap[row] = Math.wrapAround(aniAnt['y'] - radius + row, this.rows);
-				}
-				for (col = 2 * radius; col >= 0; col--) {
-					col_wrap[col] = Math.wrapAround(aniAnt['x'] - radius + col, this.cols);
-				}
-				col = col_wrap[radius];
-				for (row = 1; row <= radius; row++) {
-					fog[row_wrap[radius - row]][col] = false;
-					fog[row_wrap[radius + row]][col] = false;
-				}
-				fog_row = fog[row_wrap[radius]];
-				for (col = 0; col < col_wrap.length; col++) {
-					fog_row[col_wrap[col]] = false;
-				}
-				for (row = 1; row <= radius; row++) {
-					fog_row1 = fog[row_wrap[radius - row]];
-					fog_row2 = fog[row_wrap[radius + row]];
-					for (col = 1; col <= radius; col++) {
-						if (row * row + col * col <= radius2) {
-							fog_row1[col_wrap[radius - col]] = false;
-							fog_row1[col_wrap[radius + col]] = false;
-							fog_row2[col_wrap[radius - col]] = false;
-							fog_row2[col_wrap[radius + col]] = false;
-						}
-					}
-				}
-			}
-		}
-	}
-	return fogs[turn];
-};
+// def simulate(self, steps_left):
+        // if steps_left <= 0:
+            // return
+            
+        // to_kill, to_born = [],[]      
+        // for row_num, row in enumerate(self.map):
+            // for col_num, cell in enumerate(row):
+                // loc = (row_num, col_num)
+                // cnt_neighs = self.cnt_neighs(loc)
+                // # alive cells to kill
+                // if cell != EMPTY and not 1 < sum(cnt_neighs) < 4:
+                    // to_kill.append(loc)
+                // # new cells to born
+                // elif cell == EMPTY and sum(cnt_neighs) == 3:
+                    // to_born.append((loc, cnt_neighs.index(max(cnt_neighs))))
+                    
+        // # apply changes
+        // for (row, col) in to_kill:
+            // self.map[row][col] = EMPTY
+        // for (row, col), owner in to_born:
+            // self.map[row][col] = owner
+            
+        // self.simulate(steps_left-1)
 
+        // def cnt_neighs(self, (row, col)):
+        // neighs = [(dx, dy) for dx in (-1,0,1) for dy in (-1,0,1) 
+                 // if not dx == dy == 0] # do not add original cell to its neigbours
+                 
+        // cnt_neighs = [0] * self.num_players
+        // for (dx, dy) in neighs:
+            // if 0 <= row+dx < self.height and 0 <= col+dy < self.width: # check for boundary
+                // owner = self.map[row+dx][col+dy]
+                // if owner != EMPTY: 
+                    // cnt_neighs[owner] += 1
+                    
+        // return cnt_neighs
+        
+ Replay.prototype.cnt_neighs = function(map, aRow, aCol) {
+    // console.log('Entered cnt_neighs');
+    if (aRow === 11 && aCol === 9) {
+        // console.log('FUCKING STOP!');
+    }
+    var cnt_neighs = new Array(this.players)
+    for (i = 0; i < this.players; i++)
+        cnt_neighs[i] = 0;
+    
+    var EMPTY = -1;
+    var cells = this.meta['replaydata']['cells'];
+    var dx, dy, row, col, inBounds, id, owner;
+    for (dx = -1; dx <= 1; ++dx) {
+        row = aRow + dx;
+        for (dy = -1; dy <= 1; ++dy) {
+            col = aCol + dy;
+            inBounds = row >= 0 && row < this.rows && 
+                       col >= 0 && col < this.cols;
+            isOriginal = (row === aRow && col === aCol); // original cell is skipped
+            if (inBounds && !isOriginal && map[row][col] !== EMPTY) {
+                id = map[row][col];
+                owner = cells[id][3];
+                ++cnt_neighs[owner];
+            }
+        }
+    }
+    return cnt_neighs;
+ }
+        
+Replay.prototype.simulate = function(map, total_steps, steps_done = 0) {
+    // console.log('Entered simulate');
+    // console.log('steps_done: ' + steps_done);
+    if (steps_done >= total_steps) 
+        return;
+    
+    var EMPTY = -1;
+    var cells = this.meta['replaydata']['cells'];
+    var to_kill = [];
+    var to_spawn = [];
+    // alert('before calc');
+    console.log('starting calculation:');
+    for (row = 0; row < this.rows; ++row) {
+        for (col = 0; col < this.cols; ++col) {
+            // console.log('row: ' + row + ' col: ' + col);
+            cell = map[row][col];
+            cnt_neighs = this.cnt_neighs(map, row, col); // alive neighs per player
+            // console.log('Left cnt_neighs');
+            sum_neighs = cnt_neighs[0] + cnt_neighs[1];
+            // alive cells to kill
+            if (cell != EMPTY && (sum_neighs < 2 || sum_neighs > 3)) {
+                to_kill.push({row: row, col: col});
+            }
+            // new cells to born
+            else if (cell === EMPTY && sum_neighs === 3) {
+                owner = cnt_neighs.indexOf(Math.max.apply(Math, cnt_neighs)); // owner of most neighs
+                to_spawn.push({row: row, col: col, owner: owner})
+            }
+        }
+    }
+    
+    // console.log('before apply changes');
+    
+    // apply changes
+    for (i = 0; i < to_kill.length; ++i) {
+        data = to_kill[i]
+        id = map[data.row][data.col]; // id of dying cell
+        cells[id][4] = this.duration + steps_done + 1; // remember dying turn
+        map[data.row][data.col] = EMPTY;
+    }
+    for (i = 0; i < to_spawn.length; ++i) {
+        data = to_spawn[i]
+        map[data.row][data.col] = cells.length; // remember id of a spawned cell
+        cells.push([data.row, data.col, this.duration + steps_done + 1, 
+                    data.owner, this.duration + total_steps + 1]);
+    }
+    
+    // console.log('after apply changes');
+    
+    this.simulate(map, total_steps, steps_done+1);
+};      
+    
 /**
  * This method will try and recreate the bot input generated by the engine as seen by a particular
  * player in this replay.<br>
- * To best match the exact values sent by the engine I recreate the order of visible items as in
- * <code>get_state_changes</code> in ants.py. Elements are ordered by type first.
- * <ol>
- * <li>water</li>
- * <li>hills</li>
- * <li>alive ants</li>
- * <li>food</li>
- * <li>dead ants</li>
- * </ol>
- * Inside the same type the items are intuitively ordered by row and col, both ascending. The
- * original owner id may also be considered for multiple dead ants on the same square.
  * 
  * @param {Number}
  *        player The index of the participating player.
@@ -787,171 +595,6 @@ Replay.prototype.getFog = function(player, turn) {
  * @returns {String} The bot input text.
  */
 Replay.prototype.generateBotInput = function(player, min, max) {
-	var turn, value, fakeTurn, map, fog, i, r, c, ants, food, hills;
-	var dir, moves, visible_hills, visible_ants, visible_food, visible_dead;
-	var ant, ant_locations, loc;
-	var param = undefined;
-	var playerNum = 0;
-	var mappedIds = new Array(this.players);
-	var resolvePlayer = function(original) {
-		if (mappedIds[original] === undefined) {
-			mappedIds[original] = playerNum;
-			playerNum++;
-		}
-		return mappedIds[original];
-	};
-	resolvePlayer(player);
 	var botInput = 'turn 0\n';
-	var entityPush = function(t, array, row, col, owner) {
-		if (t >= min) {
-			array[array.length] = [ row, col, owner ];
-		}
-		if (owner !== undefined) resolvePlayer(owner);
-	};
-	var entityAppend = function(type, entityList) {
-		var k, entity;
-		entityList.sort(function(a, b) {
-			if (a[0] !== b[0]) return a[0] - b[0];
-			if (a[1] !== b[1]) return a[1] - b[1];
-			return a[2] - b[2];
-		});
-		for (k = 0; k < entityList.length; k++) {
-			entity = entityList[k];
-			botInput += type + ' ' + entity[0] + ' ' + entity[1];
-			if (entity[2] !== undefined) {
-				botInput += ' ' + resolvePlayer(entity[2]);
-			}
-			botInput += '\n';
-		}
-	};
-
-	// game settings (including numbers not usually send to the player)
-	botInput += 'rows ' + this.rows + '\n';
-	botInput += 'cols ' + this.cols + '\n';
-	for (param in this.meta['replaydata']) {
-		if (param === 'revision') continue;
-		if (param === 'food_rate') continue;
-		if (param === 'food_turn') continue;
-		if (param === 'food_start') continue;
-		if (param === 'engine_seed') continue;
-		if (param === 'winning_turn') continue;
-		if (param === 'ranking_turn') continue;
-		value = this.meta['replaydata'][param];
-		if (typeof value == 'number' && !isNaN(value) && isFinite(value)) {
-			botInput += param + ' ' + value + '\n';
-		}
-	}
-	botInput += 'ready\n';
-
-	// helpful data structures
-	map = new Array(this.rows);
-	for (r = 0; r < map.length; r++) {
-		map[r] = new Array(this.cols);
-	}
-	ants = this.meta['replaydata']['ants'];
-	ant_locations = new Array(ants.length);
-
-	// create ant location lists over the course of the requested turns
-	for (i = 0; i < ant_locations.length; i++) {
-		ant_locations[i] = new Array(max + 1);
-		ant = ants[i];
-		r = ant[0];
-		c = ant[1];
-		ant_locations[i][ant[2]] = [ r, c ];
-		moves = new String(ant[5]);
-		for (turn = 0; turn < moves.length;) {
-			dir = undefined;
-			switch (moves.charAt(turn)) {
-			case 'n':
-			case 'N':
-				dir = Direction.N;
-				break;
-			case 'e':
-			case 'E':
-				dir = Direction.E;
-				break;
-			case 's':
-			case 'S':
-				dir = Direction.S;
-				break;
-			case 'w':
-			case 'W':
-				dir = Direction.W;
-			}
-			if (dir) {
-				r = Math.wrapAround(r + dir.y, this.rows);
-				c = Math.wrapAround(c + dir.x, this.cols);
-			}
-			turn++;
-			ant_locations[i][ant[2] + turn] = [ r, c ];
-		}
-	}
-
-	// turns; we have to simulate from the start to get the
-	// player id translations right
-	fakeTurn = 0;
-	for (turn = 0; turn <= max; turn++) {
-		// check visible player entities
-		fog = this.getFog(player, turn);
-		visible_hills = [];
-		visible_ants = [];
-		visible_food = [];
-		visible_dead = [];
-		// hills must not be razed and visible
-		hills = this.meta['replaydata']['hills'];
-		for (i = 0; i < hills.length; i++) {
-			if (turn < hills[i][3] && !fog[hills[i][0]][hills[i][1]]) {
-				entityPush(turn, visible_hills, hills[i][0], hills[i][1], hills[i][2]);
-			}
-		}
-		// alive ants must be visible
-		// dead ants must be visible or belong to the player
-		for (i = 0; i < ants.length; i++) {
-			loc = ant_locations[i][turn];
-			if (ants[i][2] <= turn) {
-				if (turn < ants[i][3]) {
-					if (!fog[loc[0]][loc[1]]) {
-						entityPush(turn, visible_ants, loc[0], loc[1], ants[i][4]);
-					}
-				} else if (turn === ants[i][3]) {
-					if (ants[i][4] === player || !fog[loc[0]][loc[1]]) {
-						entityPush(turn, visible_dead, loc[0], loc[1], ants[i][4]);
-					}
-				}
-			}
-		}
-		if (turn >= min) {
-			// we actually write something
-			fakeTurn++;
-			botInput += 'turn ' + fakeTurn + '\n';
-			// send water info once
-			for (r = 0; r < this.rows; r++) {
-				for (c = 0; c < this.cols; c++) {
-					if (!fog[r][c]) {
-						if (map[r][c] === undefined) {
-							if (map[r][c] = this.walls[r][c]) {
-								botInput += 'w ' + r + ' ' + c + '\n';
-							}
-						}
-					}
-				}
-			}
-			// send hills
-			entityAppend('h', visible_hills);
-			// send alive ants
-			entityAppend('a', visible_ants);
-			// send visible food
-			food = this.meta['replaydata']['food'];
-			for (i = 0; i < food.length; i++) {
-				if (food[i][2] <= turn && turn < food[i][3] && !fog[food[i][0]][food[i][1]]) {
-					entityPush(turn, visible_food, food[i][0], food[i][1]);
-				}
-			}
-			entityAppend('f', visible_food);
-			// send dead ants
-			entityAppend('d', visible_dead);
-			botInput += 'go\n';
-		}
-	}
 	return botInput;
 };

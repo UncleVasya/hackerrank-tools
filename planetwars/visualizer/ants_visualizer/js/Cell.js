@@ -19,7 +19,7 @@
  *        time Sets the time in which the object appears in turn units.
  * @constructor
  */
-function Ant(id, time) {
+function Cell(id, time) {
 	this.id = id;
 	this.death = undefined;
 	this.keyFrames = [ new KeyFrame() ];
@@ -41,7 +41,7 @@ function Ant(id, time) {
  *        time the time in question
  * @returns {KeyFrame} a key frame for the time or null, if the time is before the first key frame
  */
-Ant.prototype.frameAt = function(time) {
+Cell.prototype.frameAt = function(time) {
 	var frame;
 	var set = this.keyFrames;
 	for ( var i = set.length - 1; i >= 0; i--) {
@@ -71,7 +71,7 @@ Ant.prototype.frameAt = function(time) {
  *        time the time in question
  * @returns {KeyFrameEx} the interpolated key frame
  */
-Ant.prototype.interpolate = function(time) {
+Cell.prototype.interpolate = function(time) {
 	var i, min, max, lastFrame, timeIdx, goFrom;
 	var set = this.keyFrames;
 
@@ -126,7 +126,7 @@ Ant.prototype.interpolate = function(time) {
  * @param {Number}
  *        timeb end time
  */
-Ant.prototype.fade = function(key, valueb, timea, timeb) {
+Cell.prototype.fade = function(key, valueb, timea, timeb) {
 	var i, valuea, mix, f0, f1;
 	var set = this.keyFrames;
 	// create and adjust the start and end frames

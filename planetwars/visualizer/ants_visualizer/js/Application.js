@@ -150,9 +150,7 @@ Visualizer = function(container, options, w, h, configOverrides) {
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
 			/** @private */
-			this.scores = new CanvasElementStats(this.state, 'scores', 'scores', 'bonus');
-			/** @private */
-			this.counts = new CanvasElementStats(this.state, '# of ants', 'counts', 'hive');
+			this.counts = new CanvasElementStats(this.state, '# of cells', 'counts', '500 steps');
 		}
 		/** @private */
 		this.director = new Director(this);
@@ -1086,12 +1084,9 @@ Visualizer.prototype.resize = function(forced) {
 		if (this.state.replay.hasDuration && this.state.options['decorated']) {
 			// 1. player buttons
 			y = this.btnMgr.groups['players'].cascade(newSize.w) + 4;
-			// 2. scores bar & time line
-			this.scores.x = 0;
-			this.scores.y = y;
-			this.scores.setSize(newSize.w, CanvasElementStats.MIN_HEIGHT);
+			// 2. time line
 			this.counts.x = 0;
-			this.counts.y = this.scores.y + this.scores.h + 4;
+			this.counts.y = y;
 			this.counts.setSize(newSize.w, CanvasElementStats.MAX_HEIGHT);
 			y = this.counts.y + this.counts.h;
 		} else {
@@ -1206,9 +1201,6 @@ Visualizer.prototype.draw = function() {
 	}
 
 	if (this.state.replay.hasDuration && this.state.options['decorated']) {
-		if (this.scores.validate() || this.resizing) {
-			ctx.drawImage(this.scores.canvas, this.scores.x, this.scores.y);
-		}
 		if (this.counts.validate() || this.resizing) {
 			ctx.drawImage(this.counts.canvas, this.counts.x, this.counts.y);
 		}
@@ -1272,8 +1264,8 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 			this.hint = 'row ' + this.state.mouseRow + ' | col ' + this.state.mouseCol;
 		}
 		if (this.mouseDown === 1) {
-			tick = this.mouseX - this.scores.graph.x;
-			tick /= (this.scores.graph.w - 1);
+			tick = this.mouseX - this.counts.graph.x;
+			tick /= (this.counts.graph.w - 1);
 			tick = Math.round(tick * this.state.replay.duration);
 			this.director.gotoTick(tick);
 		} else if (this.mouseDown === 2
@@ -1316,7 +1308,7 @@ Visualizer.prototype.mousePressed = function() {
 	if (this.state.options['interactive']) {
 		if (this.state.replay.hasDuration
 				&& this.state.options['decorated']
-				&& (this.counts.graph.contains(this.mouseX, this.mouseY) || this.scores.graph
+				&& (this.counts.graph.contains(this.mouseX, this.mouseY) || this.counts.graph
 						.contains(this.mouseX, this.mouseY))) {
 			this.mouseDown = 1;
 		} else if (this.state.config['zoom'] !== 1
@@ -1545,7 +1537,7 @@ Options = function() {
 	this['data_dir'] = '';
 	this['interactive'] = true;
 	this['decorated'] = true;
-	this['debug'] = true;
+	this['debug'] = false;
 	this['profile'] = false;
 	this['embedded'] = false;
 	this['game'] = '';

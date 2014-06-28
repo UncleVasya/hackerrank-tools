@@ -5,7 +5,7 @@
  */
 
 $import('Util');
-$import('Ant');
+$import('Cell');
 $import('Application');
 $import('Buttons');
 $import('Config');
