@@ -615,8 +615,8 @@ Visualizer.prototype.tryStart = function() {
 						bg.addSpace(64);
 
 						dlg = new Delegate(this, function() {
-							var stop = Math.floor(this.state.time * 2) + 1;
-							this.director.slowmoTo(stop / 2);
+							var stop = Math.floor(this.state.time + 1);
+							this.director.slowmoTo(stop);
 						});
 						bg.addButton(6, dlg, 'play one move/attack phase');
 						bg.addSpace(32);
