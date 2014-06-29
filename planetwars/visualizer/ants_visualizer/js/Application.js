@@ -604,8 +604,8 @@ Visualizer.prototype.tryStart = function() {
 						bg.addSpace(32);
 
 						dlg = new Delegate(this, function() {
-							var stop = Math.ceil(this.state.time * 2) - 1;
-							this.director.slowmoTo(stop / 2);
+							var stop = Math.ceil(this.state.time) - 1;
+							this.director.slowmoTo(stop);
 						});
 						bg.addButton(5, dlg, 'play one move/attack phase backwards');
 						bg.addSpace(64);
