@@ -247,12 +247,25 @@ function Replay(replay, debug, highlightUser) {
 					// this['stores'][k][i] = player_stores[player_stores.length - 1];
 				// }
 			// }
-			// calculate cell counts per player per turn
+			// calculate cell counts per turn per player
 			for (i = 0; i < cells.length; i++) {
 				for (n = cells[i][2]; n < cells[i][4]; n++) {
 					this['counts'][n][cells[i][3]]++;
 				}
 			}
+            
+            // if some player eliminated reduce replay duration
+            // TODO: 500 is Simulator.total_steps
+            // var done = false;
+            // for (step = this.duration-500; step < this.duration && !done; ++step) {
+                // for (player = 0; player < this.players; ++player) {
+                    // if (this['counts'][step][player] <= 0) {
+                        // this.duration = step;
+                        // done = true;
+                        // break;
+                    // }
+                // }
+            // }
             
 			this.aniCells = new Array(cells.length);
 		}
