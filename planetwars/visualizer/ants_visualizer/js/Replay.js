@@ -25,7 +25,6 @@
  * @see Ant
  */
 function Replay(replay, debug, highlightUser) {
-    // alert('replay 1');
 	var i, k, player_scores, highlightPlayer, c, n, r, regex;
 	var format = 'json';
 	var storeslist = undefined;
@@ -267,7 +266,6 @@ function Replay(replay, debug, highlightUser) {
 		}
 		this.addMissingMetaData(highlightPlayer);
 	}
-    // alert('parse 1');
 }
 
 /**
@@ -344,8 +342,6 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 		this.htmlPlayerColors[i] += INT_TO_HEX[this.meta['playercolors'][i][1]];
 		this.htmlPlayerColors[i] += INT_TO_HEX[this.meta['playercolors'][i][2]];
 	}
-    
-    // alert('addMetaData');
 };
 
 /**
@@ -362,7 +358,6 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
  * @returns {Ant[]} The array of visible ants.
  */
 Replay.prototype.getTurn = function(n) {
-    //alert('getTurn 1');
 	var i, idx, turn, cells, cell, aniCell, lastFrame, dead, food, moves, activation;
 	if (this.turns[n] === undefined) {
 		if (n !== 0) this.getTurn(n - 1);
@@ -394,7 +389,6 @@ Replay.prototype.getTurn = function(n) {
 			}
 		}
 	}
-    // alert('getTurn 2');
 	return this.turns[n];
 };
 
@@ -414,9 +408,9 @@ Replay.prototype.getTurn = function(n) {
  * @returns {Ant} The new animation ant object.
  */
 Replay.prototype.spawnCell = function(id, row, col, spawn, owner) {
-	var aniCell = this.aniCells[id] = new Cell(id, spawn - 0.25);
+	var aniCell = this.aniCells[id] = new Cell(id, spawn - 0.8);
 	var color = this.meta['playercolors'][owner];
-	var f = aniCell.frameAt(spawn - 0.25);
+	var f = aniCell.frameAt(spawn - 0.8);
 	aniCell.owner = owner;
 	f['x'] = col;
 	f['y'] = row;
@@ -426,14 +420,8 @@ Replay.prototype.spawnCell = function(id, row, col, spawn, owner) {
 	f['b'] = color[2];
 	if (spawn !== 0) {
 		f = aniCell.frameAt(spawn);
-		f['size'] = 1.0;
-		f = aniCell.frameAt(spawn + 0.125);
-		f['size'] = 1.5;
-		f = aniCell.frameAt(spawn + 0.25);
-		f['size'] = 0.7;
-		f = aniCell.frameAt(spawn + 0.5);
 	}
-	f['size'] = 1;
+	f['size'] = 1.0;
 	return aniCell;
 };
 
@@ -448,64 +436,11 @@ Replay.prototype.spawnCell = function(id, row, col, spawn, owner) {
  *        death The zero-based turn, that the ant died in.
  */
 Replay.prototype.killCell = function(aniCell, death) {
-	var owner = aniCell.frameAt(death)['owner'];
-	var color = this.meta['playercolors'][owner];
-	aniCell.fade('r', 255, death - 0.80, death - 0.60);
-	aniCell.fade('g', 255, death - 0.80, death - 0.60);
-	aniCell.fade('b', 255, death - 0.80, death - 0.60);
-	aniCell.fade('r', color[0], death - 0.60, death - 0.40);
-	aniCell.fade('g', color[1], death - 0.60, death - 0.40);
-	aniCell.fade('b', color[2], death - 0.60, death - 0.40);
-	aniCell.fade('r', 0.0, death - 0.40, death);
-	aniCell.fade('g', 0.0, death - 0.40, death);
-	aniCell.fade('b', 0.0, death - 0.40, death);
-	aniCell.fade('size', 0.7, death - 0.80, death - 0.60);
-	aniCell.fade('size', 0.0, death - 0.40, death);
+	aniCell.fade('size', 0.0, death - 0.8, death);
 	aniCell.death = death;
 };
-
-// def simulate(self, steps_left):
-        // if steps_left <= 0:
-            // return
-            
-        // to_kill, to_born = [],[]      
-        // for row_num, row in enumerate(self.map):
-            // for col_num, cell in enumerate(row):
-                // loc = (row_num, col_num)
-                // cnt_neighs = self.cnt_neighs(loc)
-                // # alive cells to kill
-                // if cell != EMPTY and not 1 < sum(cnt_neighs) < 4:
-                    // to_kill.append(loc)
-                // # new cells to born
-                // elif cell == EMPTY and sum(cnt_neighs) == 3:
-                    // to_born.append((loc, cnt_neighs.index(max(cnt_neighs))))
-                    
-        // # apply changes
-        // for (row, col) in to_kill:
-            // self.map[row][col] = EMPTY
-        // for (row, col), owner in to_born:
-            // self.map[row][col] = owner
-            
-        // self.simulate(steps_left-1)
-
-        // def cnt_neighs(self, (row, col)):
-        // neighs = [(dx, dy) for dx in (-1,0,1) for dy in (-1,0,1) 
-                 // if not dx == dy == 0] # do not add original cell to its neigbours
-                 
-        // cnt_neighs = [0] * self.num_players
-        // for (dx, dy) in neighs:
-            // if 0 <= row+dx < self.height and 0 <= col+dy < self.width: # check for boundary
-                // owner = self.map[row+dx][col+dy]
-                // if owner != EMPTY: 
-                    // cnt_neighs[owner] += 1
-                    
-        // return cnt_neighs
         
  Replay.prototype.cnt_neighs = function(map, aRow, aCol) {
-    // console.log('Entered cnt_neighs');
-    if (aRow === 11 && aCol === 9) {
-        // console.log('FUCKING STOP!');
-    }
     var cnt_neighs = new Array(this.players)
     for (i = 0; i < this.players; i++)
         cnt_neighs[i] = 0;
@@ -531,8 +466,6 @@ Replay.prototype.killCell = function(aniCell, death) {
  }
         
 Replay.prototype.simulate = function(map, total_steps, steps_done = 0) {
-    // console.log('Entered simulate');
-    // console.log('steps_done: ' + steps_done);
     if (steps_done >= total_steps) 
         return;
     
@@ -540,14 +473,10 @@ Replay.prototype.simulate = function(map, total_steps, steps_done = 0) {
     var cells = this.meta['replaydata']['cells'];
     var to_kill = [];
     var to_spawn = [];
-    // alert('before calc');
-    console.log('starting calculation:');
     for (row = 0; row < this.rows; ++row) {
         for (col = 0; col < this.cols; ++col) {
-            // console.log('row: ' + row + ' col: ' + col);
             cell = map[row][col];
             cnt_neighs = this.cnt_neighs(map, row, col); // alive neighs per player
-            // console.log('Left cnt_neighs');
             sum_neighs = cnt_neighs[0] + cnt_neighs[1];
             // alive cells to kill
             if (cell != EMPTY && (sum_neighs < 2 || sum_neighs > 3)) {
@@ -560,9 +489,6 @@ Replay.prototype.simulate = function(map, total_steps, steps_done = 0) {
             }
         }
     }
-    
-    // console.log('before apply changes');
-    
     // apply changes
     for (i = 0; i < to_kill.length; ++i) {
         data = to_kill[i]
@@ -576,9 +502,6 @@ Replay.prototype.simulate = function(map, total_steps, steps_done = 0) {
         cells.push([data.row, data.col, this.duration + steps_done + 1, 
                     data.owner, this.duration + total_steps + 1]);
     }
-    
-    // console.log('after apply changes');
-    
     this.simulate(map, total_steps, steps_done+1);
 };      
     

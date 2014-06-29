@@ -18,6 +18,7 @@ function Director(vis) {
 	this.duration = 0;
 	this.defaultSpeed = 1;
 	this.stopAt = undefined;
+    this.inSlowMo = false;
 	this.cpu = vis.state.config['cpu'];
 	this.onstate = undefined;
 	this.timeout = undefined;
@@ -73,6 +74,7 @@ Director.prototype.stop = function() {
 		if (this.vis.state.options['profile']) console.profileEnd();
 		this.speed = 0;
 		this.lastTime = undefined;
+        this.inSlowMo = false;
 		if (this.onstate) this.onstate();
 	}
 };
@@ -114,6 +116,7 @@ Director.prototype.slowmoTo = function(time) {
 			this.speed = -1;
 		}
 		if (!wasPlaying) {
+            this.inSlowMo = true;
 			if (this.onstate) this.onstate();
 			this.loop(0);
 		}
@@ -300,7 +303,23 @@ Director.prototype.loop = function(delay) {
 	} else {
 		this.vis.state.fade = undefined;
 	}
-	this.vis.state.time = Math.clamp(this.time, 0, this.duration);
+    // check if we are going to draw this frame (animation may be turned off) 
+    var animLevel = this.vis.state.config['animLevel'];
+    var levels = this.vis.state.config['ANIM_LEVELS'];
+    var draw = false;
+    switch (animLevel) {
+        case levels['FULL']:
+            draw = true;
+            break;
+        case levels['LIMITED']:
+            draw = this.vis.isGamingPhase(this.time) || this.inSlowMo;
+            break;
+    }
+    this.vis.state.time = Math.clamp(this.time, 0, this.duration);
+    if (!draw) {
+        // draw previous turn state;
+        this.vis.state.time = Math.floor(this.vis.state.time);
+    }
 	this.vis.draw();
 	if (goOn) {
         if (this.vis.state.options['debug']) {

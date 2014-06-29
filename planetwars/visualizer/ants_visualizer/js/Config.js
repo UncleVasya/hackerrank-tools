@@ -37,8 +37,15 @@ Config.prototype['zoom'] = 1;
 Config.prototype['duration'] = 75;
 Config.prototype['speedSlowest'] = 2;
 Config.prototype['speedFastest'] = 8;
-Config.prototype['speedFactor'] = 0;
+Config.prototype['speedFactor'] = -4;
 Config.prototype['cpu'] = 0.5;
+
+Config.prototype['ANIM_LEVELS'] = {
+    NONE: 0, // not in use now
+    LIMITED: 1, 
+    FULL: 2
+};
+Config.prototype['animLevel'] = 1;
 
 /**
  * Loads all keys from a generic object into the configuration.
