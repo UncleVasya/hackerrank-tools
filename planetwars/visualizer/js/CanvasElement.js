@@ -117,7 +117,9 @@ CanvasElementAbstractMap.extend(CanvasElement);
 /**
  * Draws the terrain map.
  */
-CanvasElementAbstractMap.prototype.draw = function(drawGrid = true) {
+CanvasElementAbstractMap.prototype.draw = function(resized, drawGrid) {
+    if (typeof(drawGrid) === 'undefined') drawGrid = true;
+    
     var row, col;
 	var rows = this.state.replay.rows;
 	var cols = this.state.replay.cols;
@@ -176,7 +178,7 @@ CanvasElementMiniMap.prototype.checkState = function() {
  */
 CanvasElementMiniMap.prototype.draw = function() {
 	var i, ant, color;
-	CanvasElementAbstractMap.prototype.draw.call(this, false);
+	CanvasElementAbstractMap.prototype.draw.call(this, false, false);
 	for (i = this.ants.length - 1; i >= 0; i--) {
 		if ((ant = this.ants[i].interpolate(this.turn))) {
 			color = '#';

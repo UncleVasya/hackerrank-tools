@@ -478,7 +478,9 @@ Replay.prototype.killCell = function(aniCell, death) {
     return cnt_neighs;
  }
         
-Replay.prototype.simulate = function(map, total_steps, steps_done = 0) {
+Replay.prototype.simulate = function(map, total_steps, steps_done) {
+    if (typeof(steps_done) === 'undefined') steps_done = 0;
+    
     if (steps_done >= total_steps) 
         return;
     
