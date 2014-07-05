@@ -46,10 +46,10 @@ class Game:
     def get_player_start(self, player=None):
         pass
     
-    #  Used to determine if player has right to make moves this turn
+    #  used to determine if player has right to make moves this turn
     def is_his_turn(self, player):
         pass
-        
+    
     # used for sending state to bots for each turn
     def get_player_state(self, player):
         pass
@@ -60,6 +60,10 @@ class Game:
         #         [''],  [('','')], [('','')]
         pass
 
+    # called by engine to determine if it should stop getting orders from bot
+    def get_moves_limit(self, player):
+        pass
+    
     def do_all_moves(self, bot_moves):
         return [self.do_moves(b, moves) for b, moves in enumerate(bot_moves)]
 
