@@ -284,6 +284,9 @@ class Jail(object):
         except (OSError, IOError):
             self.kill()
 
+    # def finish_input(self):
+    
+    
     def read_line(self, timeout=0):
         """Read line from child process
 
@@ -457,6 +460,7 @@ class House:
         while True:
             ln = queue.get()
             if ln is None:
+                self.command_process.stdin.close()
                 break
             try:
                 stdin.write(ln)
@@ -470,6 +474,10 @@ class House:
         if not self.is_alive:
             return False
         self.child_queue.put(str)
+        
+    def close_stdin(self):
+        """ Close stdin to let process know that input is over """
+        self.child_queue.put(None)
 
     def write_line(self, line):
         """Write line to stdin of the process being run

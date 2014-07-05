@@ -356,8 +356,8 @@ class LifeGame(Game):
         # first row contains character of the player 
         message = cell_char[player] + '\n'
         # here goes game grid
-        message += '\n'.join(''.join(cell_char[cell] for cell in row) for row in self.map) + '\n'
-        return message.replace("\n\n", "\n")
+        message += '\n'.join(''.join(cell_char[cell] for cell in row) for row in self.map)
+        return message
 
     def is_alive(self, player):
         """ Determine if player is still alive
@@ -380,6 +380,14 @@ class LifeGame(Game):
         orders, valid, ignored, invalid = self.validate_orders(player, orders, valid, ignored, invalid)
         self.orders[player] = orders
         return valid, ['%s # %s' % ignore for ignore in ignored], ['%s # %s' % error for error in invalid]
+        
+    def get_moves_limit(self, player):
+        """ Returns the orders limit for the player for current turn  
+        
+            Called by engine to determine if it should stop getting orders from bot
+        """
+        return 1
+        
 
     def get_scores(self, player=None):
         """ Gets the scores of all players

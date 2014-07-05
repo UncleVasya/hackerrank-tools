@@ -16,20 +16,20 @@ def doTurn(state):
                 return
     
 def main():
-  map_data = ''
-  while(True):
-    current_line = raw_input()
-    if len(current_line) >= 5 and current_line.startswith("ready"):
-        LifeGame.finishTurn()
-    elif len(current_line) >= 2 and current_line.startswith("go"):
-      state = LifeGame(map_data)
-      doTurn(state)
-      state.finishTurn()
-      map_data = ''
-    else:
-      map_data += current_line + '\n'
-
-
+    map_data = ''
+    line = raw_input()
+    while line:
+        map_data += line + '\n'
+        try:
+            line = raw_input()
+        except: 
+            break # end of input
+    
+    state = LifeGame(map_data)
+    doTurn(state)
+    
+    raw_input()
+      
 if __name__ == '__main__':
   try:
     import psyco

@@ -57,8 +57,3 @@ class LifeGame:
     self.alive_cells = self.my_cells + self.enemy_cells
     
     return 1
-
-  @staticmethod
-  def finishTurn():
-    stdout.write("go\n")
-    stdout.flush()
