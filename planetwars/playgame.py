@@ -416,16 +416,12 @@ def run_rounds(opts,args):
             for error_log in engine_options['error_logs']:
                 error_log.close()
         if replay_path:
-            if opts.nolaunch:
-                if opts.html_file:
-                    visualizer.visualize_locally.launch(replay_path, True, opts.html_file)
+            if opts.html_file == None:
+                visualizer.visualize_locally.launch(replay_path, opts.nolaunch,
+                        "replay.{0}.html".format(game_id))
             else:
-                if opts.html_file == None:
-                    visualizer.visualize_locally.launch(replay_path,
-                            generated_path="replay.{0}.html".format(game_id))
-                else:
-                    visualizer.visualize_locally.launch(replay_path,
-                            generated_path=opts.html_file)
+                visualizer.visualize_locally.launch(replay_path, opts.nolaunch, 
+                        opts.html_file)
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
