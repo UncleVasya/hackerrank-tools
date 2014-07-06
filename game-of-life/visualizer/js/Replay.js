@@ -197,31 +197,39 @@ function Replay(replay, debug, highlightUser) {
             
             // initialize cells dying turns with value beyond game length
             for (n = 0; n < cells.length; n++) {
-                cells[n][4] = this.duration + 500 + 1;
+                cells[n][4] = this.duration + 1;
             }
                 
             // simulate universe
             // TODO: make Simulation class
-            var map = new Array(this.rows);
-            for (row = 0; row < this.rows; ++row) {
-                map[row] = new Array(this.cols);
-                for (col = 0; col < this.cols; ++col) {
-                    map[row][col] = -1; // TODO: make EMPTY constant
+            active_players = 0
+            for (p = 0; p < this.players; ++p) {
+                if (this.meta['status'][p] === 'survived') {
+                    ++active_players;
                 }
             }
-            for (id = 0; id < cells.length; ++id) {
-                cell = cells[id];
-                map[cell[0]][cell[1]] = id;
+            if (active_players > 1) {
+                var map = new Array(this.rows);
+                for (row = 0; row < this.rows; ++row) {
+                    map[row] = new Array(this.cols);
+                    for (col = 0; col < this.cols; ++col) {
+                        map[row][col] = -1; // TODO: make EMPTY constant
+                    }
+                }
+                for (id = 0; id < cells.length; ++id) {
+                    cell = cells[id];
+                    map[cell[0]][cell[1]] = id;
+                }
+                this.simulate(map, 500);
+                this.duration += 500;
             }
-            this.simulate(map, 500);
-            this.duration += 500;
 
 			// prepare score and count lists
 			this.turns = new Array(this.duration + 1);
 			this['scores'] = new Array(this.duration + 1);
 			this['counts'] = new Array(this.duration + 1);
 			this['stores'] = new Array(this.duration + 1);
-			for (n = 0; n <= this.duration; n++) {
+			for (n = 0; n <= this.duration + 1; n++) {
 				this['scores'][n] = new Array(this.players);
                 for (i = 0; i < this.players; i++)
 					this['scores'][n][i] = 0;
@@ -269,24 +277,24 @@ function Replay(replay, debug, highlightUser) {
             
             // correct data about bots elimination turn
             // TODO: 500 is Simulator.total_steps
-            for (step = this.duration-500+1; step <= this.duration; ++step) {
-                for (player = 0; player < this.players; ++player) {
-                    if (this['counts'][step][player] > 0) {
-                        ++this.meta['playerturns'][player];
+            if (active_players > 1) {
+                for (step = this.duration-500+1; step <= this.duration; ++step) {
+                    for (player = 0; player < this.players; ++player) {
+                        if (this['counts'][step][player] > 0) {
+                            ++this.meta['playerturns'][player];
+                        }
                     }
-                }
-            }
-            
-            // set appropriate status for bots eliminated during simulation
-            for (player = 0; player < this.players; ++player) {
+                }     
+                // set appropriate status for bots eliminated during simulation
+                for (player = 0; player < this.players; ++player) {
                     if (this.meta['status'][player] === 'survived' 
                         && this.meta['playerturns'][player] < this.duration-1) 
                     {
                         this.meta['status'][player] = 'eliminated';
                     }
                 }
+            }
                 
-            
 			this.aniCells = new Array(cells.length);
 		}
 		this.hasDuration = this.duration > 0 || this.meta['replaydata']['turns'] > 0;
