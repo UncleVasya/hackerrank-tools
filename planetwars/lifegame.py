@@ -435,8 +435,9 @@ class LifeGame(Game):
         replay['map']['data'] = self.get_map_output()
         
         # cells data
-        replay['cells'] = [[cell.loc[0], cell.loc[1], cell.spawn_turn, cell.owner] 
-                          for cell in self.cells.values()]
+        cells = [[cell.loc[0], cell.loc[1], cell.spawn_turn, cell.owner] 
+                for cell in self.cells.values()]
+        replay['cells'] = sorted(cells, key = operator.itemgetter(2))
 
         # scores
         replay['scores'] = self.score_history
