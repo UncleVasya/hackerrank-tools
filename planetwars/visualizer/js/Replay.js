@@ -267,6 +267,26 @@ function Replay(replay, debug, highlightUser) {
                 // }
             // }
             
+            // correct data about bots elimination turn
+            // TODO: 500 is Simulator.total_steps
+            for (step = this.duration-500+1; step <= this.duration; ++step) {
+                for (player = 0; player < this.players; ++player) {
+                    if (this['counts'][step][player] > 0) {
+                        ++this.meta['playerturns'][player];
+                    }
+                }
+            }
+            
+            // set appropriate status for bots eliminated during simulation
+            for (player = 0; player < this.players; ++player) {
+                    if (this.meta['status'][player] === 'survived' 
+                        && this.meta['playerturns'][player] < this.duration-1) 
+                    {
+                        this.meta['status'][player] = 'eliminated';
+                    }
+                }
+                
+            
 			this.aniCells = new Array(cells.length);
 		}
 		this.hasDuration = this.duration > 0 || this.meta['replaydata']['turns'] > 0;
