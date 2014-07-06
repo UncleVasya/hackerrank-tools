@@ -717,7 +717,7 @@ CanvasElementStats.prototype.draw = function(resized) {
 		if (this.turn === this.graph.duration && !this.state.isStreaming) {
 			text += 'end / ' + this.graph.duration;
 		} else {
-			text += 'turn ' + (this.turn + 1) + '/' + this.graph.duration;
+			text += 'turn ' + this.turn + '/' + this.graph.duration;
 		}
 		this.ctx.fillText(text, 4, 44);
 	}
