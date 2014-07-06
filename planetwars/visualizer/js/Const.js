@@ -33,6 +33,14 @@ RIGHT_PANEL_W = 48;
  * @const
  */
 BOTTOM_PANEL_H = 64;
+
+/**
+ * a list of appropriate symbol constants for players
+ *
+ * @const
+ */
+PLAYER_SYMBOLS = 'wb'
+
 /**
  * map different colors depending on player count
  *

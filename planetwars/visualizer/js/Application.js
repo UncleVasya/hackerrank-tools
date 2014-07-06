@@ -1050,7 +1050,7 @@ Visualizer.prototype.updatePlayerButtonText = function() {
 		idx = this.state.order[i];
 		caption = this.state.replay.meta['playernames'][idx];
 		if (this.state.config['label'] === 1) {
-			caption = String.fromCharCode(0x3b1 + i) + ' ' + caption;
+			caption = PLAYER_SYMBOLS[i] + ' ' + caption;
 		} else {
 			caption = this.state.ranks[idx] + '. ' + caption;
 		}

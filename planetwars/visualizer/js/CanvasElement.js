@@ -333,7 +333,8 @@ CanvasElementAntsMap.prototype.draw = function() {
 				kf = drawList[n];
 				if (label === 1) {
 					if (kf['owner'] === undefined) continue;
-					caption = String.fromCharCode(0x3b1 + order[kf['owner']]);
+                    player = order[kf['owner']]
+					caption = PLAYER_SYMBOLS[player];
 				} else {
 					caption = kf.antId;
 				}
@@ -815,9 +816,9 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 				ctx.lineWidth = 0.5;
 				text = values[kIdx];
 				if (label) {
-					text = String.fromCharCode(0x3b1 + k) + ' ' + text;
+					text = PLAYER_SYMBOLS[k] + ' ' + text;
 					if (ctx.measureText(text).width + 4 > wBar) {
-						text = String.fromCharCode(0x3b1 + k);
+						text = PLAYER_SYMBOLS[k];
 					}
 				}
 				textWidth = ctx.measureText(text).width + 4;
