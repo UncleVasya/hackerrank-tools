@@ -593,6 +593,17 @@ Visualizer.prototype.tryStart = function() {
 			// add static buttons
 			if (this.state.options['interactive']) {
 				if (!this.btnMgr.groups['playback']) {
+                    bg = this.btnMgr.addImageGroup('toolbarLeft', this.imgMgr.get('toolbar'),
+							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
+
+					dlg = new Delegate(this, function() {
+						var lbl = this.state.config['label'];
+						this.setAntLabels((lbl + 1) % 3);
+						this.director.draw();
+					});
+					bg.addButton(5, dlg,
+							'toggles: 1. player letters on ants, 2. global ids on ants');
+                    
 					if (this.state.replay.hasDuration) {
 						bg = this.btnMgr.addImageGroup('playback', this.imgMgr.get('playback'),
 								ImageButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2, 0);
@@ -1106,6 +1117,8 @@ Visualizer.prototype.resize = function(forced) {
 				bg.x = Math.min(bg.x, this.shiftedMap.x + this.shiftedMap.w - w);
 				bg.x = Math.max(bg.x, 0);
 				bg.y = this.shiftedMap.y + this.shiftedMap.h;
+                bg = this.btnMgr.groups['toolbarLeft'];
+				bg.y = this.shiftedMap.y + 8;
 			} else {
 				this.shiftedMap.x = 0;
 				this.shiftedMap.y = y;
@@ -1116,6 +1129,8 @@ Visualizer.prototype.resize = function(forced) {
 			bg.y = this.shiftedMap.y + 8;
 			// set button group extents
 			if (this.state.replay.hasDuration) {
+                bg = this.btnMgr.groups['toolbarLeft'];
+				bg.h = newSize.h - this.shiftedMap.y - 8;
 				bg = this.btnMgr.groups['playback'];
 				bg.w = this.shiftedMap.x + this.shiftedMap.w - bg.x;
 			}
