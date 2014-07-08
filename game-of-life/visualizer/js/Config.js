@@ -47,6 +47,12 @@ Config.prototype['ANIM_LEVELS'] = {
 };
 Config.prototype['animLevel'] = 1;
 
+Config.prototype['CELL_SHAPES'] = {
+    CIRCLE: 0,
+    RECTANGLE: 1
+};
+Config.prototype['cellShape'] = 0;
+
 /**
  * Loads all keys from a generic object into the configuration.
  * 

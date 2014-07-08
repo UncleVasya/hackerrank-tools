@@ -598,8 +598,10 @@ Visualizer.prototype.tryStart = function() {
 							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
 					dlg = new Delegate(this, function() {
-							
-						});
+						var shape = this.state.config['cellShape'];
+                        this.state.config['cellShape'] = (shape + 1) % 2;
+						this.director.draw();
+					});
 					bg.addButton(0, dlg, 'toggles: 1. cells as rectangles, 2. cells as circles');
                     
 					if (this.state.replay.hasDuration) {

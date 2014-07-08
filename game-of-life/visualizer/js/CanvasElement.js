@@ -303,10 +303,28 @@ CanvasElementAntsMap.prototype.draw = function() {
 		for (n = drawList.length - 1; n >= 0; n--) {
 			kf = drawList[n];
 			if (kf['owner'] !== undefined) {
-				this.ctx.beginPath();
-				this.ctx.arc(kf.mapX + halfScale, kf.mapY + halfScale, halfScale * kf['size'], 
-                             0, 2 * Math.PI, false);
-				this.ctx.fill();
+                var cellShape = this.state.config['cellShape'];
+                var shapes = this.state.config['CELL_SHAPES'];
+                switch (cellShape) {
+                    case shapes['CIRCLE']:
+                        this.ctx.beginPath();
+                        this.ctx.arc(kf.mapX + halfScale, kf.mapY + halfScale, halfScale * kf['size'], 
+                                     0, 2 * Math.PI, false);
+                        this.ctx.fill();
+                        break;
+                    case shapes['RECTANGLE']:
+                        w = this.scale;
+                        dx = kf.mapX;
+                        dy = kf.mapY;
+                        if (kf['size'] !== 1) {
+                            d = 0.5 * (1.0 - kf['size']) * this.scale;
+                            dx += d;
+                            dy += d;
+                            w *= kf['size'];
+                        }
+                        this.ctx.fillRect(dx, dy, w, w);
+                        break;
+                }
 			}
 		}
 	}
