@@ -1234,10 +1234,11 @@ Visualizer.prototype.draw = function() {
 			if (hint) hint += '...';
 		}
 		w = ctx.measureText(hint).width;
+        hint_x = (ctx.canvas.width - w) >> 1;
 		ctx.fillStyle = 'rgba(0,0,0,0.3)';
-		ctx.fillRect(loc.x, loc.y, w, 22);
+		ctx.fillRect(hint_x, loc.y, w, 22);
 		ctx.fillStyle = '#fff';
-		ctx.fillText(hint, loc.x, loc.y + 10);
+		ctx.fillText(hint, hint_x, loc.y + 10);
 	}
 	if (this.state.isStreaming) {
 		// we were able to draw a frame, the engine may send us the next turn
