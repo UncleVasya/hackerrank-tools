@@ -146,7 +146,8 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		this.imgMgr = new ImageManager(imgDir, new Delegate(this, this.completedImages));
 		if (this.state.options['decorated']) {
 			this.imgMgr.add('playback.png', 'playback');
-			this.imgMgr.add('toolbar.png', 'toolbar');
+            this.imgMgr.add('toolbarLeft.png', 'toolbarLeft');
+            this.imgMgr.add('toolbarRight.png', 'toolbarRight');
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
 			/** @private */
@@ -593,16 +594,13 @@ Visualizer.prototype.tryStart = function() {
 			// add static buttons
 			if (this.state.options['interactive']) {
 				if (!this.btnMgr.groups['playback']) {
-                    bg = this.btnMgr.addImageGroup('toolbarLeft', this.imgMgr.get('toolbar'),
+                    bg = this.btnMgr.addImageGroup('toolbarLeft', this.imgMgr.get('toolbarLeft'),
 							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
 					dlg = new Delegate(this, function() {
-						var lbl = this.state.config['label'];
-						this.setAntLabels((lbl + 1) % 3);
-						this.director.draw();
-					});
-					bg.addButton(5, dlg,
-							'toggles: 1. player letters on ants, 2. global ids on ants');
+							
+						});
+					bg.addButton(0, dlg, 'toggles: 1. cells as rectangles, 2. cells as circles');
                     
 					if (this.state.replay.hasDuration) {
 						bg = this.btnMgr.addImageGroup('playback', this.imgMgr.get('playback'),
@@ -638,7 +636,7 @@ Visualizer.prototype.tryStart = function() {
 						bg.addButton(2, dlg, 'jump to end of the last turn');
 					}
 
-					bg = this.btnMgr.addImageGroup('toolbar', this.imgMgr.get('toolbar'),
+					bg = this.btnMgr.addImageGroup('toolbarRight', this.imgMgr.get('toolbarRight'),
 							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
 					if (this.state.config.hasLocalStorage()) {
@@ -819,7 +817,7 @@ Visualizer.prototype.centerMap = function() {
 	this.state.shiftX = this.mapCenterX;
 	this.state.shiftY = this.mapCenterY;
 	if (this.state.options['decorated']) {
-		var btn = this.btnMgr.groups['toolbar'].getButton(4);
+		var btn = this.btnMgr.groups['toolbarRight'].getButton(4);
 		btn.enabled = false;
 		btn.draw();
 	}
@@ -922,9 +920,9 @@ Visualizer.prototype.calculateReplaySpeed = function() {
 	};
 	if (this.state.options['interactive'] && this.state.options['decorated']
 			&& this.state.replay.hasDuration) {
-		var speedUpBtn = this.btnMgr.groups['toolbar'].getButton(6);
+		var speedUpBtn = this.btnMgr.groups['toolbarRight'].getButton(6);
 		speedUpBtn.hint = hintText(this.state.config['speedFactor'] + 1);
-		var slowDownBtn = this.btnMgr.groups['toolbar'].getButton(7);
+		var slowDownBtn = this.btnMgr.groups['toolbarRight'].getButton(7);
 		slowDownBtn.hint = hintText(this.state.config['speedFactor'] - 1);
 	}
 };
@@ -1021,10 +1019,10 @@ Visualizer.prototype.setZoom = function(zoom) {
 	this.map.y = (((this.shiftedMap.h - this.map.h) >> 1) + this.shiftedMap.y) | 0;
 	this.antsMap.setSize(this.map.w, this.map.h);
 	if (this.state.options['interactive'] && this.state.options['decorated']) {
-		var zoomInBtn = this.btnMgr.groups['toolbar'].getButton(2);
+		var zoomInBtn = this.btnMgr.groups['toolbarRight'].getButton(2);
 		zoomInBtn.enabled = !(this.state.scale === ZOOM_SCALE);
 		zoomInBtn.draw();
-		var zoomOutBtn = this.btnMgr.groups['toolbar'].getButton(3);
+		var zoomOutBtn = this.btnMgr.groups['toolbarRight'].getButton(3);
 		zoomOutBtn.enabled = !(effectiveZoom === 1);
 		zoomOutBtn.draw();
 	}
@@ -1124,7 +1122,7 @@ Visualizer.prototype.resize = function(forced) {
 				this.shiftedMap.y = y;
 				this.shiftedMap.setSize(newSize.w - RIGHT_PANEL_W, newSize.h - y);
 			}
-			bg = this.btnMgr.groups['toolbar'];
+			bg = this.btnMgr.groups['toolbarRight'];
 			bg.x = this.shiftedMap.x + this.shiftedMap.w;
 			bg.y = this.shiftedMap.y + 8;
 			// set button group extents
@@ -1134,7 +1132,7 @@ Visualizer.prototype.resize = function(forced) {
 				bg = this.btnMgr.groups['playback'];
 				bg.w = this.shiftedMap.x + this.shiftedMap.w - bg.x;
 			}
-			bg = this.btnMgr.groups['toolbar'];
+			bg = this.btnMgr.groups['toolbarRight'];
 			bg.h = newSize.h - this.shiftedMap.y - 8;
 		} else {
 			this.shiftedMap.x = 0;
@@ -1295,7 +1293,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 						* this.state.scale;
 			}
 			if (this.state.options['decorated']) {
-				var centerBtn = this.btnMgr.groups['toolbar'].getButton(4);
+				var centerBtn = this.btnMgr.groups['toolbarRight'].getButton(4);
 				centerBtn.enabled = this.state.shiftX !== 0 || this.state.shiftY !== 0;
 				centerBtn.draw();
 			}
