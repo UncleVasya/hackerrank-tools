@@ -238,6 +238,8 @@ function CanvasElementAntsMap(state, map) {
 	this.drawStates = new Object();
 	this.pairing = [];
 	this.scale = 1;
+    this.label = 0;
+    this.cellShape = 0;
 	this.mouseOverVis = false;
 }
 CanvasElementAntsMap.extend(CanvasElement);
@@ -252,12 +254,16 @@ CanvasElementAntsMap.extend(CanvasElement);
 CanvasElementAntsMap.prototype.checkState = function() {
 	var i, k, kf, p_i, p_k, dx, dy, rows, cols, ar, owner;
 	var hash = undefined;
-	var timeChanged = this.time !== this.state.time;
-	if (timeChanged || this.scale !== this.state.scale || this.label !== this.state.config['label']) {
+	if (this.time !== this.state.time 
+        || this.scale !== this.state.scale 
+        || this.label !== this.state.config['label']
+        || this.cellShape !== this.state.config['cellShape']) 
+    {
 		this.invalid = true;
 		this.time = this.state.time;
 		this.scale = this.state.scale;
 		this.label = this.state.config['label'];
+        this.cellShape = this.state.config['cellShape'];
 
 		// per turn calculations
 		if (this.turn !== (this.time | 0)) {
