@@ -195,9 +195,9 @@ function Replay(replay, debug, highlightUser) {
             
             this.duration = cells.length;
             
-            // initialize cells dying turns with value beyond game length
+            // initialize cells dying turn
             for (n = 0; n < cells.length; n++) {
-                cells[n][4] = this.duration + 1;
+                cells[n][4] = -1;
             }
                 
             // simulate universe
@@ -424,7 +424,7 @@ Replay.prototype.getTurn = function(n) {
 				// end of life
 				this.killCell(aniCell, dead);
 			}
-			if (n < dead) {
+			if (dead > n || dead < 0) {
 				// assign cell to display list
 				turn.push(aniCell);
 			}
