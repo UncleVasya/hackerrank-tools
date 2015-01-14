@@ -594,104 +594,11 @@ Visualizer.prototype.tryStart = function() {
 			// add static buttons
 			if (this.state.options['interactive']) {
 				if (!this.btnMgr.groups['playback']) {
-                    bg = this.btnMgr.addImageGroup('toolbarLeft', this.imgMgr.get('toolbarLeft'),
-							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
-
-					dlg = new Delegate(this, function() {
-						var shape = this.state.config['cellShape'];
-                        this.state.config['cellShape'] = (shape + 1) % 2;
-						this.director.draw();
-					});
-					bg.addButton(0, dlg, 'toggles: 1. cells as rectangles, 2. cells as circles');
-                    
 					if (this.state.replay.hasDuration) {
-						bg = this.btnMgr.addImageGroup('playback', this.imgMgr.get('playback'),
-								ImageButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2, 0);
-
-						dlg = new Delegate(this, function() {
-							this.director.gotoTick(0);
-						});
-						bg.addButton(3, dlg, 'jump to start of first turn');
-						bg.addSpace(32);
-
-						dlg = new Delegate(this, function() {
-							var stop = Math.ceil(this.state.time) - 1;
-							this.director.slowmoTo(stop);
-						});
-						bg.addButton(5, dlg, 'play one move/attack phase backwards');
-						bg.addSpace(64);
-
-						dlg = new Delegate(this.director, this.director.playStop);
-						bg.addButton(4, dlg, 'play/stop the game');
-						bg.addSpace(64);
-
-						dlg = new Delegate(this, function() {
-							var stop = Math.floor(this.state.time + 1);
-							this.director.slowmoTo(stop);
-						});
-						bg.addButton(6, dlg, 'play one move/attack phase');
-						bg.addSpace(32);
-
-						dlg = new Delegate(this, function() {
-							this.director.gotoTick(this.director.duration);
-						});
-						bg.addButton(2, dlg, 'jump to end of the last turn');
+						this.addPlaybackPanel();
 					}
-
-					bg = this.btnMgr.addImageGroup('toolbarRight', this.imgMgr.get('toolbarRight'),
-							ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
-
-					if (this.state.config.hasLocalStorage()) {
-						dlg = new Delegate(this, function() {
-							this.state.config.save();
-						});
-						bg.addButton(0, dlg, 'save and reuse the current settings');
-					}
-
-					if (!this.state.options['embedded']) {
-						dlg = new Delegate(this, function() {
-							var fs = this.state.config['fullscreen'];
-							this.setFullscreen(!fs);
-						});
-						bg.addButton(1, dlg, 'toggle fullscreen mode');
-					}
-
-					dlg = new Delegate(this, function() {
-						this.setZoom(2 * this.state.config['zoom']);
-						this.director.draw();
-					});
-					bg.addButton(2, dlg, 'zoom in');
-
-					dlg = new Delegate(this, function() {
-						var oldScale = this.state.scale;
-						do {
-							this.setZoom(0.5 * this.state.config['zoom']);
-						} while (this.state.scale === oldScale && this.state.config['zoom'] > 1);
-						this.director.draw();
-					});
-					bg.addButton(3, dlg, 'zoom out');
-
-					dlg = new Delegate(this, this.centerMap);
-					bg.addButton(4, dlg, 'center the map').enabled = false;
-
-					dlg = new Delegate(this, function() {
-						var lbl = this.state.config['label'];
-						this.setAntLabels((lbl + 1) % 3);
-						this.director.draw();
-					});
-					bg.addButton(5, dlg,
-							'toggles: 1. player letters on ants, 2. global ids on ants');
-
-					if (this.state.replay.hasDuration) {
-						dlg = new Delegate(this, this.modifySpeed, [ +1 ]);
-						bg.addButton(6, dlg);
-
-						dlg = new Delegate(this, this.modifySpeed, [ -1 ]);
-						bg.addButton(7, dlg);
-
-						dlg = new Delegate(this, this.generateBotInput);
-						bg.addButton(8, dlg, 'regenerates bot input from this replay');
-					}
+                    this.addLeftPanel();
+                    this.addRightPanel();
 				}
 			}
 		}
@@ -900,6 +807,129 @@ Visualizer.prototype.addPlayerButtons = function() {
 		buttonAdder(this.state.order[i]);
 	}
 	this.updatePlayerButtonText();
+};
+
+/**
+ * Adds panel with buttons to control playback (play, stop, etc).
+ * 
+ * @private
+ */
+Visualizer.prototype.addPlaybackPanel = function() {
+    bg = this.btnMgr.addImageGroup('playback', this.imgMgr.get('playback'),
+    ImageButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2, 0);
+
+    dlg = new Delegate(this, function() {
+        this.director.gotoTick(0);
+    });
+    bg.addButton(3, dlg, 'jump to start of first turn');
+    bg.addSpace(32);
+
+    dlg = new Delegate(this, function() {
+        var stop = Math.ceil(this.state.time) - 1;
+        this.director.slowmoTo(stop);
+    });
+    bg.addButton(5, dlg, 'play one move/attack phase backwards');
+    bg.addSpace(64);
+
+    dlg = new Delegate(this.director, this.director.playStop);
+    bg.addButton(4, dlg, 'play/stop the game');
+    bg.addSpace(64);
+
+    dlg = new Delegate(this, function() {
+        var stop = Math.floor(this.state.time + 1);
+        this.director.slowmoTo(stop);
+    });
+    bg.addButton(6, dlg, 'play one move/attack phase');
+    bg.addSpace(32);
+
+    dlg = new Delegate(this, function() {
+        this.director.gotoTick(this.director.duration);
+    });
+    bg.addButton(2, dlg, 'jump to end of the last turn');
+};
+
+/**
+ * Adds left panel with buttons related to the current game.
+ * 
+ * @private
+ */
+Visualizer.prototype.addLeftPanel = function() {
+    bg = this.btnMgr.addImageGroup('toolbarLeft', this.imgMgr.get('toolbarLeft'),
+    ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
+
+    dlg = new Delegate(this, function() {
+        var shape = this.state.config['cellShape'];
+        this.state.config['cellShape'] = (shape + 1) % 2;
+        this.director.draw();
+    });
+    bg.addButton(0, dlg, 'cell shape: 1. rectangles, 2. circles');
+    
+    dlg = new Delegate(this, function() {
+        var animLevel = this.state.config['animLevel'];
+        this.state.config['animLevel'] = (animLevel + 1) % 3;
+    });
+    bg.addButton(1, dlg, 'animation: 1. none, 2. limited, 3. full');
+};
+
+/**
+ * Adds right panel with buttons common for all games.
+ * 
+ * @private
+ */
+Visualizer.prototype.addRightPanel = function() {
+    bg = this.btnMgr.addImageGroup('toolbarRight', this.imgMgr.get('toolbarRight'),
+    ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
+
+    if (this.state.config.hasLocalStorage()) {
+        dlg = new Delegate(this, function() {
+            this.state.config.save();
+        });
+        bg.addButton(0, dlg, 'save and reuse the current settings');
+    }
+
+    if (!this.state.options['embedded']) {
+        dlg = new Delegate(this, function() {
+            var fs = this.state.config['fullscreen'];
+            this.setFullscreen(!fs);
+        });
+        bg.addButton(1, dlg, 'toggle fullscreen mode');
+    }
+
+    dlg = new Delegate(this, function() {
+        this.setZoom(2 * this.state.config['zoom']);
+        this.director.draw();
+    });
+    bg.addButton(2, dlg, 'zoom in');
+
+    dlg = new Delegate(this, function() {
+        var oldScale = this.state.scale;
+        do {
+            this.setZoom(0.5 * this.state.config['zoom']);
+        } while (this.state.scale === oldScale && this.state.config['zoom'] > 1);
+        this.director.draw();
+    });
+    bg.addButton(3, dlg, 'zoom out');
+
+    dlg = new Delegate(this, this.centerMap);
+    bg.addButton(4, dlg, 'center the map').enabled = false;
+
+    dlg = new Delegate(this, function() {
+        var lbl = this.state.config['label'];
+        this.setAntLabels((lbl + 1) % 3);
+        this.director.draw();
+    });
+    bg.addButton(5, dlg, 'toggles: 1. player letters on ants, 2. global ids on ants');
+
+    if (this.state.replay.hasDuration) {
+        dlg = new Delegate(this, this.modifySpeed, [ +1 ]);
+        bg.addButton(6, dlg);
+
+        dlg = new Delegate(this, this.modifySpeed, [ -1 ]);
+        bg.addButton(7, dlg);
+
+        dlg = new Delegate(this, this.generateBotInput);
+        bg.addButton(8, dlg, 'regenerates bot input from this replay');
+    }
 };
 
 /**

@@ -308,11 +308,11 @@ Director.prototype.loop = function(delay) {
     var levels = this.vis.state.config['ANIM_LEVELS'];
     var draw = false;
     switch (animLevel) {
-        case levels['FULL']:
-            draw = true;
-            break;
         case levels['LIMITED']:
             draw = this.vis.isGamingPhase(this.time) || this.inSlowMo;
+            break;
+        case levels['FULL']:
+            draw = true;
             break;
     }
     this.vis.state.time = Math.clamp(this.time, 0, this.duration);
