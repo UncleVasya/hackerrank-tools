@@ -732,7 +732,7 @@ CanvasElementStats.prototype.draw = function(resized) {
 		this.ctx.fillStyle = TEXT_GRAPH_COLOR;
 		this.ctx.drawImage(this.graph.canvas, 2, 30);
 		// time indicator
-		x = 4.5 + (this.graph.w - 1) * this.time / this.graph.duration;
+		x = (this.graph.w - 1) * this.time / this.graph.duration;
 		this.ctx.lineWidth = 1;
 		this.ctx.beginPath();
 		this.ctx.moveTo(x, 32.5);
