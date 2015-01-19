@@ -556,8 +556,18 @@ CanvasElementGraph.prototype.draw = function() {
 	this.ctx.moveTo(0.5 + 0, h + 0.5);
 	this.ctx.lineTo(0.5 + scaleX * (this.duration + 1), h + 0.5);
 	this.ctx.stroke();
-	scaleY = h / (max - min);
-
+    
+    // draw game phaze divider
+    // TODO: 80 is Simulator.game_phase_duration
+    x = scaleX * 80 - scaleX;
+    this.ctx.lineWidth = 1;
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, 0);
+    this.ctx.lineTo(x, 32.5 + h);
+    this.ctx.strokeStyle = '#DF0101'; // red
+    this.ctx.stroke();
+    
+    scaleY = h / (max - min);
 	// time line
 	this.ctx.textAlign = 'left';
 	for (i = values[0].length - 1; i >= 0; i--) {
