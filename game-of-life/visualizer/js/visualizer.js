@@ -6,6 +6,7 @@
 
 $import('Util');
 $import('Cell');
+$import('Visu');
 $import('Application');
 $import('Buttons');
 $import('Config');

@@ -19,7 +19,7 @@ function Director(vis) {
 	this.defaultSpeed = 1;
 	this.stopAt = undefined;
     this.inSlowMo = false;
-	this.cpu = vis.state.config['cpu'];
+	this.cpu = vis.app.state.config['cpu'];
 	this.onstate = undefined;
 	this.timeout = undefined;
 	this.frameCounter = 0;
@@ -51,7 +51,7 @@ Director.prototype.playStop = function() {
 Director.prototype.play = function() {
 	if (!this.playing()) {
 		this.speed = this.defaultSpeed;
-		if (this.vis.state.options['loop']) {
+		if (this.vis.app.state.options['loop']) {
 			this.stopAt = undefined;
 		} else {
 			if (this.time === this.duration) {
@@ -61,7 +61,7 @@ Director.prototype.play = function() {
 		}
 		if (this.onstate) this.onstate();
 		this.loop(0);
-		if (this.vis.state.options['profile']) console.profile();
+		if (this.vis.app.state.options['profile']) console.profile();
 	}
 };
 
@@ -71,7 +71,7 @@ Director.prototype.play = function() {
  */
 Director.prototype.stop = function() {
 	if (this.playing()) {
-		if (this.vis.state.options['profile']) console.profileEnd();
+		if (this.vis.app.state.options['profile']) console.profileEnd();
 		this.speed = 0;
 		this.lastTime = undefined;
         this.inSlowMo = false;
@@ -271,7 +271,7 @@ Director.prototype.loop = function(delay) {
 		if (lastTime !== undefined) {
 			cpuTime = this.lastTime - lastTime - delay;
             var timeStep = (this.lastTime - lastTime) * this.speed * 0.001;
-            if (this.vis.state.options['loop']) {
+            if (this.vis.app.state.options['loop']) {
                 var vals = this.fixSpeedForFade(timeStep, lastTime);
                 timeStep = vals.timeStep;
                 lastTime = vals.lastTime;
@@ -298,18 +298,18 @@ Director.prototype.loop = function(delay) {
 		}
 	}
 	// check for fade out color
-	if (this.vis.state.options['loop'] && (this.time < 0 || this.time > this.duration)) {
+	if (this.vis.app.state.options['loop'] && (this.time < 0 || this.time > this.duration)) {
 		this.vis.state.fade = this.getFadeColor();
 	} else {
 		this.vis.state.fade = undefined;
 	}
     // check if we are going to draw this frame (animation may be turned off) 
-    var animLevel = this.vis.state.config['animLevel'];
-    var levels = this.vis.state.config['ANIM_LEVELS'];
+    var animLevel = this.vis.app.state.config['animLevel'];
+    var levels = this.vis.app.state.config['ANIM_LEVELS'];
     var draw = false;
     switch (animLevel) {
         case levels['LIMITED']:
-            draw = this.vis.isGamingPhase(this.time) || this.inSlowMo;
+            draw = this.vis.app.isGamingPhase(this.time) || this.inSlowMo;
             break;
         case levels['FULL']:
             draw = true;
@@ -322,7 +322,7 @@ Director.prototype.loop = function(delay) {
     }
 	this.vis.draw();
 	if (goOn) {
-        if (this.vis.state.options['debug']) {
+        if (this.vis.app.state.options['debug']) {
             if (this.fixedFpt === undefined && cpuTime !== undefined) {
                 this.doFpsStuff(lastTime, cpuTime);
             }

@@ -20,7 +20,7 @@ INT_TO_HEX = new Array(256);
  * 
  * @const
  */
-var LEFT_PANEL_W = 48;
+LEFT_PANEL_W = 48;
 /**
  * width of right side panel
  * 
@@ -111,7 +111,7 @@ BACK_COLOR = rgb_to_hex(hsl_to_rgb([ 30, 30, 100 ]));
  * 
  * @const
  */
-ZOOM_SCALE = 20;
+ZOOM_SCALE = 60;
 
 /**
  * The standard font in the visualizer. Be careful here, because my implementation of font string

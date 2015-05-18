@@ -55,7 +55,7 @@ LoadingState = {
 Visualizer = function(container, options, w, h, configOverrides) {
 	var parameters, equalPos, value, i, text, imgDir;
 	var key = undefined;
-	var vis = this;
+	var app = this;
 	/** @private */
 	this.loading = LoadingState.LOADING;
 	/*
@@ -74,16 +74,6 @@ Visualizer = function(container, options, w, h, configOverrides) {
 	try {
 		/** @private */
 		this.state = new State();
-		/** @private */
-		this.map = new CanvasElementMap(this.state);
-		/** @private */
-		this.antsMap = new CanvasElementAntsMap(this.state, this.map);
-		/** @private */
-		this.shiftedMap = new CanvasElementShiftedMap(this.state, this.antsMap);
-		/** @private */
-		this.miniMap = new CanvasElementMiniMap(this.state);
-		/** @private */
-		this.turns = undefined;
 		/** @private */
 		this.w = w;
 		/** @private */
@@ -150,21 +140,17 @@ Visualizer = function(container, options, w, h, configOverrides) {
             this.imgMgr.add('toolbarRight.png', 'toolbarRight');
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
-			/** @private */
-			this.counts = new CanvasElementStats(this.state, '# of cells', 'counts', '500 steps');
 		}
-		/** @private */
-		this.director = new Director(this);
+        /** @private */
+		this.vis = new Visu(this);
+        /** @private */
+        this.helperVis = new Visu(this);
 		/** @private */
 		this.mouseX = -1;
 		/** @private */
 		this.mouseY = -1;
 		/** @private */
 		this.mouseDown = 0;
-		/** @private */
-		this.mapCenterX = 0;
-		/** @private */
-		this.mapCenterY = 0;
 		/** @private */
 		this.progressList = [];
 
@@ -173,8 +159,8 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		text += Html.table(function() {
 			var table = '';
 			var key = undefined;
-			for (key in vis.options) {
-				var value = vis.options[key];
+			for (key in app.options) {
+				var value = app.options[key];
 				table += Html.tr(function() {
 					return Html.td(function() {
 						return Html.bold(key);
@@ -199,12 +185,6 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		 * @private
 		 */
 		this.main = {};
-		/**
-		 * a hint text overlay
-		 * 
-		 * @private
-		 */
-		this.hint = '';
 
 		// start loading images in the background and wait
 		this.loading = LoadingState.IDLE;
@@ -214,6 +194,7 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		throw error;
 	}
 };
+
 
 /**
  * Prints a message on the screen and then executes a function. Usually the screen is not updated
@@ -344,9 +325,10 @@ Visualizer.prototype.cleanUp = function() {
 	this.loading = LoadingState.CLEANUP;
 	if (this.replayReq) this.replayReq.abort();
 	if (this.state.options['decorated']) {
-		this.imgMgr.cleanUp();
-	}
-	this.director.cleanUp();
+        this.imgMgr.cleanUp();
+    }
+    this.vis.cleanUp();
+    this.helperVis.cleanUp();
 	this.state.cleanUp();
 	this.replayStr = undefined;
 	this.replayReq = undefined;
@@ -454,20 +436,21 @@ Visualizer.prototype.streamingStart = function() {
 	if (this.loading === LoadingState.LOADING) {
 		if (this.state.replay.hasDuration) {
 			// set CPU to 100%, we need it
-			this.director.cpu = 1;
+			this.vis.director.cpu = 1;
 			this.loadCanvas();
 		}
 	} else {
 		// call resize() in forced mode to update the GUI (graphs)
 		this.resize(true);
 		// resume playback if we are at the end
-		resume = !this.director.playing() && (this.state.time === this.director.duration);
-		if (this.director.stopAt === this.director.duration) {
-			this.director.stopAt = this.state.replay.duration;
+		resume = !this.vis.director.playing() && (this.vis.state.time === this.vis.director.duration);
+		if (this.vis.director.stopAt === this.vis.director.duration) {
+			this.vis.director.stopAt = this.state.replay.duration;
 		}
-		this.director.duration = this.state.replay.duration;
+		this.vis.director.duration = this.state.replay.duration;
+        this.helperVis.director.duration = this.state.replay.duration;
 		if (resume) {
-			this.director.play();
+			this.vis.director.play();
 		}
 	}
 };
@@ -479,7 +462,7 @@ Visualizer.prototype.streamingStart = function() {
  *        fpt the number of frames per turn
  */
 Visualizer.prototype.javaVideoOutput = function(fpt) {
-	this.director.fixedFpt = fpt;
+	this.vis.director.fixedFpt = fpt;
 };
 
 /**
@@ -593,30 +576,13 @@ Visualizer.prototype.tryStart = function() {
 			}
 			// add static buttons
 			if (this.state.options['interactive']) {
-				if (!this.btnMgr.groups['playback']) {
-					if (this.state.replay.hasDuration) {
-						this.addPlaybackPanel();
-					}
-                    this.addLeftPanel();
-                    this.addRightPanel();
-				}
-			}
+                this.addLeftPanel();
+                this.addRightPanel();
+            }
 		}
-		// calculate speed from duration and config settings
-		this.director.duration = this.state.replay.duration;
-		this.calculateReplaySpeed();
+        this.vis.init();
+        this.helperVis.init();
 		if (this.state.options['interactive']) {
-			if (this.state.options['decorated']) {
-				this.director.onstate = function() {
-					var btn = vis.btnMgr.groups['playback'].buttons[4];
-					btn.offset = (vis.director.playing() ? 7 : 4) * vis.imgMgr.get('playback').height;
-					if (btn === vis.btnMgr.pinned) {
-						vis.btnMgr.pinned = null;
-					}
-					btn.down = 0;
-					btn.draw();
-				};
-			}
 			// this will fire once in FireFox when a key is held down
 			/**
 			 * @ignore
@@ -700,11 +666,15 @@ Visualizer.prototype.tryStart = function() {
 		window.onresize = function() {
 			vis.resize();
 		};
+        this.setSpeedButtonsHints();
+        this.setZoomButtonsState();
 		Visualizer.focused = this;
 		// move to a specific row and col
 		this.calculateMapCenter(ZOOM_SCALE);
-		this.state.shiftX = this.mapCenterX;
-		this.state.shiftY = this.mapCenterY;
+		this.vis.state.shiftX = this.mapCenterX; //TODO: find a better place for this
+		this.vis.state.shiftY = this.mapCenterY;
+        this.helperVis.state.shiftX = this.mapCenterX; //TODO: find a better place for this
+		this.helperVis.state.shiftY = this.mapCenterY;
 
 		this.log.style.display = 'none';
 		this.main.canvas.style.display = 'inline';
@@ -712,9 +682,11 @@ Visualizer.prototype.tryStart = function() {
 		this.setFullscreen(this.state.config['fullscreen']);
 		if (this.state.replay.hasDuration) {
 			if (!isNaN(this.state.options['turn'])) {
-				this.director.gotoTick(this.state.options['turn'] - 1);
+				this.vis.director.gotoTick(this.state.options['turn'] - 1);
+                this.helperVis.director.gotoTick(this.state.options['turn'] - 1);
 			} else {
-				this.director.play();
+				this.vis.director.play();
+                this.helperVis.director.play();
 			}
 		}
 	} else if (this.replayStr) {
@@ -723,8 +695,10 @@ Visualizer.prototype.tryStart = function() {
 };
 
 Visualizer.prototype.centerMap = function() {
-	this.state.shiftX = this.mapCenterX;
-	this.state.shiftY = this.mapCenterY;
+	this.vis.state.shiftX = this.mapCenterX;
+	this.vis.state.shiftY = this.mapCenterY;
+    this.helperVis.state.shiftX = this.mapCenterX;
+	this.helperVis.state.shiftY = this.mapCenterY;
 	if (this.state.options['decorated']) {
 		var btn = this.btnMgr.groups['toolbarRight'].getButton(4);
 		btn.enabled = false;
@@ -742,7 +716,22 @@ Visualizer.prototype.centerMap = function() {
  */
 Visualizer.prototype.modifySpeed = function(modifier) {
 	this.state.config['speedFactor'] += modifier;
-	this.calculateReplaySpeed();
+	this.vis.calculateReplaySpeed();
+    this.setSpeedButtonsHints();
+};
+
+Visualizer.prototype.setSpeedButtonsHints = function() {
+    var hintText = function(base) {
+		return 'set speed modifier to ' + ((base > 0) ? '+' + base : base);
+	};
+    var state = this.state;
+    if (state.options['interactive'] && state.options['decorated']
+			&& state.replay.hasDuration) {
+		var speedUpBtn = this.btnMgr.groups['toolbarRight'].getButton(6);
+		speedUpBtn.hint = hintText(state.config['speedFactor'] + 1);
+		var slowDownBtn = this.btnMgr.groups['toolbarRight'].getButton(7);
+		slowDownBtn.hint = hintText(state.config['speedFactor'] - 1);
+	}
 };
 
 /**
@@ -809,44 +798,6 @@ Visualizer.prototype.addPlayerButtons = function() {
 	this.updatePlayerButtonText();
 };
 
-/**
- * Adds panel with buttons to control playback (play, stop, etc).
- * 
- * @private
- */
-Visualizer.prototype.addPlaybackPanel = function() {
-    bg = this.btnMgr.addImageGroup('playback', this.imgMgr.get('playback'),
-    ImageButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2, 0);
-
-    dlg = new Delegate(this, function() {
-        this.director.gotoTick(0);
-    });
-    bg.addButton(3, dlg, 'jump to start of first turn');
-    bg.addSpace(32);
-
-    dlg = new Delegate(this, function() {
-        var stop = Math.ceil(this.state.time) - 1;
-        this.director.slowmoTo(stop);
-    });
-    bg.addButton(5, dlg, 'play one move/attack phase backwards');
-    bg.addSpace(64);
-
-    dlg = new Delegate(this.director, this.director.playStop);
-    bg.addButton(4, dlg, 'play/stop the game');
-    bg.addSpace(64);
-
-    dlg = new Delegate(this, function() {
-        var stop = Math.floor(this.state.time + 1);
-        this.director.slowmoTo(stop);
-    });
-    bg.addButton(6, dlg, 'play one move/attack phase');
-    bg.addSpace(32);
-
-    dlg = new Delegate(this, function() {
-        this.director.gotoTick(this.director.duration);
-    });
-    bg.addButton(2, dlg, 'jump to end of the last turn');
-};
 
 /**
  * Adds left panel with buttons related to the current game.
@@ -860,7 +811,8 @@ Visualizer.prototype.addLeftPanel = function() {
     dlg = new Delegate(this, function() {
         var shape = this.state.config['cellShape'];
         this.state.config['cellShape'] = (shape + 1) % 2;
-        this.director.draw();
+        this.vis.director.draw();
+        this.helperVis.director.draw();
     });
     bg.addButton(0, dlg, 'cell shape: 1. rectangles, 2. circles');
     
@@ -897,7 +849,7 @@ Visualizer.prototype.addRightPanel = function() {
 
     dlg = new Delegate(this, function() {
         this.setZoom(2 * this.state.config['zoom']);
-        this.director.draw();
+
     });
     bg.addButton(2, dlg, 'zoom in');
 
@@ -906,7 +858,6 @@ Visualizer.prototype.addRightPanel = function() {
         do {
             this.setZoom(0.5 * this.state.config['zoom']);
         } while (this.state.scale === oldScale && this.state.config['zoom'] > 1);
-        this.director.draw();
     });
     bg.addButton(3, dlg, 'zoom out');
 
@@ -916,7 +867,6 @@ Visualizer.prototype.addRightPanel = function() {
     dlg = new Delegate(this, function() {
         var lbl = this.state.config['label'];
         this.setAntLabels((lbl + 1) % 3);
-        this.director.draw();
     });
     bg.addButton(5, dlg, 'toggles: 1. player letters on ants, 2. global ids on ants');
 
@@ -932,32 +882,6 @@ Visualizer.prototype.addRightPanel = function() {
     }
 };
 
-/**
- * This calculates the playback speed from the configuration values {@link Config#duration},
- * {@link Config#speedSlowest}, {@link Config#speedFastest} and {@link Config#speedFactor}. The
- * latter can be controlled by the speed buttons.
- * 
- * @private
- */
-Visualizer.prototype.calculateReplaySpeed = function() {
-	var speed = this.director.duration / this.state.config['duration'];
-	speed = Math.max(speed, this.state.config['speedSlowest']);
-	speed = Math.min(speed, this.state.config['speedFastest']);
-	this.director.defaultSpeed = speed * Math.pow(1.5, this.state.config['speedFactor']);
-	if (this.director.speed !== 0) {
-		this.director.speed = this.director.defaultSpeed;
-	}
-	var hintText = function(base) {
-		return 'set speed modifier to ' + ((base > 0) ? '+' + base : base);
-	};
-	if (this.state.options['interactive'] && this.state.options['decorated']
-			&& this.state.replay.hasDuration) {
-		var speedUpBtn = this.btnMgr.groups['toolbarRight'].getButton(6);
-		speedUpBtn.hint = hintText(this.state.config['speedFactor'] + 1);
-		var slowDownBtn = this.btnMgr.groups['toolbarRight'].getButton(7);
-		slowDownBtn.hint = hintText(this.state.config['speedFactor'] - 1);
-	}
-};
 
 /**
  * Calculates the visualizer display size depending on the constructor arguments and whether
@@ -1012,53 +936,7 @@ Visualizer.prototype.setFullscreen = function(enable) {
 	this.resize(true);
 };
 
-/**
- * Sets a new map zoom. At zoom level 1, the map is displayed such that
- * <ul>
- * <li>it has at least a border of 10 pixels on each side</li>
- * <li>map squares are displayed at an integer size</li>
- * <li>map squares are at least 1 pixel in size</li>
- * </ul>
- * This value is then multiplied by the zoom given to this function and ultimately clamped to a
- * range of [1..20].
- * 
- * @private
- * @param zoom
- *        {Number} The new zoom level in pixels. Map squares will be scaled to this value. It will
- *        be clamped to the range [1..20].
- */
-Visualizer.prototype.setZoom = function(zoom) {
-	var oldScale = this.state.scale;
-	var effectiveZoom = Math.max(1, zoom);
-	if (this.director.fixedFpt === undefined) {
-		this.state.config['zoom'] = effectiveZoom;
-		this.state.scale = Math.max(1, Math.min((this.shiftedMap.w - 20) / this.state.replay.cols,
-				(this.shiftedMap.h - 20) / this.state.replay.rows)) | 0;
-		this.state.scale = Math.min(ZOOM_SCALE, this.state.scale * effectiveZoom);
-	} else {
-		this.state.scale = Math.max(1, Math.min(this.shiftedMap.w / this.state.replay.cols,
-				this.shiftedMap.h / this.state.replay.rows)) | 0;
-		this.state.scale = Math.pow(2, (Math.log(this.state.scale) / Math.LN2) | 0);
-	}
-	if (oldScale) {
-		this.state.shiftX = (this.state.shiftX * this.state.scale / oldScale) | 0;
-		this.state.shiftY = (this.state.shiftY * this.state.scale / oldScale) | 0;
-	}
-	this.calculateMapCenter(this.state.scale);
-	this.map.setSize(this.state.scale * this.state.replay.cols, this.state.scale
-			* this.state.replay.rows);
-	this.map.x = (((this.shiftedMap.w - this.map.w) >> 1) + this.shiftedMap.x) | 0;
-	this.map.y = (((this.shiftedMap.h - this.map.h) >> 1) + this.shiftedMap.y) | 0;
-	this.antsMap.setSize(this.map.w, this.map.h);
-	if (this.state.options['interactive'] && this.state.options['decorated']) {
-		var zoomInBtn = this.btnMgr.groups['toolbarRight'].getButton(2);
-		zoomInBtn.enabled = !(this.state.scale === ZOOM_SCALE);
-		zoomInBtn.draw();
-		var zoomOutBtn = this.btnMgr.groups['toolbarRight'].getButton(3);
-		zoomOutBtn.enabled = !(effectiveZoom === 1);
-		zoomOutBtn.draw();
-	}
-};
+
 
 /**
  * Sets the ant label display mode to a new value.
@@ -1076,7 +954,10 @@ Visualizer.prototype.setAntLabels = function(mode) {
 		this.main.ctx.fillStyle = '#fff';
 		this.main.ctx.fillRect(0, 0, this.main.canvas.width, this.main.canvas.height);
 		this.resize(true);
-	}
+	} else {
+        this.vis.director.draw();
+        this.helperVis.director.draw();
+    }
 };
 
 /**
@@ -1100,7 +981,7 @@ Visualizer.prototype.updatePlayerButtonText = function() {
 };
 
 /**
- * Called upon window size changes to layout the visualizer elements.
+ * Called upon window size changes to layout the application main elements.
  * 
  * @private
  * @param forced
@@ -1108,7 +989,7 @@ Visualizer.prototype.updatePlayerButtonText = function() {
  *        detected. This is useful on startup or if the canvas content has been invalidated.
  */
 Visualizer.prototype.resize = function(forced) {
-	var y, w;
+	var y;
 	var olds = new Size(this.main.canvas.width, this.main.canvas.height);
 	var newSize = this.calculateCanvasSize();
 	var resizing = newSize.w != olds.w || newSize.h != olds.h;
@@ -1123,164 +1004,124 @@ Visualizer.prototype.resize = function(forced) {
 		}
 		this.resizing = true;
 		if (this.state.replay.hasDuration && this.state.options['decorated']) {
-			// 1. player buttons
 			y = this.btnMgr.groups['players'].cascade(newSize.w) + 4;
-			// 2. time line
-			this.counts.x = 0;
-			this.counts.y = y;
-			this.counts.setSize(newSize.w, CanvasElementStats.MAX_HEIGHT);
-			y = this.counts.y + this.counts.h;
 		} else {
 			y = 0;
 		}
-		// 3. visualizer placement
 		if (this.state.options['interactive'] && this.state.options['decorated']) {
-			if (this.state.replay.hasDuration) {
-				this.shiftedMap.x = LEFT_PANEL_W;
-				this.shiftedMap.y = y;
-				this.shiftedMap.setSize(newSize.w - LEFT_PANEL_W - RIGHT_PANEL_W, newSize.h - y
-						- BOTTOM_PANEL_H);
-				// playback buttons are center, unless they would exceed the right border of the map
-				var bg = this.btnMgr.groups['playback'];
-				w = 8 * 64;
-				bg.x = ((newSize.w - w) / 2) | 0;
-				bg.x = Math.min(bg.x, this.shiftedMap.x + this.shiftedMap.w - w);
-				bg.x = Math.max(bg.x, 0);
-				bg.y = this.shiftedMap.y + this.shiftedMap.h;
-                bg = this.btnMgr.groups['toolbarLeft'];
-				bg.y = this.shiftedMap.y + 8;
-			} else {
-				this.shiftedMap.x = 0;
-				this.shiftedMap.y = y;
-				this.shiftedMap.setSize(newSize.w - RIGHT_PANEL_W, newSize.h - y);
-			}
-			bg = this.btnMgr.groups['toolbarRight'];
-			bg.x = this.shiftedMap.x + this.shiftedMap.w;
-			bg.y = this.shiftedMap.y + 8;
-			// set button group extents
-			if (this.state.replay.hasDuration) {
-                bg = this.btnMgr.groups['toolbarLeft'];
-				bg.h = newSize.h - this.shiftedMap.y - 8;
-				bg = this.btnMgr.groups['playback'];
-				bg.w = this.shiftedMap.x + this.shiftedMap.w - bg.x;
-			}
-			bg = this.btnMgr.groups['toolbarRight'];
-			bg.h = newSize.h - this.shiftedMap.y - 8;
-		} else {
-			this.shiftedMap.x = 0;
-			this.shiftedMap.y = y;
-			this.shiftedMap.setSize(newSize.w, newSize.h - y);
+            var bg = this.btnMgr.groups['toolbarLeft'];
+            bg.x = 0;
+			bg.y = y + CanvasElementStats.MAX_HEIGHT + 8;
+            bg.h = newSize.h - bg.y;
+
+            bg = this.btnMgr.groups['toolbarRight'];
+			bg.x = newSize.w - RIGHT_PANEL_W;
+			bg.y = y + CanvasElementStats.MAX_HEIGHT + 8;
+            bg.h = newSize.h - bg.y;
 		}
-		this.setZoom(this.state.config['zoom']);
-		this.miniMap.x = this.shiftedMap.x + this.shiftedMap.w - 2 - this.state.replay.cols,
-				this.miniMap.y = this.shiftedMap.y + 2;
-		this.miniMap.setSize(this.state.replay.cols, this.state.replay.rows);
-		// redraw everything
-		if (this.state.options['decorated']) this.btnMgr.draw();
-		this.director.draw(true);
-		this.resizing = false;
+		// redraw button panels
+		if (this.state.options['decorated']) {
+            this.btnMgr.draw();
+        }
+
+        this.updateHint();
+
+        this.vis.x = 0;
+        this.vis.y = y;
+        this.vis.w = newSize.w / 2 - 10;
+        //this.vis.w = newSize.w;
+        this.vis.h = newSize.h - y;
+
+        this.helperVis.x = newSize.w / 2 + 10;
+        this.helperVis.y = y;
+        this.helperVis.w = newSize.w / 2 - 10;
+        this.helperVis.h = newSize.h - y;
+
+        this.vis.resize();
+        this.helperVis.resize();
+
+        this.resizing = false;
 	}
 };
 
-/**
- * Redraws the map display and it's overlays. It is called by the {@link Director} and resembles the
- * core of the visualization.
- */
-Visualizer.prototype.draw = function() {
-	var ctx, w, h, mx, my, x, y;
-	var loc = this.shiftedMap;
+Visualizer.prototype.setZoom = function(zoom) {
+    zoom = Math.max(1, zoom);
+    if (this.vis.director.fixedFpt === undefined) {
+        this.state.config['zoom'] = zoom;
+    }
 
-	// map
-	this.shiftedMap.validate();
-	this.main.ctx.drawImage(this.shiftedMap.canvas, loc.x, loc.y);
+    this.vis.setZoom(zoom);
+    this.vis.director.draw();
 
-	// mouse cursor (super complicated position calculation)
-	ctx = this.main.ctx;
-	if (this.state.mouseOverVis) {
-		ctx.save();
-		ctx.beginPath();
-		ctx.rect(loc.x, loc.y, loc.w, loc.h);
-		ctx.clip();
-		mx = this.mouseX - this.map.x - this.state.shiftX;
-		my = this.mouseY - this.map.y - this.state.shiftY;
-		mx = Math.floor(mx / this.state.scale) * this.state.scale + this.map.x + this.state.shiftX;
-		my = Math.floor(my / this.state.scale) * this.state.scale + this.map.y + this.state.shiftY;
-		ctx.strokeStyle = '#0';
-		ctx.beginPath();
-		ctx.rect(mx + 0.5, my + 0.5, this.state.scale - 1, this.state.scale - 1);
-		ctx.stroke();
-		ctx.restore();
-	}
+    this.helperVis.setZoom(zoom);
+    this.helperVis.director.draw();
 
-	// minimap
-	if (this.state.config['zoom'] !== 1 && this.miniMap.h + 4 <= loc.h
-			&& this.miniMap.w + 4 <= loc.w) {
-		this.miniMap.validate();
-		ctx.save();
-		// border
-		ctx.strokeStyle = '#fff';
-		ctx.lineWidth = 2;
-		ctx.beginPath();
-		ctx.rect(this.miniMap.x - 1, this.miniMap.y - 1, this.miniMap.w + 2, this.miniMap.h + 2);
-		ctx.stroke();
-		// map
-		ctx.drawImage(this.miniMap.canvas, this.miniMap.x, this.miniMap.y);
-		// position indicator
-		ctx.beginPath();
-		ctx.rect(this.miniMap.x, this.miniMap.y, this.miniMap.w, this.miniMap.h);
-		ctx.clip();
-		w = loc.w / this.state.scale;
-		h = loc.h / this.state.scale;
-		x = this.state.replay.cols / 2 - this.state.shiftX / this.state.scale - w / 2;
-		y = this.state.replay.rows / 2 - this.state.shiftY / this.state.scale - h / 2;
-		x -= Math.floor(x / this.state.replay.cols) * this.state.replay.cols;
-		y -= Math.floor(y / this.state.replay.rows) * this.state.replay.rows;
-		ctx.beginPath();
-		ctx.rect(this.miniMap.x + x, this.miniMap.y + y, w, h);
-		ctx.rect(this.miniMap.x + x - this.state.replay.cols, this.miniMap.y + y, w, h);
-		ctx.rect(this.miniMap.x + x, this.miniMap.y + y - this.state.replay.rows, w, h);
-		ctx.rect(this.miniMap.x + x - this.state.replay.cols, this.miniMap.y + y
-				- this.state.replay.rows, w, h);
-		ctx.stroke();
-		ctx.restore();
-	}
+    this.setZoomButtonsState();
+};
 
-	if (this.state.replay.hasDuration && this.state.options['decorated']) {
-		if (this.counts.validate() || this.resizing) {
-			ctx.drawImage(this.counts.canvas, this.counts.x, this.counts.y);
-		}
-	}
-
-	// draw hint text
-	var hint = this.hint;
-	if (hint) {
-		ctx.font = FONT;
-		ctx.textAlign = 'left';
-		ctx.textBaseline = 'middle';
-		if (ctx.measureText(hint).width > loc.w) {
-			do {
-				hint = hint.substr(0, hint.length - 1);
-			} while (hint && ctx.measureText(hint + '...').width > loc.w);
-			if (hint) hint += '...';
-		}
-		w = ctx.measureText(hint).width;
-        hint_x = (ctx.canvas.width - w) >> 1;
-		ctx.fillStyle = 'rgba(0,0,0,0.3)';
-		ctx.fillRect(hint_x, loc.y, w, 22);
-		ctx.fillStyle = '#fff';
-		ctx.fillText(hint, hint_x, loc.y + 10);
-	}
-	if (this.state.isStreaming) {
-		// we were able to draw a frame, the engine may send us the next turn
-		var vis = this;
-		window.setTimeout(function() {
-			if (vis.state.isStreaming) vis.streamingStart();
-		}, 0);
-	} else if (this.director.fixedFpt !== undefined) {
-		// store frame
-		video.captureFrame(this.director.time, this.director.duration);
+Visualizer.prototype.setZoomButtonsState = function() {
+    if (this.state.options['interactive'] && this.state.options['decorated']) {
+		var zoomInBtn = this.btnMgr.groups['toolbarRight'].getButton(2);
+		zoomInBtn.enabled = !(this.state.scale === ZOOM_SCALE);
+		zoomInBtn.draw();
+		var zoomOutBtn = this.btnMgr.groups['toolbarRight'].getButton(3);
+		zoomOutBtn.enabled = !(this.state.config['zoom'] === 1);
+		zoomOutBtn.draw();
 	}
 };
+
+Visualizer.prototype.updateHint = function() {
+	var ctx = this.main.ctx;
+    var hint = this.hint;
+
+    ctx.font = FONT;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    if (ctx.measureText(hint).width > ctx.canvas.width) {
+        do {
+            hint = hint.substr(0, hint.length - 1);
+        } while (hint && ctx.measureText(hint + '...').width > ctx.canvas.width);
+        if (hint) hint += '...';
+    }
+    this.hint_w = ctx.measureText(hint).width;
+    this.hint_x = (ctx.canvas.width - this.hint_w) >> 1;
+
+    if (this.helperVis) {
+        // clean up space between visualizers
+        var x = this.vis.x + this.vis.w;
+        var w = this.helperVis.x - x;
+        var hint_y = this.vis.shiftedMap.y;
+        var hint_h = 22;
+
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x, hint_y, w, hint_h);
+
+        // draw hint part between visualizers
+        var hint_part_x = Math.max(this.hint_x, x);
+        var hint_part_w = Math.min(this.hint_w, w);
+
+        this.drawHintPart(hint_part_x, hint_part_w);
+    }
+}
+
+Visualizer.prototype.drawHintPart = function(x, w) {
+    var ctx = this.main.ctx;
+
+    var hint_y = this.vis.shiftedMap.y;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, hint_y, w, hint_y + 22);
+    ctx.clip();
+
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    //ctx.fillStyle = '#000';
+    ctx.fillRect(x, hint_y, w, 22); // TODO: 22 is HINT_HEIGHT
+    ctx.fillStyle = '#fff';
+    ctx.fillText(this.hint, this.hint_x, hint_y + 10); // TODO: 10 is HINT_TEXT_MARGIN
+    ctx.restore();
+}
 
 /**
  * Internal wrapper around mouse move events.
@@ -1294,54 +1135,30 @@ Visualizer.prototype.draw = function() {
  *        visualizer.
  */
 Visualizer.prototype.mouseMoved = function(mx, my) {
-	var tick;
-	var deltaX = mx - this.mouseX;
-	var deltaY = my - this.mouseY;
 	var oldHint = this.hint;
 	var btn = null;
 	this.mouseX = mx;
 	this.mouseY = my;
-	this.state.mouseCol = (mx - this.map.x - this.state.shiftX) / this.state.scale | 0;
-	this.state.mouseRow = (my - this.map.y - this.state.shiftY) / this.state.scale | 0;
 	this.hint = '';
 	if (this.state.options['interactive']) {
-		if ((this.state.mouseOverVis = this.map.contains(this.mouseX, this.mouseY)
-				&& this.shiftedMap.contains(this.mouseX, this.mouseY))) {
-			this.hint = 'row ' + this.state.mouseRow + ' | col ' + this.state.mouseCol;
-		}
-		if (this.mouseDown === 1) {
-			tick = this.mouseX - this.counts.graph.x;
-			tick /= (this.counts.graph.w - 1);
-			tick = Math.round(tick * this.state.replay.duration);
-			this.director.gotoTick(tick);
-		} else if (this.mouseDown === 2
-				|| (this.mouseDown === 3 && this.miniMap.contains(this.mouseX, this.mouseY))) {
-			if (this.mouseDown === 2) {
-				this.state.shiftX += deltaX;
-				this.state.shiftY += deltaY;
-			} else {
-				this.state.shiftX = (this.state.replay.cols / 2 - (this.mouseX - this.miniMap.x))
-						* this.state.scale;
-				this.state.shiftY = (this.state.replay.rows / 2 - (this.mouseY - this.miniMap.y))
-						* this.state.scale;
-			}
-			if (this.state.options['decorated']) {
-				var centerBtn = this.btnMgr.groups['toolbarRight'].getButton(4);
-				centerBtn.enabled = this.state.shiftX !== 0 || this.state.shiftY !== 0;
-				centerBtn.draw();
-			}
-			this.director.draw();
-		} else if (this.state.options['decorated']) {
+        if (this.vis.contains(this.mouseX, this.mouseY)) {
+            this.vis.mouseMoved(mx, my);
+        } else if (this.helperVis.contains(this.mouseX, this.mouseY)) {
+            this.helperVis.mouseMoved(mx, my);
+        }
+        if (this.state.options['decorated']) {
 			btn = this.btnMgr.mouseMove(mx, my);
 		}
 	} else if (this.state.options['decorated']) {
 		btn = this.btnMgr.mouseMove(mx, my);
 	}
 	if (btn && btn.hint) {
-		this.hint = btn.hint;
+        this.hint = btn.hint;
 	}
 	if (oldHint !== this.hint) {
-		this.director.draw();
+        this.updateHint();
+        this.vis.director.draw();
+        this.helperVis.director.draw();
 	}
 };
 
@@ -1352,21 +1169,13 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
  */
 Visualizer.prototype.mousePressed = function() {
 	if (this.state.options['interactive']) {
-		if (this.state.replay.hasDuration
-				&& this.state.options['decorated']
-				&& (this.counts.graph.contains(this.mouseX, this.mouseY) || this.counts.graph
-						.contains(this.mouseX, this.mouseY))) {
-			this.mouseDown = 1;
-		} else if (this.state.config['zoom'] !== 1
-				&& this.miniMap.contains(this.mouseX, this.mouseY)) {
-			this.mouseDown = 3;
-		} else if (this.shiftedMap.contains(this.mouseX, this.mouseY)) {
-			this.mouseDown = 2;
-		} else {
-			this.btnMgr.mouseDown();
-			return;
-		}
-		this.mouseMoved(this.mouseX, this.mouseY);
+		if (this.vis.contains(this.mouseX, this.mouseY)) {
+            this.vis.mousePressed();
+        } else if (this.helperVis.contains(this.mouseX, this.mouseY)) {
+            this.helperVis.mousePressed();
+        }
+		this.btnMgr.mouseDown();
+		this.mouseMoved(this.mouseX, this.mouseY); // TODO: find out why do we need this
 	} else if (this.state.options['decorated']) {
 		// handle game/player links if in non-interactive mode
 		this.btnMgr.mouseDown();
@@ -1383,6 +1192,8 @@ Visualizer.prototype.mouseReleased = function() {
 	if (this.state.options['decorated']) {
 		this.btnMgr.mouseUp();
 	}
+    this.vis.mouseReleased();
+    this.helperVis.mouseReleased();
 	this.mouseMoved(this.mouseX, this.mouseY);
 };
 
@@ -1581,12 +1392,5 @@ State.prototype.cleanUp = function() {
 	this.ranks = undefined;
 	this.order = undefined;
 	this.replay = null;
-	this.time = 0;
-	this.shiftX = 0;
-	this.shiftY = 0;
-	this.mouseOverVis = false;
-	this.mouseCol = undefined;
-	this.mouseRow = undefined;
 	this.isStreaming = false;
-	this.fade = undefined;
 };
