@@ -7,16 +7,20 @@ Visu = function(app) {
     this.w = 0;
     this.h = 0;
 
+    this.replay = undefined;
+
     /** @private */
     this.state = new VisState();
     /** @private */
-    this.map = new CanvasElementMap(app.state, this.state);
+    this.map = undefined;
     /** @private */
-    this.antsMap = new CanvasElementAntsMap(app.state, this.state, this.map);
+    this.antsMap = undefined;
     /** @private */
-    this.shiftedMap = new CanvasElementShiftedMap(app.state, this.state, this.antsMap);
+    this.shiftedMap = undefined;
     /** @private */
-    this.miniMap = new CanvasElementMiniMap(app.state, this.state);
+    this.miniMap = undefined;
+    /** @private */
+    this.counts = undefined;
     /** @private */
     this.turns = undefined;
     /** @private */
@@ -25,8 +29,7 @@ Visu = function(app) {
     if (app.state.options['decorated']) {
         /** @private */
         this.btnMgr = new ButtonManager(null);
-        /** @private */
-        this.counts = new CanvasElementStats(app.state, this.state, '# of cells', 'counts', '500 steps');
+
     }
     /** @private */
     this.director = new Director(this);
@@ -58,6 +61,14 @@ Visu = function(app) {
 Visu.prototype.cleanUp = function() {
 	this.director.cleanUp();
     this.state.cleanUp();
+
+    this.replay = undefined;
+
+    this.map = undefined;
+    this.antsMap = undefined;
+    this.shiftedMap = undefined;
+    this.miniMap = undefined;
+    this.counts = undefined;
 };
 
 /**
@@ -78,19 +89,29 @@ Visu.prototype.calculateReplaySpeed = function() {
 	}
 };
 
-Visu.prototype.init = function() {
+Visu.prototype.init = function(replay) {
+    this.state.replay = replay;
+
+    this.map = new CanvasElementMap(this.app.state, this.state);
+    this.antsMap = new CanvasElementAntsMap(this.app.state, this.state, this.map);
+    this.shiftedMap = new CanvasElementShiftedMap(this.app.state, this.state, this.antsMap);
+    this.miniMap = new CanvasElementMiniMap(this.app.state, this.state);
+    if (this.app.state.options['decorated']) {
+        this.counts = new CanvasElementStats(this.app.state, this.state, '# of cells', 'counts', '500 steps');
+    }
+
     // calculate speed from duration and config settings
-    this.director.duration = this.app.state.replay.duration;
+    this.director.duration = this.state.replay.duration;
     this.calculateReplaySpeed();
 
-    // add visual effect to the Play button
     var options = this.app.state.options;
     if (options['interactive'] && options['decorated']) {
         this.btnMgr.ctx = this.app.main.ctx;
         this.addPlaybackPanel();
 
         var vis = this;
-        this.director.onstate = function () {
+        this.director.onState = function () {
+            // add visual effect to the Play button
             var btn = vis.btnMgr.groups['playback'].buttons[4];
             btn.offset = (this.playing() ? 7 : 4) * vis.app.imgMgr.get('playback').height;
             if (btn === vis.btnMgr.pinned) {
@@ -129,7 +150,7 @@ Visu.prototype.addPlaybackPanel = function() {
     bg.addSpace(64);
 
     dlg = new Delegate(this, function() {
-        var stop = Math.floor(this.state.time + 1);
+        var stop = Math.floor(this.state.time) + 1;
         this.director.slowmoTo(stop);
     });
     bg.addButton(6, dlg, 'play one move/attack phase');
@@ -190,21 +211,21 @@ Visu.prototype.draw = function() {
         ctx.clip();
         w = loc.w / this.app.state.scale;
         h = loc.h / this.app.state.scale;
-        x = this.app.state.replay.cols / 2 - this.state.shiftX / this.app.state.scale - w / 2;
-        y = this.app.state.replay.rows / 2 - this.state.shiftY / this.app.state.scale - h / 2;
-        x -= Math.floor(x / this.app.state.replay.cols) * this.app.state.replay.cols;
-        y -= Math.floor(y / this.app.state.replay.rows) * this.app.state.replay.rows;
+        x = this.state.replay.cols / 2 - this.state.shiftX / this.app.state.scale - w / 2;
+        y = this.state.replay.rows / 2 - this.state.shiftY / this.app.state.scale - h / 2;
+        x -= Math.floor(x / this.state.replay.cols) * this.state.replay.cols;
+        y -= Math.floor(y / this.state.replay.rows) * this.state.replay.rows;
         ctx.beginPath();
         ctx.rect(this.miniMap.x + x, this.miniMap.y + y, w, h);
-        ctx.rect(this.miniMap.x + x - this.app.state.replay.cols, this.miniMap.y + y, w, h);
-        ctx.rect(this.miniMap.x + x, this.miniMap.y + y - this.app.state.replay.rows, w, h);
-        ctx.rect(this.miniMap.x + x - this.app.state.replay.cols, this.miniMap.y + y
-        - this.app.state.replay.rows, w, h);
+        ctx.rect(this.miniMap.x + x - this.state.replay.cols, this.miniMap.y + y, w, h);
+        ctx.rect(this.miniMap.x + x, this.miniMap.y + y - this.state.replay.rows, w, h);
+        ctx.rect(this.miniMap.x + x - this.state.replay.cols, this.miniMap.y + y
+        - this.state.replay.rows, w, h);
         ctx.stroke();
         ctx.restore();
     }
 
-    if (this.app.state.replay.hasDuration && this.app.state.options['decorated']) {
+    if (this.state.replay.hasDuration && this.app.state.options['decorated']) {
         if (this.counts.validate() || this.app.resizing) {
             ctx.drawImage(this.counts.canvas, this.counts.x, this.counts.y);
         }
@@ -239,7 +260,7 @@ Visu.prototype.resize = function() {
     //this.resizing = true;
 
     // 1. timeline placement
-    if (this.app.state.replay.hasDuration && this.app.state.options['decorated']) {
+    if (this.state.replay.hasDuration && this.app.state.options['decorated']) {
         // time line
         this.counts.x = this.x;
         this.counts.y = y;
@@ -249,7 +270,7 @@ Visu.prototype.resize = function() {
 
     // 2. visualizer placement
     if (this.app.state.options['interactive'] && this.app.state.options['decorated']) {
-        if (this.app.state.replay.hasDuration) {
+        if (this.state.replay.hasDuration) {
             this.shiftedMap.x = Math.max(this.x, LEFT_PANEL_W);
             this.shiftedMap.y = y;
             var width = this.w - (this.shiftedMap.x - this.x);
@@ -275,9 +296,9 @@ Visu.prototype.resize = function() {
         this.shiftedMap.setSize(this.w, this.h - y);
     }
     this.setZoom(this.app.state.config['zoom']);
-    this.miniMap.x = this.shiftedMap.x + this.shiftedMap.w - 2 - this.app.state.replay.cols;
+    this.miniMap.x = this.shiftedMap.x + this.shiftedMap.w - 2 - this.state.replay.cols;
     this.miniMap.y = this.shiftedMap.y + 2;
-    this.miniMap.setSize(this.app.state.replay.cols, this.app.state.replay.rows);
+    this.miniMap.setSize(this.state.replay.cols, this.state.replay.rows);
     // redraw everything
     this.director.draw(true);
     this.btnMgr.draw();
@@ -303,12 +324,12 @@ Visu.prototype.setZoom = function(zoom) {
     var state = this.app.state;
 	var oldScale = state.scale;
 	if (this.director.fixedFpt === undefined) {
-		state.scale = Math.max(1, Math.min((this.shiftedMap.w - 20) / state.replay.cols,
-				(this.shiftedMap.h - 20) / state.replay.rows)) | 0;
+		state.scale = Math.max(1, Math.min((this.shiftedMap.w - 20) / this.state.replay.cols,
+				(this.shiftedMap.h - 20) / this.state.replay.rows)) | 0;
 		state.scale = Math.min(ZOOM_SCALE, state.scale * zoom);
 	} else {
-		state.scale = Math.max(1, Math.min(this.shiftedMap.w / state.replay.cols,
-				this.shiftedMap.h / state.replay.rows)) | 0;
+		state.scale = Math.max(1, Math.min(this.shiftedMap.w / this.state.replay.cols,
+				this.shiftedMap.h / this.state.replay.rows)) | 0;
 		state.scale = Math.pow(2, (Math.log(state.scale) / Math.LN2) | 0);
 	}
 	if (oldScale) {
@@ -316,7 +337,7 @@ Visu.prototype.setZoom = function(zoom) {
 		this.state.shiftY = (this.state.shiftY * state.scale / oldScale) | 0;
 	}
 	this.app.calculateMapCenter(state.scale);
-	this.map.setSize(state.scale * state.replay.cols, state.scale * state.replay.rows);
+	this.map.setSize(state.scale * this.state.replay.cols, state.scale * this.state.replay.rows);
 	this.map.x = (((this.shiftedMap.w - this.map.w) >> 1) + this.shiftedMap.x) | 0;
 	this.map.y = (((this.shiftedMap.h - this.map.h) >> 1) + this.shiftedMap.y) | 0;
 	this.antsMap.setSize(this.map.w, this.map.h);
@@ -353,7 +374,7 @@ Visu.prototype.mouseMoved = function(mx, my) {
 		if (this.mouseDown === 1 && this.counts.graph.contains(this.mouseX, this.mouseY)) {
 			tick = this.mouseX - this.counts.graph.x;
 			tick /= (this.counts.graph.w - 1);
-			tick = Math.round(tick * this.app.state.replay.duration);
+			tick = Math.round(tick * this.state.replay.duration);
 			this.director.gotoTick(tick);
 		} else if (this.mouseDown === 2
 				|| (this.mouseDown === 3 && this.miniMap.contains(this.mouseX, this.mouseY))) {
@@ -361,9 +382,9 @@ Visu.prototype.mouseMoved = function(mx, my) {
 				this.state.shiftX += deltaX;
 				this.state.shiftY += deltaY;
 			} else {
-				this.state.shiftX = (this.app.state.replay.cols / 2 - (this.mouseX - this.miniMap.x))
+				this.state.shiftX = (this.state.replay.cols / 2 - (this.mouseX - this.miniMap.x))
 						* this.app.state.scale;
-				this.state.shiftY = (this.app.state.replay.rows / 2 - (this.mouseY - this.miniMap.y))
+				this.state.shiftY = (this.state.replay.rows / 2 - (this.mouseY - this.miniMap.y))
 						* this.app.state.scale;
 			}
 			if (this.app.state.options['decorated']) {
@@ -391,7 +412,7 @@ Visu.prototype.mouseMoved = function(mx, my) {
  */
 Visu.prototype.mousePressed = function() {
 	if (this.app.state.options['interactive']) {
-		if (this.app.state.replay.hasDuration
+		if (this.state.replay.hasDuration
 				&& this.app.state.options['decorated']
 				&& this.counts.graph.contains(this.mouseX, this.mouseY)) {
 			this.mouseDown = 1;
@@ -453,6 +474,7 @@ Visu.prototype.contains = function(x, y) {
  *           is only valid when {@link State#mouseOverVis} is true.
  * @property fade Undefined, unless a fade out/in effect is to be drawn. Then this is set to a
  *           rgba() fill style.
+ * @property {Replay} replay The currently loaded replay.
  */
 function VisState() {
 	this.cleanUp();

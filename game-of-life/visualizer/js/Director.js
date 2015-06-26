@@ -20,7 +20,8 @@ function Director(vis) {
 	this.stopAt = undefined;
     this.inSlowMo = false;
 	this.cpu = vis.app.state.config['cpu'];
-	this.onstate = undefined;
+	this.onState = undefined;
+    this.onTurnChange = undefined;
 	this.timeout = undefined;
 	this.frameCounter = 0;
 	this.frameStart = undefined;
@@ -59,7 +60,7 @@ Director.prototype.play = function() {
 			}
 			this.stopAt = this.duration;
 		}
-		if (this.onstate) this.onstate();
+		if (this.onState) this.onState();
 		this.loop(0);
 		if (this.vis.app.state.options['profile']) console.profile();
 	}
@@ -75,7 +76,7 @@ Director.prototype.stop = function() {
 		this.speed = 0;
 		this.lastTime = undefined;
         this.inSlowMo = false;
-		if (this.onstate) this.onstate();
+		if (this.onState) this.onState();
 	}
 };
 
@@ -93,6 +94,10 @@ Director.prototype.gotoTick = function(time) {
 	if (this.vis.state.time !== effectiveTime) {
 		this.vis.state.time = this.time = effectiveTime;
 		this.vis.draw();
+
+        if (this.onTurnChange) {
+            this.onTurnChange();
+        }
 	}
 };
 
@@ -117,7 +122,7 @@ Director.prototype.slowmoTo = function(time) {
 		}
 		if (!wasPlaying) {
             this.inSlowMo = true;
-			if (this.onstate) this.onstate();
+			if (this.onState) this.onState();
 			this.loop(0);
 		}
 	}
@@ -263,10 +268,11 @@ Director.prototype.doDelay = function(delay, cpuTime) {
 Director.prototype.loop = function(delay) {
 	var cpuTime = undefined;
 	var lastTime = this.lastTime;
+    var lastTurn = Math.floor(this.time);
 	if (this.speed === 0) {
 		return;
 	}
-	if (this.fixedFpt === undefined) {
+    if (this.fixedFpt === undefined) {
 		this.lastTime = new Date().getTime();
 		if (lastTime !== undefined) {
 			cpuTime = this.lastTime - lastTime - delay;
@@ -309,7 +315,7 @@ Director.prototype.loop = function(delay) {
     var draw = false;
     switch (animLevel) {
         case levels['LIMITED']:
-            draw = this.vis.app.isGamingPhase(this.time) || this.inSlowMo;
+            draw = (this.time < this.duration - 500) || this.inSlowMo;
             break;
         case levels['FULL']:
             draw = true;
@@ -321,7 +327,15 @@ Director.prototype.loop = function(delay) {
         this.vis.state.time = Math.floor(this.vis.state.time);
     }
 	this.vis.draw();
-	if (goOn) {
+
+    // check if turn changed and run callback if needed
+    if (this.time >= 0 && this.time <= this.duration &&
+        lastTurn != Math.floor(this.time) && this.onTurnChange)
+    {
+        this.onTurnChange();
+    }
+
+    if (goOn) {
         if (this.vis.app.state.options['debug']) {
             if (this.fixedFpt === undefined && cpuTime !== undefined) {
                 this.doFpsStuff(lastTime, cpuTime);
@@ -339,6 +353,7 @@ Director.prototype.loop = function(delay) {
 Director.prototype.cleanUp = function() {
 	window.clearTimeout(this.timeout);
 	this.stop();
+    this.time = 0;
 };
 
 /**

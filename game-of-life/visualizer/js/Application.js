@@ -14,19 +14,19 @@
 LoadingState = {
 	/**
 	 * The visualizer is not currently loading a replay or map.
-	 * 
+	 *
 	 * @const
 	 */
 	IDLE : 0,
 	/**
 	 * The visualizer is loading a replay or map and cannot take any load requests.
-	 * 
+	 *
 	 * @const
 	 */
 	LOADING : 1,
 	/**
 	 * The visualizer is currently cleaning up.
-	 * 
+	 *
 	 * @const
 	 * @see Visualizer#cleanUp
 	 */
@@ -181,7 +181,7 @@ Visualizer = function(container, options, w, h, configOverrides) {
 		this.replayReq = undefined;
 		/**
 		 * the main canvas
-		 * 
+		 *
 		 * @private
 		 */
 		this.main = {};
@@ -478,7 +478,7 @@ Visualizer.prototype.loadParseReplay = function() {
 		var user = vis.state.options['user'];
 		if (user === '') user = undefined;
 		if (vis.replayStr) {
-			vis.state.replay = new Replay(vis.replayStr, debug, user);
+			vis.state.replay = new Replay({replay: vis.replayStr, debug: debug, highlightUser: user});
 			vis.replayStr = undefined;
 		} else if (vis.loading !== LoadingState.CLEANUP) {
 			throw new Error('Replay is undefined.');
@@ -543,45 +543,75 @@ Visualizer.prototype.tryStart = function() {
 		if (this.imgMgr.pending !== 0) return;
 		// add GUI
 		if (this.state.options['decorated']) {
-			if (this.imgMgr.error) return;
-			if (this.imgMgr.pending) return;
-			this.btnMgr.ctx = this.main.ctx;
-			// calculate player order
-			if (this.state.replay.meta['replaydata']['bonus']) {
-				scores = new Array(this.state.replay.players);
-				for (i = 0; i < this.state.replay.players; i++) {
-					scores[i] = this.state.replay['scores'][this.state.replay.duration][i];
-					scores[i] += this.state.replay.meta['replaydata']['bonus'][i];
-				}
-			} else {
-				scores = this.state.replay['scores'][this.state.replay.duration];
-			}
-			this.state.ranks = new Array(scores.length);
-			this.state.order = new Array(scores.length);
-			for (i = 0; i < scores.length; i++) {
-				this.state.ranks[i] = 1;
-				for (k = 0; k < scores.length; k++) {
-					if (scores[i] < scores[k]) {
-						this.state.ranks[i]++;
-					}
-				}
-				k = this.state.ranks[i] - 1;
-				while (this.state.order[k] !== undefined)
-					k++;
-				this.state.order[k] = i;
-			}
-			// add player buttons
-			if (this.state.replay.hasDuration) {
-				this.addPlayerButtons();
-			}
-			// add static buttons
-			if (this.state.options['interactive']) {
+            if (this.imgMgr.error) return;
+            if (this.imgMgr.pending) return;
+            this.btnMgr.ctx = this.main.ctx;
+            // calculate player order
+            if (this.state.replay.meta['replaydata']['bonus']) {
+                scores = new Array(this.state.replay.players);
+                for (i = 0; i < this.state.replay.players; i++) {
+                    scores[i] = this.state.replay['scores'][this.state.replay.duration][i];
+                    scores[i] += this.state.replay.meta['replaydata']['bonus'][i];
+                }
+            } else {
+                scores = this.state.replay['scores'][this.state.replay.duration];
+            }
+            this.state.ranks = new Array(scores.length);
+            this.state.order = new Array(scores.length);
+            for (i = 0; i < scores.length; i++) {
+                this.state.ranks[i] = 1;
+                for (k = 0; k < scores.length; k++) {
+                    if (scores[i] < scores[k]) {
+                        this.state.ranks[i]++;
+                    }
+                }
+                k = this.state.ranks[i] - 1;
+                while (this.state.order[k] !== undefined)
+                    k++;
+                this.state.order[k] = i;
+            }
+            // add player buttons
+            if (this.state.replay.hasDuration) {
+                this.addPlayerButtons();
+            }
+            // add static buttons
+            if (this.state.options['interactive']) {
                 this.addLeftPanel();
                 this.addRightPanel();
             }
-		}
-        this.vis.init();
-        this.helperVis.init();
+        }
+
+        this.vis.init(this.state.replay);
+		this.vis.director.onTurnChange = function() {
+            var turn = Math.floor(this.time);
+			document.title = String(turn);
+
+			// TODO: Make a getAliveCells method in Replay, cache it like getTurn.
+			// 		 Replace code fragment below with a simple call to getAliveCells.
+			var cells = vis.state.replay.getTurn(Math.min(turn, this.duration - 500 - 1)); // we don't need to simulate positions after game phase
+			cells = cells.reduce(function(result, cell) { // strip not-needed data
+				var frame = cell.keyFrames[0];
+				 // take only cells that is alive on this turn
+				 // (getTurn returns cells that are going to spaw on next turn too, we don't need them)
+				if (frame.time <= turn) {
+					result.push([frame.y, frame.x, 0, frame.owner]);
+				}
+				return result;
+			}, []);
+
+			var meta = Object.create(vis.state.replay.meta);
+			meta['replaydata'] = Object.create(meta['replaydata']);
+			meta['replaydata']['cells'] = cells;
+
+			vis.helperVis.cleanUp();
+			vis.helperVis.init(new Replay({meta: meta, debug: this.debug, highlightUser: this.highlightUser}));
+			vis.helperVis.resize();
+            if (turn > this.duration - 500 - 1) {
+                vis.helperVis.director.gotoTick(turn - (this.duration - 500)); // TODO: duration - 500 is Simulator.game_phase_duration
+            }
+        };
+        this.helperVis.init(this.state.replay);
+
 		if (this.state.options['interactive']) {
 			// this will fire once in FireFox when a key is held down
 			/**
@@ -1287,11 +1317,6 @@ Visualizer.prototype.keyPressed = function(key) {
 Visualizer.prototype.generateBotInput = function() {
     alert('Not implemented for this game. Ping me if you need it.');
 };
-
-Visualizer.prototype.isGamingPhase = function(time) {
-    time = Math.clamp(time, 0, this.duration)
-    return (time <= (this.state.replay.duration - 500)); // TODO: must be Simulator.total_steps
-}
 
 /**
  * @class This class defines startup options that are enabling debugging features or set immutable

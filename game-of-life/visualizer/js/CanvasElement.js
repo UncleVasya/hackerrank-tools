@@ -123,8 +123,8 @@ CanvasElementAbstractMap.prototype.draw = function(resized, drawGrid) {
         drawGrid = true;
     
     var row, col;
-	var rows = this.appState.replay.rows;
-	var cols = this.appState.replay.cols;
+	var rows = this.visState.replay.rows;
+	var cols = this.visState.replay.cols;
 	this.ctx.fillStyle = SAND_COLOR;
 	this.ctx.fillRect(0, 0, this.w, this.h);
     
@@ -170,7 +170,7 @@ CanvasElementMiniMap.prototype.checkState = function() {
 	if ((this.visState.time | 0) !== this.turn) {
 		this.invalid = true;
 		this.turn = (this.visState.time | 0);
-		this.ants = this.appState.replay.getTurn(this.turn);
+		this.ants = this.visState.replay.getTurn(this.turn);
 	}
 };
 
@@ -270,10 +270,8 @@ CanvasElementAntsMap.prototype.checkState = function() {
 
 		// per turn calculations
 		if (this.turn !== (this.time | 0)) {
-			cols = this.appState.replay.cols;
-			rows = this.appState.replay.rows;
 			this.turn = this.time | 0;
-			this.ants = this.appState.replay.getTurn(this.turn);
+			this.ants = this.visState.replay.getTurn(this.turn);
 		}
 
 		// interpolate ants for this point in time
@@ -452,8 +450,8 @@ CanvasElementShiftedMap.prototype.draw = function() {
 		this.ctx.fillRect(mx, my, this.antsMap.w, this.antsMap.h);
 	}
 	// game cut-off reason
-	cutoff = this.appState.replay.meta['replaydata']['cutoff'];
-	if (this.time > this.appState.replay.duration - 1 && cutoff) {
+	cutoff = this.visState.replay.meta['replaydata']['cutoff'];
+	if (this.time > this.visState.replay.duration - 1 && cutoff) {
 		cutoff = '"' + cutoff + '"';
 		this.ctx.font = FONT;
 		dx = 0.5 * (this.w - this.ctx.measureText(cutoff).width);
@@ -475,9 +473,10 @@ CanvasElementShiftedMap.prototype.draw = function() {
  * @param {String}
  *        stats name of the stats to query from the visualizer
  */
-function CanvasElementGraph(appState, stats) {
+function CanvasElementGraph(appState, visState, stats) {
 	this.upper();
 	this.appState = appState;
+	this.visState = visState;
 	this.stats = stats;
 	this.duration = 0;
 }
@@ -494,7 +493,7 @@ CanvasElementGraph.extend(CanvasElement);
  *          text otherwise.
  */
 CanvasElementGraph.prototype.statusToGlyph = function(i) {
-	var status_i = this.appState.replay.meta['status'][i];
+	var status_i = this.visState.replay.meta['status'][i];
 	if (status_i === 'survived') {
 		return '\u2713';
 	} else if (status_i === 'eliminated') {
@@ -511,9 +510,9 @@ CanvasElementGraph.prototype.statusToGlyph = function(i) {
  * @returns {Boolean} true, if the internal state has changed
  */
 CanvasElementGraph.prototype.checkState = function() {
-	if (this.duration !== this.appState.replay.duration && this.h > 0) {
+	if (this.duration !== this.visState.replay.duration && this.h > 0) {
 		this.invalid = true;
-		this.duration = this.appState.replay.duration;
+		this.duration = this.visState.replay.duration;
 	}
 };
 
@@ -525,7 +524,7 @@ CanvasElementGraph.prototype.draw = function() {
 	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx, razed;
 	var w = this.w - 1;
 	var h = this.h - 1;
-	var replay = this.appState.replay;
+	var replay = this.visState.replay;
 	var values = this.getStats(this.stats).values;
 	// Fixes the bug where the values would be scaled iteratively on every screen update in the live
 	// visualizer
@@ -563,7 +562,7 @@ CanvasElementGraph.prototype.draw = function() {
     
     // draw game phaze divider
     // TODO: 80 is Simulator.game_phase_duration
-    x = scaleX * 80 - scaleX;
+    x = scaleX * (this.visState.replay.duration - 500) - scaleX;
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     this.ctx.moveTo(x, 0);
@@ -622,14 +621,14 @@ CanvasElementGraph.prototype.draw = function() {
  * @returns {Stats} the statistics set for the given item name.
  */
 CanvasElementGraph.prototype.getStats = function(name) {
-	var values = this.appState.replay[name];
+	var values = this.visState.replay[name];
 	var bonus;
 	if (name === 'counts') {
-		bonus = this.appState.replay['scores'];
+		bonus = this.visState.replay['scores'];
 	} else {
 		bonus = new Array(values.length);
-		if (name === 'scores' && this.turn === this.appState.replay.duration) {
-			bonus[values.length - 1] = this.appState.replay.meta['replaydata']['bonus'];
+		if (name === 'scores' && this.turn === this.visState.replay.duration) {
+			bonus[values.length - 1] = this.visState.replay.meta['replaydata']['bonus'];
 		}
 	}
 	return new Stats(values, bonus);
@@ -657,7 +656,7 @@ function CanvasElementStats(appState, visState, caption, stats, bonusText) {
 	this.time = 0;
 	this.label = false;
 	this.bonusText = bonusText;
-	this.graph = new CanvasElementGraph(appState, stats);
+	this.graph = new CanvasElementGraph(appState, visState, stats);
 	this.dependsOn(this.graph);
 }
 CanvasElementStats.extend(CanvasElement);
@@ -774,12 +773,12 @@ CanvasElementStats.prototype.draw = function(resized) {
  * @returns {Stats} the statistics set for the given item name.
  */
 CanvasElementStats.prototype.getStats = function(name, turn) {
-	var values = this.appState.replay[name][turn];
+	var values = this.visState.replay[name][turn];
 	var bonus = undefined;
 	if (name === 'scores' && this.turn === this.appState.replay.duration) {
-		bonus = this.appState.replay.meta['replaydata']['bonus'];
+		bonus = this.visState.replay.meta['replaydata']['bonus'];
 	} else if (name === 'counts') {
-		bonus = this.appState.replay['stores'][turn];
+		bonus = this.visState.replay['stores'][turn];
 	}
 	return new Stats(values, bonus);
 };
@@ -814,12 +813,12 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 	var sumPositive = 0;
 	var sumValues, sum;
 	var xOffset = x;
-	var drawPart = function(ctx, pixels, div, list, values, appState, arrow, label) {
+	var drawPart = function(ctx, pixels, div, list, values, appState, visState, arrow, label) {
 		var k, kIdx, wBarRaw, wBar, textWidth;
 		ctx.save();
 		for (k = 0; k < list.length; k++) {
 			kIdx = appState.order[list[k]];
-			ctx.fillStyle = appState.replay.htmlPlayerColors[kIdx];
+			ctx.fillStyle = visState.replay.htmlPlayerColors[kIdx];
 			ctx.strokeStyle = STAT_COLOR;
 			ctx.lineWidth = 0.5;
 			if (div) {
@@ -907,11 +906,11 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 	sum = sumValues + sumBoni;
 	// show negative scores
 	if (negatives.length) {
-		drawPart(this.ctx, wUsable, sum, negatives, stats.values, this.appState, true, this.label);
+		drawPart(this.ctx, wUsable, sum, negatives, stats.values, this.appState, this.visState, true, this.label);
 	}
 	xNegSep = (x + sumNegative * wUsable / sum) | 0;
 	// show positive scores
-	drawPart(this.ctx, wUsable, sum, positives, stats.values, this.appState, false, this.label);
+	drawPart(this.ctx, wUsable, sum, positives, stats.values, this.appState, this.visState,false, this.label);
 	this.ctx.lineWidth = 2;
 	this.ctx.strokeStyle = STAT_COLOR;
 	this.ctx.beginPath();
@@ -932,7 +931,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 	// draw boni
 	if (showBoni) {
 		xOffset += 1;
-		drawPart(this.ctx, wUsable, sum, boniList, boni, this.appState, true, this.label);
+		drawPart(this.ctx, wUsable, sum, boniList, boni, this.appState, this.visState, true, this.label);
 		this.ctx.textAlign = 'right';
 		this.ctx.strokeText(bonusText, x + w - 2, y);
 		this.ctx.fillText(bonusText, x + w - 2, y);
