@@ -96,7 +96,7 @@ Director.prototype.gotoTick = function(time) {
 		this.vis.draw();
 
         if (this.onTurnChange) {
-            this.onTurnChange();
+            this.onTurnChange(this.time);
         }
 	}
 };
@@ -332,7 +332,7 @@ Director.prototype.loop = function(delay) {
     if (this.time >= 0 && this.time <= this.duration &&
         lastTurn != Math.floor(this.time) && this.onTurnChange)
     {
-        this.onTurnChange();
+        this.onTurnChange(this.time);
     }
 
     if (goOn) {

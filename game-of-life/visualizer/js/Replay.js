@@ -87,7 +87,6 @@ function Replay(params) {
         }
 
         // prepare score and count lists
-        this.turns = new Array(this.duration + 1);
         this['scores'] = new Array(this.duration + 1);
         this['counts'] = new Array(this.duration + 1);
         this['stores'] = new Array(this.duration + 1);
@@ -156,8 +155,12 @@ function Replay(params) {
                 }
             }
         }
-
-        this.aniCells = new Array(cells.length);
+         // prepare caches
+        this.aniCells =  new Array(cells.length);
+        this.turns = new Array(this.duration + 1);
+        this.aliveCells = new Array(this.duration + 1);
+        this.simReplays = new Array(this.duration - 500 + 1);
+        this.replayCacheMisses = 0;
     }
     this.hasDuration = this.duration > 0 || this.meta['replaydata']['turns'] > 0;
 
@@ -317,6 +320,11 @@ Replay.prototype.parseReplay = function(replay) {
 		// owner index must match player count
 		keyRange(obj, 3, 0, this.players - 1);
 		stack.pop();
+
+        //obj.row = obj[0];
+        //obj.col = obj[1];
+        //obj.spawn = obj[2];
+        //obj.owner = obj[3];
 	}
 	stack.pop();
 
@@ -421,7 +429,7 @@ Replay.prototype.getTurn = function(n) {
 		cells = this.meta['replaydata']['cells'];
 		for (i = 0; i < cells.length; i++) {
 			cell = cells[i];
-            spawnTurn = cell[2];
+            var spawnTurn = cell[2];
 			if (spawnTurn === n + 1 || n === 0 && spawnTurn === 0) {
 				// spawn this cell
 				aniCell = this.spawnCell(i, cell[0], cell[1], cell[2], cell[3]);
@@ -432,6 +440,11 @@ Replay.prototype.getTurn = function(n) {
 				// continue with next cell
 				continue;
 			}
+
+            // TODO: GoL is an easy game and maybe I can avoid need to pre-calculate previous turns.
+            //       1) Rearrange check below to first check if we need to show this cell
+            //       2) Add   if (!aniCell) this.SpawnCell(). So we don't rely on cell presence from prev. turns
+            //       3) Original call to this.spawnCell() replace with    aniCell = this.aniCells[i] || this.spawnCell()
 
 			dead = cell[4];
 			if (dead === n + 1) {
@@ -493,6 +506,41 @@ Replay.prototype.spawnCell = function(id, row, col, spawn, owner) {
 Replay.prototype.killCell = function(aniCell, death) {
 	aniCell.fade('size', 0.0, death - 0.8, death);
 	aniCell.death = death;
+};
+
+Replay.prototype.getAliveCells = function(turn) {
+    if (!this.aliveCells[turn]) {
+        this.aliveCells[turn] = [];
+        this.meta['replaydata']['cells'].forEach(function(cell) {
+			if (cell[2] <= turn && cell[4] > turn) {
+                this.aliveCells[turn].push(cell);
+            }
+		}, this);
+    }
+    return this.aliveCells[turn];
+};
+
+Replay.prototype.getSimReplay = function(turn) {
+    if (!this.simReplays[turn]) {
+        ++this.replayCacheMisses;
+
+        // copy alive cells data and set spawn turns to be 0
+        var aliveCells = this.getAliveCells(turn).map(function(cell) {
+            return [cell[0], cell[1], 0, cell[3]];
+        });
+
+        var meta = Object.create(this.meta);
+        meta['replaydata'] = Object.create(meta['replaydata']);
+        meta['replaydata']['cells'] = aliveCells;
+
+        this.simReplays[turn] = new Replay({meta: meta, debug: this.debug, highlightUser: this.highlightUser});
+    }
+    document.title = 'Replay cache |  ' +
+        'size: ' +  this.simReplays.length + '  ' +
+        'count: ' + this.simReplays.reduce(function(res, x) {return x? ++res: res}, 0) + '  ' +
+        'misses: ' + this.replayCacheMisses;
+
+    return this.simReplays[turn];
 };
     
 /**

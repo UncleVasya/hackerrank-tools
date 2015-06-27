@@ -582,35 +582,18 @@ Visualizer.prototype.tryStart = function() {
         }
 
         this.vis.init(this.state.replay);
-		this.vis.director.onTurnChange = function() {
-            var turn = Math.floor(this.time);
-			document.title = String(turn);
-
-			// TODO: Make a getAliveCells method in Replay, cache it like getTurn.
-			// 		 Replace code fragment below with a simple call to getAliveCells.
-			var cells = vis.state.replay.getTurn(Math.min(turn, this.duration - 500 - 1)); // we don't need to simulate positions after game phase
-			cells = cells.reduce(function(result, cell) { // strip not-needed data
-				var frame = cell.keyFrames[0];
-				 // take only cells that is alive on this turn
-				 // (getTurn returns cells that are going to spaw on next turn too, we don't need them)
-				if (frame.time <= turn) {
-					result.push([frame.y, frame.x, 0, frame.owner]);
-				}
-				return result;
-			}, []);
-
-			var meta = Object.create(vis.state.replay.meta);
-			meta['replaydata'] = Object.create(meta['replaydata']);
-			meta['replaydata']['cells'] = cells;
+		this.vis.director.onTurnChange = function(time) {
+            var turn = Math.floor(time);
+            var effectiveTurn = Math.min(turn, this.duration - 500); // make prognoses only for game phase positions
 
 			vis.helperVis.cleanUp();
-			vis.helperVis.init(new Replay({meta: meta, debug: this.debug, highlightUser: this.highlightUser}));
+			vis.helperVis.init(vis.state.replay.getSimReplay(effectiveTurn));
 			vis.helperVis.resize();
             if (turn > this.duration - 500 - 1) {
                 vis.helperVis.director.gotoTick(turn - (this.duration - 500)); // TODO: duration - 500 is Simulator.game_phase_duration
             }
         };
-        this.helperVis.init(this.state.replay);
+        this.helperVis.init(vis.state.replay.getSimReplay(0));
 
 		if (this.state.options['interactive']) {
 			// this will fire once in FireFox when a key is held down
