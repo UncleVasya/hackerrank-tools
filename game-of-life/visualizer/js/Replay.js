@@ -161,6 +161,7 @@ function Replay(params) {
         this.aliveCells = new Array(this.duration + 1);
         this.simReplays = new Array(this.duration - 500 + 1);
         this.replayCacheMisses = 0;
+        this.replayCacheSuccess = 0;
     }
     this.hasDuration = this.duration > 0 || this.meta['replaydata']['turns'] > 0;
 
@@ -520,27 +521,39 @@ Replay.prototype.getAliveCells = function(turn) {
     return this.aliveCells[turn];
 };
 
-Replay.prototype.getSimReplay = function(turn) {
-    if (!this.simReplays[turn]) {
+Replay.prototype.getSimReplay = function(turn, callback) {
+    if (this.simReplays[turn]) {
+        ++this.replayCacheSuccess;
+        if (callback) callback(this.simReplays[turn]);
+    } else {
         ++this.replayCacheMisses;
 
         // copy alive cells data and set spawn turns to be 0
-        var aliveCells = this.getAliveCells(turn).map(function(cell) {
+        var aliveCells = this.getAliveCells(turn).map(function (cell) {
             return [cell[0], cell[1], 0, cell[3]];
         });
 
-        var meta = Object.create(this.meta);
-        meta['replaydata'] = Object.create(meta['replaydata']);
+        var meta = deep_copy(this.meta);
         meta['replaydata']['cells'] = aliveCells;
 
-        this.simReplays[turn] = new Replay({meta: meta, debug: this.debug, highlightUser: this.highlightUser});
-    }
-    document.title = 'Replay cache |  ' +
-        'size: ' +  this.simReplays.length + '  ' +
-        'count: ' + this.simReplays.reduce(function(res, x) {return x? ++res: res}, 0) + '  ' +
-        'misses: ' + this.replayCacheMisses;
+        if (!this.webWorker) {
+            this.webWorker = new WebWorker(function () {
+                onmessage = function (event) {
+                    var msg = event.data;
+                    msg.data = new Replay(msg.data);
+                    postMessage(msg);
+                };
+            });
+        }
 
-    return this.simReplays[turn];
+        var self = this;
+        var data = {meta: meta, debug: this.debug, highlightUser: this.highlightUser};
+        this.webWorker.sendMessage(data, function (replay) {
+            self.simReplays[turn] = replay;
+            replay.__proto__ = Replay.prototype;
+            if (callback) callback(replay);
+        });
+    }
 };
     
 /**

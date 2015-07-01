@@ -95,11 +95,6 @@ var BrowserDetect = {
 			versionSearch: "Version"
 		},
 		{
-			prop: window.opera,
-			identity: "Opera",
-			versionSearch: "Version"
-		},
-		{
 			string: navigator.vendor,
 			subString: "iCab",
 			identity: "iCab"
@@ -479,7 +474,7 @@ function hsl_to_rgb (C) {
     return [ Math.floor(0.999 + 255 * (r + m)),
              Math.floor(0.999 + 255 * (g + m)),
              Math.floor(0.999 + 255 * (b + m)) ]    
-};
+}
 
 /**
  * Converts a rgb color value to hexidecimal.
@@ -489,4 +484,80 @@ function hsl_to_rgb (C) {
  */
 function rgb_to_hex (C) {
     return '#' + INT_TO_HEX[C[0]] + INT_TO_HEX[C[1]] + INT_TO_HEX[C[2]];
-};
+}
+
+/**
+ * Deep copy an object (make copies of all its object properties, sub-properties, etc.)
+ * A stripped version of this: http://stackoverflow.com/a/13333781
+ */
+function deep_copy(src, visited) {
+    if (src == null || typeof(src) !== 'object') {
+        return src;
+    }
+    visited = visited || [];
+
+    // ensure src has not already been visited
+    for (var i = 0; i < visited.length; i++) {
+        // if src was already visited, don't try to copy it, just return the reference
+        if (src === visited[i]) {
+            return src;
+        }
+    }
+    //visited.push(src);
+
+    var copy;
+
+    // special cases:
+    if (Object.prototype.toString.call(src) == '[object Array]') {
+        copy = src.slice();
+        var i = copy.length;
+        while (i--) {
+            copy[i] = deep_copy(copy[i], visited);
+        }
+    } else {
+        // normal case
+        copy = Object.create(src.__proto__);
+        for (var key in src) {
+            copy[key] = deep_copy(src[key], visited);
+        }
+    }
+    return copy;
+}
+
+function WebWorker (func) {
+    // Build a worker from an anonymous function body
+    var workerCode = [
+        'self.importScripts(\'' + namespace_vis.scripts.join('\',\'') + '\'); ',
+        '(' + func.toString() + ')()'
+    ];
+    var blobURL = URL.createObjectURL(
+        new Blob(workerCode, {type: 'application/javascript'}
+     ));
+
+    var worker = new Worker(blobURL);
+
+    worker.callbacks = [];
+
+    worker.sendMessage = function(data, callback) {
+        this.callbacks.push(callback);
+        this.postMessage({
+            id: this.callbacks.length - 1,
+            data: data
+        });
+    };
+
+    worker.onmessage = function (event) {
+        var msg = event.data;
+        var callback = this.callbacks[msg.id];
+        if (callback) {
+            this.callbacks[msg.id] = null;
+            callback(msg.data);
+        }
+    };
+
+    // Won't be needing this anymore
+    URL.revokeObjectURL(blobURL);
+
+    return worker;
+}
+

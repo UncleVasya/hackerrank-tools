@@ -586,14 +586,31 @@ Visualizer.prototype.tryStart = function() {
             var turn = Math.floor(time);
             var effectiveTurn = Math.min(turn, this.duration - 500); // make prognoses only for game phase positions
 
-			vis.helperVis.cleanUp();
-			vis.helperVis.init(vis.state.replay.getSimReplay(effectiveTurn));
-			vis.helperVis.resize();
-            if (turn > this.duration - 500 - 1) {
-                vis.helperVis.director.gotoTick(turn - (this.duration - 500)); // TODO: duration - 500 is Simulator.game_phase_duration
-            }
+            vis.state.replay.getSimReplay(effectiveTurn, function(replay) {
+                document.title = 'Replay cache |  ' +
+                    'size: ' +  vis.state.replay.simReplays.length + '  ' +
+                    'count: ' + vis.state.replay.simReplays.reduce(function(cnt, x) {return x? ++cnt: cnt}, 0) + '  ' +
+                    'misses: ' + vis.state.replay.replayCacheMisses + '  ' +
+                    'success: ' + vis.state.replay.replayCacheSuccess;
+
+                // if main vis turn changed, no need to draw this replay on helper vis
+                if (turn != Math.floor(vis.vis.director.time)) return;
+
+                if (replay !== vis.helperVis.state.replay) {
+                    vis.helperVis.cleanUp();
+                    vis.helperVis.init(replay);
+                    vis.helperVis.resize();
+                }
+                if (turn > vis.vis.director.duration - 500 - 1) {
+                    vis.helperVis.director.gotoTick(turn - (vis.vis.director.duration - 500)); // TODO: duration - 500 is Simulator.game_phase_duration
+                }
+            });
         };
-        this.helperVis.init(vis.state.replay.getSimReplay(0));
+        //vis.state.replay.getSimReplay(0, function (replay) {
+        //    this.helperVis.init(replay);
+        //});
+        this.helperVis.init(vis.state.replay);
+
 
 		if (this.state.options['interactive']) {
 			// this will fire once in FireFox when a key is held down
@@ -699,7 +716,6 @@ Visualizer.prototype.tryStart = function() {
                 this.helperVis.director.gotoTick(this.state.options['turn'] - 1);
 			} else {
 				this.vis.director.play();
-                this.helperVis.director.play();
 			}
 		}
 	} else if (this.replayStr) {
