@@ -601,7 +601,7 @@ Visualizer.prototype.tryStart = function() {
                     vis.helperVis.init(replay);
                     vis.helperVis.resize();
                 }
-                if (turn > vis.vis.director.duration - 500 - 1) {
+                if (turn > vis.vis.director.duration - 500) {
                     vis.helperVis.director.gotoTick(turn - (vis.vis.director.duration - 500)); // TODO: duration - 500 is Simulator.game_phase_duration
                 }
             });
@@ -609,6 +609,8 @@ Visualizer.prototype.tryStart = function() {
         //vis.state.replay.getSimReplay(0, function (replay) {
         //    this.helperVis.init(replay);
         //});
+        this.state.replay.getSimReplay(0);
+        this.state.replay.getSimReplay(this.state.replay.duration - 500);
         this.helperVis.init(vis.state.replay);
 
 
