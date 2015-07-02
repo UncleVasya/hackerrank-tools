@@ -1,11 +1,10 @@
-function LifeSimulator(cells, rows, cols, players, start_turn) {
+function LifeSimulator(cells, rows, cols, startTurn) {
     this.SIMULATION_LENGTH = 500;
 
     this.cells = cells;
     this.rows = rows;
     this.cols = cols;
-    this.players = players;
-    this.start_turn = start_turn;
+    this.startTurn = startTurn;
 }
 
 LifeSimulator.prototype.simulate = function() {
@@ -14,80 +13,87 @@ LifeSimulator.prototype.simulate = function() {
         map[row] = new Array(this.cols);
     }
 
+    var aliveCells = [];
     for (var i = 0; i < this.cells.length; ++i) {
-        var cell = this.cells[i]
+        var cell = this.cells[i];
         map[cell[0]][cell[1]] = cell;
+        aliveCells.push({row: cell[0], col: cell[1]});
     }
 
-    this.simStep(map, this.SIMULATION_LENGTH);
+    this.simStep(map, aliveCells, this.SIMULATION_LENGTH);
 };
 
-LifeSimulator.prototype.simStep = function(map, total_steps, steps_done) {
-    steps_done = steps_done || 0;
+LifeSimulator.prototype.simStep = function(map, aliveCells, totalSteps, stepsDone) {
+    stepsDone = stepsDone || 0;
+    if (stepsDone >= totalSteps) return;
 
-    if (steps_done >= total_steps)
-        return;
+    var row, col, cell, owner;
+    var neighsCnt = this.calcNeighsCnt(map, aliveCells);
 
-    var to_kill = [], to_spawn = [];
-    var cntNeighs, sumNeighs;
-    var cell, owner, data;
-    for (var row = 0; row < this.rows; ++row) {
-        for (var col = 0; col < this.cols; ++col) {
-            cntNeighs = this.cntNeighs(map, row, col); // alive neighs per player
-            sumNeighs = cntNeighs[0] + cntNeighs[1];
-            cell = map[row][col];
+    // calc next state
+    aliveCells = [];
+    for (row = 0; row < this.rows; ++row) {
+        for (col = 0; col < this.cols; ++col) {
+            var neighs = neighsCnt[row][col];
+            var sumNeighs = neighs[0] + neighs[1];
 
-            // alive cells to kill
-            if (cell && (sumNeighs < 2 || sumNeighs > 3)) {
-                to_kill.push({row: row, col: col});
-            }
-            // new cells to born
-            else if (!cell && sumNeighs === 3) {
-                owner = cntNeighs.indexOf(Math.max.apply(Math, cntNeighs)); // owner of most neighs
-                to_spawn.push({row: row, col: col, owner: owner})
+            if (map[row][col]) { // cell was alive
+                if (sumNeighs < 2 || sumNeighs > 3) { // cell dies
+                    cell = map[row][col];
+                    cell[4] = this.startTurn + stepsDone + 1; // remember dying turn
+                    map[row][col] = null;
+                } else { // cell stays alive
+                    aliveCells.push({row: row, col: col});
+                }
+            } else if (sumNeighs === 3) { // cell was dead and new cell spawns
+                owner = neighs[0] > neighs[1]? 0: 1; // owner of most neighs
+                cell = [row, col, this.startTurn + stepsDone + 1, owner, this.startTurn + totalSteps + 1];
+                map[row][col] = cell;
+                aliveCells.push({row: row, col: col});
+                this.cells.push(cell);
             }
         }
     }
-    // apply changes
-    for (var i = 0; i < to_kill.length; ++i) {
-        data = to_kill[i];
-        cell = map[data.row][data.col];
-        cell[4] = this.start_turn + steps_done + 1; // remember dying turn
-        map[data.row][data.col] = null;
-    }
-    for (i = 0; i < to_spawn.length; ++i) {
-        data = to_spawn[i];
-        cell = [data.row, data.col, this.start_turn + steps_done + 1, data.owner, this.start_turn + total_steps + 1];
-        this.cells.push(cell);
-        map[data.row][data.col] = cell;
-    }
-    this.simStep(map, total_steps, steps_done+1);
+    this.simStep(map, aliveCells, totalSteps, stepsDone+1);
 };
 
-LifeSimulator.prototype.cntNeighs = function(map, aRow, aCol) {
-    var cntNeighs = new Array(this.players);
-    for (var i = 0; i < this.players; i++)
-        cntNeighs[i] = 0;
+LifeSimulator.prototype.calcNeighsCnt = function(map, aliveCells) {
+    var row, col, cell, owner, i;
+    var cntNeighs = this.initNeighsCnt();
 
-    var dx, dy;
-    var row, col, owner, inBounds, isOriginal, cell;
-    for (dx = -1; dx <= 1; ++dx) {
-        row = aRow + dx;
-        for (dy = -1; dy <= 1; ++dy) {
-            col = aCol + dy;
-            
-            inBounds = row >= 0 && row < this.rows &&
-                       col >= 0 && col < this.cols;
-            isOriginal = (row == aRow && col == aCol); // original cell is skipped
+    // calc neighs count around alive cells
+    for (i=0; i < aliveCells.length; ++i) {
+        var coords = aliveCells[i];
+        cell = map[coords.row][coords.col];
 
-            if (!inBounds || isOriginal)
-                continue;
+        for (var dx = -1; dx <= 1; ++dx) {
+            row = coords.row + dx;
+            for (var dy = -1; dy <= 1; ++dy) {
+                col = coords.col + dy;
 
-            cell = map[row][col];
-            if (cell) {
-                owner = map[row][col][3];
-                ++cntNeighs[owner];
+                var inBounds = row >= 0 && row < this.rows &&
+                    col >= 0 && col < this.cols;
+                var isOriginal = (row === coords.row && col === coords.col); // original cell is skipped
+
+                if (!inBounds || isOriginal) continue;
+
+                owner = cell[3];
+                ++cntNeighs[row][col][owner];
             }
+        }
+    }
+    return cntNeighs
+};
+
+LifeSimulator.prototype.initNeighsCnt = function() {
+    var row, col;
+
+    // init neighbours count array
+    var cntNeighs = new Array(this.rows);
+    for (row = 0; row < this.rows; ++row) {
+        cntNeighs[row] = new Array(this.cols);
+        for (col = 0; col < this.cols; ++col) {
+            cntNeighs[row][col] = [0, 0]; // for 2 players
         }
     }
     return cntNeighs;

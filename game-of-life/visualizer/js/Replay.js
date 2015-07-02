@@ -82,7 +82,7 @@ function Replay(params) {
             }
         }
         if (active_players > 1 || params.meta) {
-			new LifeSimulator(cells, this.rows, this.cols, this.players, this.duration).simulate();
+			new LifeSimulator(cells, this.rows, this.cols, this.duration).simulate();
             this.duration += 500;
         }
 
