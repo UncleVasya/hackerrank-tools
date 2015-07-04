@@ -104,9 +104,12 @@ CanvasElement.prototype.dependsOn = function(element) {
 /**
  * @class Base class for maps
  * @extends CanvasElement
+ *
  * @constructor
- * @param {State}
- *        state the visualizer state for reference
+ * @param {appState}
+ *        appState the application state for reference
+ * @param {visState}
+ *        visState the visualizer state for reference
  */
 function CanvasElementAbstractMap(appState, visState) {
 	this.upper();
@@ -147,9 +150,12 @@ CanvasElementAbstractMap.prototype.draw = function(resized, drawGrid) {
 /**
  * @class A canvas element for the mini map.
  * @extends CanvasElementAbstractMap
+ *
  * @constructor
- * @param {State}
- *        state the visualizer state for reference
+ * @param {appState}
+ *        appState the application state for reference
+ * @param {visState}
+ *        visState the visualizer state for reference
  */
 function CanvasElementMiniMap(appState, visState) {
 	this.upper(appState, visState);
@@ -196,9 +202,12 @@ CanvasElementMiniMap.prototype.draw = function() {
 /**
  * @class A canvas element for the main map.
  * @extends CanvasElementAbstractMap
+ *
  * @constructor
- * @param {State}
- *        state the visualizer state for reference
+ * @param {appState}
+ *        appState the application state for reference
+ * @param {visState}
+ *        visState the visualizer state for reference
  */
 function CanvasElementMap(appState, visState) {
 	this.upper(appState, visState);
@@ -222,13 +231,14 @@ CanvasElementMap.prototype.checkState = function() {
 /**
  * @class The main map including ants and indicators
  * @extends CanvasElement
+ *
  * @constructor
- * @param {State}
- *        state the visualizer state for reference
+ * @param {appState}
+ *        appState the application state for reference
+ * @param {visState}
+ *        visState the visualizer state for reference
  * @param {CanvasElementMap}
  *        map the background map
- * @param {CanvasElementFog}
- *        fog the fog overlay
  */
 function CanvasElementAntsMap(appState, visState, map) {
 	this.upper();
@@ -386,9 +396,12 @@ CanvasElementAntsMap.prototype.draw = function() {
 /**
  * @class The main map with ants, dragged with the mouse and extended by borders if required
  * @extends CanvasElement
+ *
  * @constructor
- * @param {State}
- *        state the visualizer state for reference
+ * @param {appState}
+ *        appState the application state for reference
+ * @param {visState}
+ *        visState the visualizer state for reference
  * @param {CanvasElementAntsMap}
  *        antsMap the prepared map with ants
  */
@@ -468,8 +481,10 @@ CanvasElementShiftedMap.prototype.draw = function() {
  * @class A canvas element for statistical time graphs.
  * @extends CanvasElement
  * @constructor
- * @param {State}
- *        state the visualizer state for reference
+ * @param {appState}
+ *        appState the application state for reference
+ * @param {visState}
+ *        visState the visualizer state for reference
  * @param {String}
  *        stats name of the stats to query from the visualizer
  */
@@ -561,8 +576,7 @@ CanvasElementGraph.prototype.draw = function() {
 	this.ctx.stroke();
     
     // draw game phaze divider
-    // TODO: 80 is Simulator.game_phase_duration
-    x = scaleX * (this.visState.replay.duration - 500) - scaleX;
+    x = scaleX * (this.visState.replay.gamePhaseDuration) - scaleX;
     this.ctx.lineWidth = 1;
     this.ctx.beginPath();
     this.ctx.moveTo(x, 0);
@@ -638,8 +652,10 @@ CanvasElementGraph.prototype.getStats = function(name) {
  * @class A canvas element for statistics. It makes use of {@link CanvasElementGraph}.
  * @extends CanvasElement
  * @constructor
- * @param {State}
- *        state the visualizer state for reference
+ * @param {appState}
+ *        appState the application state for reference
+ * @param {visState}
+ *        visState the visualizer state for reference
  * @param {String}
  *        caption the caption that is show to the left of the bar graph
  * @param {String}

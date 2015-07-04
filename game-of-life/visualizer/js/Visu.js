@@ -1,4 +1,10 @@
-
+/**
+ * @class The visualizer object that handles replay drawing and playback: map, graphs, playback controls.
+ *
+ * @constructor
+ * @param {Object}
+ *        app main application object
+ */
 Visu = function(app) {
     this.app = app;
 
@@ -89,6 +95,14 @@ Visu.prototype.calculateReplaySpeed = function() {
 	}
 };
 
+/**
+ * Creates all different objects needed (canvas layers, director object)
+ * and prepares them for visualizing provided replay.
+ *
+ * @private
+ * @param {Object}
+ *        replay replay to visualize
+ */
 Visu.prototype.init = function(replay) {
     this.state.replay = replay;
 
@@ -341,6 +355,16 @@ Visu.prototype.setZoom = function(zoom) {
 	this.map.x = (((this.shiftedMap.w - this.map.w) >> 1) + this.shiftedMap.x) | 0;
 	this.map.y = (((this.shiftedMap.h - this.map.h) >> 1) + this.shiftedMap.y) | 0;
 	this.antsMap.setSize(this.map.w, this.map.h);
+};
+
+/**
+ * Centers the map drawn by this visualizer.
+ *
+ */
+Visu.prototype.centerMap = function() {
+    this.state.shiftX = this.app.mapCenterX;
+	this.state.shiftY = this.app.mapCenterY;
+    this.director.draw();
 };
 
 /**

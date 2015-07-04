@@ -21,12 +21,14 @@ INT_TO_HEX = new Array(256);
  * @const
  */
 LEFT_PANEL_W = 48;
+
 /**
  * width of right side panel
  * 
  * @const
  */
 RIGHT_PANEL_W = 48;
+
 /**
  * height of bottom panel
  * 
@@ -57,6 +59,7 @@ COLOR_MAPS = [  10, // highlighted player
               [ 0, 1, 3, 4, 5, 6, 7, 8 ],
               [ 0, 1, 2, 3, 4, 5, 6, 7, 8 ],
               [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] ];
+
 /**
  * colors of players
  * 
@@ -70,42 +73,49 @@ PLAYER_COLORS = [ [ 350, 85, 45 ], [ 20, 80, 55 ],
 
 		          [ 0, 0, 90 ] ];
 
+
 /**
  * color of food items
  * 
  * @const
  */
 FOOD_COLOR = hsl_to_rgb([ 50, 20, 50 ]);
+
 /**
  * color of land squares
  * 
  * @const
  */
 SAND_COLOR = rgb_to_hex(hsl_to_rgb([ 30, 35, 35 ]));
+
 /**
  * color of text in player stats
  * 
  * @const
  */
 STAT_COLOR = rgb_to_hex(hsl_to_rgb([ 0, 0, 10 ]));
+
 /**
  * color of text in stat titles
  * 
  * @const
  */
 TEXT_COLOR = rgb_to_hex(hsl_to_rgb([ 0, 0, 10 ]));
+
 /**
  * color of text on graph title
  * 
  * @const
  */
 TEXT_GRAPH_COLOR = rgb_to_hex(hsl_to_rgb([ 0, 0, 90 ]));
+
 /**
  * color of background for top stats bars
  * 
  * @const
  */
 BACK_COLOR = rgb_to_hex(hsl_to_rgb([ 30, 30, 100 ]));
+
 /**
  * maximum pixel size of map squares
  * 
@@ -121,3 +131,10 @@ ZOOM_SCALE = 60;
  * @const
  */
 FONT = 'bold 19px Arial,Sans';
+
+/**
+ * height of hint message
+ *
+ * @const
+ */
+HINT_HEIGHT = 22;

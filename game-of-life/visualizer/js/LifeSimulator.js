@@ -1,11 +1,11 @@
 function LifeSimulator(cells, rows, cols, startTurn) {
-    this.SIMULATION_LENGTH = 500;
-
     this.cells = cells;
     this.rows = rows;
     this.cols = cols;
     this.startTurn = startTurn;
 }
+
+LifeSimulator.SIM_LENGTH = 500;
 
 LifeSimulator.prototype.simulate = function() {
     var map = new Array(this.rows);
@@ -20,7 +20,7 @@ LifeSimulator.prototype.simulate = function() {
         aliveCells.push({row: cell[0], col: cell[1]});
     }
 
-    this.simStep(map, aliveCells, this.SIMULATION_LENGTH);
+    this.simStep(map, aliveCells, LifeSimulator.SIM_LENGTH);
 };
 
 LifeSimulator.prototype.simStep = function(map, aliveCells, totalSteps, stepsDone) {

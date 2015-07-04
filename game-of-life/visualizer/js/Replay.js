@@ -54,6 +54,7 @@ function Replay(params) {
             this.rows = this.meta['replaydata']['map']['rows'];
             this.cols = this.meta['replaydata']['map']['cols'];
 			this.duration = 0;
+            this.gamePhaseDuration = 0;
 
 			this.meta['status'] = Object.create(this.meta.status);
             for (var p = 0; p < this.players; ++p) {
@@ -70,7 +71,7 @@ function Replay(params) {
 
         // initialize cells dying turn
         for (n = 0; n < cells.length; n++) {
-            cells[n][4] = this.duration + 500 + 1;
+            cells[n][4] = this.duration + LifeSimulator.SIM_LENGTH + 1;
         }
 
         // simulate universe
@@ -83,7 +84,7 @@ function Replay(params) {
         }
         if (active_players > 1 || params.meta) {
 			new LifeSimulator(cells, this.rows, this.cols, this.duration).simulate();
-            this.duration += 500;
+            this.duration += LifeSimulator.SIM_LENGTH;
         }
 
         // prepare score and count lists
@@ -103,19 +104,7 @@ function Replay(params) {
             for (i = 0; i < this.players; i++)
                 this['stores'][n][i] = 0;
         }
-        // for (i = 0; i < this.players; i++) {
-            // for (; k <= this.duration; k++) {
-                // this['scores'][k][i] = player_scores[player_scores.length - 1];
-            // }
-            // // convert stores from per-player to per-turn
-            // player_stores = storeslist[i];
-            // for (k = 0; k < player_stores.length; k++) {
-                // this['stores'][k][i] = player_stores[k];
-            // }
-            // for (; k <= this.duration; k++) {
-                // this['stores'][k][i] = player_stores[player_stores.length - 1];
-            // }
-        // }
+
         // calculate cell counts per turn per player
         for (i = 0; i < cells.length; i++) {
             for (n = cells[i][2]; n < cells[i][4]; n++) {
@@ -123,25 +112,11 @@ function Replay(params) {
             }
         }
 
-        // if some player eliminated reduce replay duration
-        // TODO: 500 is Simulator.total_steps
-        // var done = false;
-        // for (step = this.duration-500; step < this.duration && !done; ++step) {
-            // for (player = 0; player < this.players; ++player) {
-                // if (this['counts'][step][player] <= 0) {
-                    // this.duration = step;
-                    // done = true;
-                    // break;
-                // }
-            // }
-        // }
-
         // correct data about bots elimination turn
-        // TODO: 500 is Simulator.total_steps
         if (active_players > 1) {
-            for (step = this.duration-500+1; step <= this.duration; ++step) {
-                for (player = 0; player < this.players; ++player) {
-                    if (this['counts'][step][player] > 0) {
+            for (var turn = this.gamePhaseDuration + 1; turn <= this.duration; ++turn) {
+                for (var player = 0; player < this.players; ++player) {
+                    if (this['counts'][turn][player] > 0) {
                         ++this.meta['playerturns'][player];
                     }
                 }
@@ -159,7 +134,7 @@ function Replay(params) {
         this.aniCells =  new Array(cells.length);
         this.turns = new Array(this.duration + 1);
         this.aliveCells = new Array(this.duration + 1);
-        this.simReplays = new Array(this.duration - 500 + 1);
+        this.simReplays = new Array(this.gamePhaseDuration + 1);
         this.replayCacheMisses = 0;
         this.replayCacheSuccess = 0;
     }
@@ -329,7 +304,7 @@ Replay.prototype.parseReplay = function(replay) {
 	}
 	stack.pop();
 
-    this.duration = cells.length;
+    this.duration = this.gamePhaseDuration = cells.length;
 };
 
 /**

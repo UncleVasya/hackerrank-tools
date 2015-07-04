@@ -128,6 +128,16 @@ Director.prototype.slowmoTo = function(time) {
 	}
 };
 
+/**
+ * Makes sure fade effects after playback ended are shown on normal speed.
+ *
+ * @param {Number}
+ *        timeStep visualization time passing between two frames at current speed
+ * @param {Number}
+ *        lastTime clock time of last drawn frame
+ *
+ * @private
+ */
 Director.prototype.fixSpeedForFade = function(timeStep, lastTime) {
     do {
         var timeLeft = undefined;
@@ -187,6 +197,11 @@ Director.prototype.fixSpeedForFade = function(timeStep, lastTime) {
     return {timeStep: timeStep, lastTime: lastTime};
 };
 
+/**
+ * Gets appropriate fade color based on current visualization time.
+ *
+ * @private
+ */
 Director.prototype.getFadeColor = function () {
     var color, alpha; 
     if (this.time < -1) {
@@ -205,6 +220,11 @@ Director.prototype.getFadeColor = function () {
     return 'rgba(' + color + ',' + color + ',' + color + ',' + alpha + ')';
 };
 
+/**
+ * Shows FPS counter on document title.
+ *
+ * @private
+ */
 Director.prototype.showFps = function() {
     var delta = (this.lastTime - this.frameStart);
     var fps = Math.round(1000 * this.frameCounter / delta);

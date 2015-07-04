@@ -542,7 +542,7 @@ Visualizer.prototype.completedImages = function(error) {
  */
 Visualizer.prototype.tryStart = function() {
 	var bg, i, k, dlg, scores;
-	var vis = this;
+	var app = this;
 	// we need to parse the replay, unless it has been parsed by the
 	// XmlHttpRequest callback
 	if (this.state.replay) {
@@ -590,38 +590,35 @@ Visualizer.prototype.tryStart = function() {
 
         this.vis.init(this.state.replay);
 		this.vis.director.onTurnChange = function(time) {
-            if (!vis.helperVis) return; // helper vis disabled, nothing to do here
+            if (!app.helperVis) return; // helper vis disabled, nothing to do here
 
             var turn = Math.floor(time);
-            var effectiveTurn = Math.min(turn, this.duration - 500); // make prognoses only for game phase positions
+            var effectiveTurn = Math.min(turn, app.state.replay.gamePhaseDuration); // make prognoses only for game phase positions
 
-            vis.state.replay.getSimReplay(effectiveTurn, function(replay) {
+            app.state.replay.getSimReplay(effectiveTurn, function(replay) {
                 document.title = 'Replay cache |  ' +
-                    'size: ' +  vis.state.replay.simReplays.length + '  ' +
-                    'count: ' + vis.state.replay.simReplays.reduce(function(cnt, x) {return x? ++cnt: cnt}, 0) + '  ' +
-                    'misses: ' + vis.state.replay.replayCacheMisses + '  ' +
-                    'success: ' + vis.state.replay.replayCacheSuccess;
+                    'size: ' +  app.state.replay.simReplays.length + '  ' +
+                    'count: ' + app.state.replay.simReplays.reduce(function(cnt, x) {return x? ++cnt: cnt}, 0) + '  ' +
+                    'misses: ' + app.state.replay.replayCacheMisses + '  ' +
+                    'success: ' + app.state.replay.replayCacheSuccess;
 
                 // if main vis turn changed, no need to draw this replay on helper vis
-                if (turn != Math.floor(vis.vis.director.time)) return;
+                if (turn != Math.floor(app.vis.director.time)) return;
 
-                if (replay !== vis.helperVis.state.replay) {
-                    vis.helperVis.cleanUp();
-                    vis.helperVis.init(replay);
-                    vis.helperVis.resize();
+                if (replay !== app.helperVis.state.replay) {
+                    app.helperVis.cleanUp();
+                    app.helperVis.init(replay);
+                    app.helperVis.resize();
                 }
-                if (turn > vis.vis.director.duration - 500) {
-                    vis.helperVis.director.gotoTick(turn - (vis.vis.director.duration - 500)); // TODO: duration - 500 is Simulator.game_phase_duration
+                if (turn > app.state.replay.gamePhaseDuration) {
+                    app.helperVis.director.gotoTick(turn - (app.state.replay.gamePhaseDuration));
                 }
             });
         };
-        //vis.state.replay.getSimReplay(0, function (replay) {
-        //    this.helperVis.init(replay);
-        //});
         this.state.replay.getSimReplay(0);
-        this.state.replay.getSimReplay(this.state.replay.duration - 500);
+        this.state.replay.getSimReplay(this.state.replay.gamePhaseDuration);
         if (this.helperVis) {
-            this.helperVis.init(vis.state.replay);
+            this.helperVis.init(app.state.replay);
         }
 
 		if (this.state.options['interactive']) {
@@ -669,11 +666,11 @@ Visualizer.prototype.tryStart = function() {
 					+ ((window.scrollY === undefined) ? (document.body.parentNode.scrollTop !== undefined) ? document.body.parentNode.scrollTop
 							: document.body.scrollTop
 							: window.scrollY);
-			vis.mouseMoved(mx, my);
+			app.mouseMoved(mx, my);
 		};
 		/** @ignore */
 		this.main.canvas.onmouseout = function() {
-			vis.mouseExited();
+			app.mouseExited();
 		};
 		/**
 		 * @ignore
@@ -682,8 +679,8 @@ Visualizer.prototype.tryStart = function() {
 		 */
 		this.main.canvas.onmousedown = function(event) {
 			if (event.which === 1) {
-				Visualizer.focused = vis;
-				vis.mousePressed();
+				Visualizer.focused = app;
+				app.mousePressed();
 			}
 		};
 		/**
@@ -693,7 +690,7 @@ Visualizer.prototype.tryStart = function() {
 		 */
 		this.main.canvas.onmouseup = function(event) {
 			if (event.which === 1) {
-				vis.mouseReleased();
+				app.mouseReleased();
 			}
 		};
 		/**
@@ -702,11 +699,11 @@ Visualizer.prototype.tryStart = function() {
 		 *        The input event.
 		 */
 		this.main.canvas.ondblclick = function(event) {
-			if (vis.shiftedMap.contains(vis.mouseX, vis.mouseY)) vis.centerMap();
+			if (app.shiftedMap.contains(app.mouseX, app.mouseY)) app.centerMap();
 		};
 		/** @ignore */
 		window.onresize = function() {
-			vis.resize();
+			app.resize();
 		};
         this.setSpeedButtonsHints();
         this.setZoomButtonsState();
@@ -737,19 +734,19 @@ Visualizer.prototype.tryStart = function() {
 	}
 };
 
+/**
+ * Centers map drawn by visualizers and disables CenterMap button.
+ *
+ * @private
+ */
 Visualizer.prototype.centerMap = function() {
-	this.vis.state.shiftX = this.mapCenterX;
-	this.vis.state.shiftY = this.mapCenterY;
-    if (this.helperVis) {
-        this.helperVis.state.shiftX = this.mapCenterX;
-        this.helperVis.state.shiftY = this.mapCenterY;
-    }
 	if (this.state.options['decorated']) {
 		var btn = this.btnMgr.groups['toolbarRight'].getButton(4);
 		btn.enabled = false;
 		btn.draw();
 	}
-	this.director.draw();
+    this.vis.centerMap();
+    if (this.helperVis) this.helperVis.centerMap();
 };
 
 /**
@@ -765,6 +762,11 @@ Visualizer.prototype.modifySpeed = function(modifier) {
     this.setSpeedButtonsHints();
 };
 
+/**
+ * Updates hints on speed change buttons according to the current speed.
+ *
+ * @private
+ */
 Visualizer.prototype.setSpeedButtonsHints = function() {
     var hintText = function(base) {
 		return 'set speed modifier to ' + ((base > 0) ? '+' + base : base);
@@ -880,7 +882,7 @@ Visualizer.prototype.addLeftPanel = function() {
             this.helperVis.init(this.state.replay);
             // pre-calculate helper replays for the first and last turns
             this.state.replay.getSimReplay(0);
-            this.state.replay.getSimReplay(this.state.replay.duration - 500);
+            this.state.replay.getSimReplay(this.state.replay.gamePhaseDuration);
         }
         this.resize(true);
         // synchronize helper vis and main vis
@@ -1112,6 +1114,13 @@ Visualizer.prototype.resize = function(forced) {
 	}
 };
 
+/**
+ * Changes zoom level of visualizers and updates zoom buttons.
+ *
+ * @private
+ * @param zoom
+ *        {Number} New zoom level. Values less than 1 are set to 1.
+ */
 Visualizer.prototype.setZoom = function(zoom) {
     zoom = Math.max(1, zoom);
     if (this.vis.director.fixedFpt === undefined) {
@@ -1129,6 +1138,13 @@ Visualizer.prototype.setZoom = function(zoom) {
     this.setZoomButtonsState();
 };
 
+/**
+ * Updates availability of zoom buttons:
+ * - IncreaseZoom button disabled if zoom level is at max already;
+ * - DecreaseZoom button disabled if zoom level is at min already;
+ *
+ * @private
+ */
 Visualizer.prototype.setZoomButtonsState = function() {
     if (this.state.options['interactive'] && this.state.options['decorated']) {
 		var zoomInBtn = this.btnMgr.groups['toolbarRight'].getButton(2);
@@ -1140,6 +1156,12 @@ Visualizer.prototype.setZoomButtonsState = function() {
 	}
 };
 
+/**
+ * Updates hint message for buttons, map position, etc.
+ * Handles case with 2 visualizers: draws hint part lying between visualizers.
+ *
+ * @private
+ */
 Visualizer.prototype.updateHint = function() {
 	var ctx = this.main.ctx;
     var hint = this.hint;
@@ -1162,10 +1184,9 @@ Visualizer.prototype.updateHint = function() {
         var x = this.vis.x + this.vis.w;
         var w = this.helperVis.x - x;
         var hint_y = this.vis.shiftedMap.y;
-        var hint_h = 22;
 
         ctx.fillStyle = '#fff';
-        ctx.fillRect(x, hint_y, w, hint_h);
+        ctx.fillRect(x, hint_y, w, HINT_HEIGHT);
 
         // draw hint part between visualizers
         var hint_part_x = Math.max(this.hint_x, x);
@@ -1173,8 +1194,17 @@ Visualizer.prototype.updateHint = function() {
 
         this.drawHintPart(hint_part_x, hint_part_w);
     }
-}
+};
 
+/**
+ * Draws specific part of hint message.
+ *
+ * @private
+ * @param x
+ *        {Number} Starting position of hint part.
+ * @param w
+ *        {Number} Weight of hint part.
+ */
 Visualizer.prototype.drawHintPart = function(x, w) {
     var ctx = this.main.ctx;
 
@@ -1182,16 +1212,15 @@ Visualizer.prototype.drawHintPart = function(x, w) {
 
     ctx.save();
     ctx.beginPath();
-    ctx.rect(x, hint_y, w, hint_y + 22);
+    ctx.rect(x, hint_y, w, hint_y + HINT_HEIGHT);
     ctx.clip();
 
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    //ctx.fillStyle = '#000';
-    ctx.fillRect(x, hint_y, w, 22); // TODO: 22 is HINT_HEIGHT
+    ctx.fillRect(x, hint_y, w, HINT_HEIGHT);
     ctx.fillStyle = '#fff';
-    ctx.fillText(this.hint, this.hint_x, hint_y + 10); // TODO: 10 is HINT_TEXT_MARGIN
+    ctx.fillText(this.hint, this.hint_x, hint_y + 10);
     ctx.restore();
-}
+};
 
 /**
  * Internal wrapper around mouse move events.
