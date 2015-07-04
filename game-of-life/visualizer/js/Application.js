@@ -144,7 +144,10 @@ Visualizer = function(container, options, w, h, configOverrides) {
         /** @private */
 		this.vis = new Visu(this);
         /** @private */
-        this.helperVis = new Visu(this);
+        this.helperVisEnabled = true;
+        if (this.state.config['helperVisEnabled']) {
+            this.helperVis = new Visu(this);
+        }
 		/** @private */
 		this.mouseX = -1;
 		/** @private */
@@ -328,7 +331,9 @@ Visualizer.prototype.cleanUp = function() {
         this.imgMgr.cleanUp();
     }
     this.vis.cleanUp();
-    this.helperVis.cleanUp();
+    if (this.helperVis) {
+        this.helperVis.cleanUp();
+    }
 	this.state.cleanUp();
 	this.replayStr = undefined;
 	this.replayReq = undefined;
@@ -448,7 +453,9 @@ Visualizer.prototype.streamingStart = function() {
 			this.vis.director.stopAt = this.state.replay.duration;
 		}
 		this.vis.director.duration = this.state.replay.duration;
-        this.helperVis.director.duration = this.state.replay.duration;
+        if (this.helperVis) {
+            this.helperVis.director.duration = this.state.replay.duration;
+        }
 		if (resume) {
 			this.vis.director.play();
 		}
@@ -583,6 +590,8 @@ Visualizer.prototype.tryStart = function() {
 
         this.vis.init(this.state.replay);
 		this.vis.director.onTurnChange = function(time) {
+            if (!vis.helperVis) return; // helper vis disabled, nothing to do here
+
             var turn = Math.floor(time);
             var effectiveTurn = Math.min(turn, this.duration - 500); // make prognoses only for game phase positions
 
@@ -611,8 +620,9 @@ Visualizer.prototype.tryStart = function() {
         //});
         this.state.replay.getSimReplay(0);
         this.state.replay.getSimReplay(this.state.replay.duration - 500);
-        this.helperVis.init(vis.state.replay);
-
+        if (this.helperVis) {
+            this.helperVis.init(vis.state.replay);
+        }
 
 		if (this.state.options['interactive']) {
 			// this will fire once in FireFox when a key is held down
@@ -705,8 +715,10 @@ Visualizer.prototype.tryStart = function() {
 		this.calculateMapCenter(ZOOM_SCALE);
 		this.vis.state.shiftX = this.mapCenterX; //TODO: find a better place for this
 		this.vis.state.shiftY = this.mapCenterY;
-        this.helperVis.state.shiftX = this.mapCenterX; //TODO: find a better place for this
-		this.helperVis.state.shiftY = this.mapCenterY;
+        if (this.helperVis) {
+            this.helperVis.state.shiftX = this.mapCenterX; //TODO: find a better place for this
+            this.helperVis.state.shiftY = this.mapCenterY;
+        }
 
 		this.log.style.display = 'none';
 		this.main.canvas.style.display = 'inline';
@@ -715,7 +727,7 @@ Visualizer.prototype.tryStart = function() {
 		if (this.state.replay.hasDuration) {
 			if (!isNaN(this.state.options['turn'])) {
 				this.vis.director.gotoTick(this.state.options['turn'] - 1);
-                this.helperVis.director.gotoTick(this.state.options['turn'] - 1);
+                //this.helperVis.director.gotoTick(this.state.options['turn'] - 1);
 			} else {
 				this.vis.director.play();
 			}
@@ -728,8 +740,10 @@ Visualizer.prototype.tryStart = function() {
 Visualizer.prototype.centerMap = function() {
 	this.vis.state.shiftX = this.mapCenterX;
 	this.vis.state.shiftY = this.mapCenterY;
-    this.helperVis.state.shiftX = this.mapCenterX;
-	this.helperVis.state.shiftY = this.mapCenterY;
+    if (this.helperVis) {
+        this.helperVis.state.shiftX = this.mapCenterX;
+        this.helperVis.state.shiftY = this.mapCenterY;
+    }
 	if (this.state.options['decorated']) {
 		var btn = this.btnMgr.groups['toolbarRight'].getButton(4);
 		btn.enabled = false;
@@ -837,13 +851,15 @@ Visualizer.prototype.addPlayerButtons = function() {
  */
 Visualizer.prototype.addLeftPanel = function() {
     bg = this.btnMgr.addImageGroup('toolbarLeft', this.imgMgr.get('toolbarLeft'),
-    ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
+        ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
     dlg = new Delegate(this, function() {
         var shape = this.state.config['cellShape'];
         this.state.config['cellShape'] = (shape + 1) % 2;
         this.vis.director.draw();
-        this.helperVis.director.draw();
+        if (this.helperVis) {
+            this.helperVis.director.draw();
+        }
     });
     bg.addButton(0, dlg, 'cell shape: 1. rectangles, 2. circles');
     
@@ -852,6 +868,26 @@ Visualizer.prototype.addLeftPanel = function() {
         this.state.config['animLevel'] = (animLevel + 1) % 3;
     });
     bg.addButton(1, dlg, 'animation: 1. none, 2. limited, 3. full');
+
+    dlg = new Delegate(this, function() {
+        var enabled = this.state.config['helperVisEnabled'];
+        if (enabled) { // disable helper vis
+            this.helperVis.cleanUp();
+            this.helperVis = null;
+
+        } else { // enable helper vis
+            this.helperVis = new Visu(this);
+            this.helperVis.init(this.state.replay);
+            // pre-calculate helper replays for the first and last turns
+            this.state.replay.getSimReplay(0);
+            this.state.replay.getSimReplay(this.state.replay.duration - 500);
+        }
+        this.resize(true);
+        // synchronize helper vis and main vis
+        this.vis.director.onTurnChange(this.vis.director.time);
+        this.state.config['helperVisEnabled'] = !enabled;
+    });
+    bg.addButton(2, dlg, 'show/hide prognosis');
 };
 
 /**
@@ -987,7 +1023,9 @@ Visualizer.prototype.setAntLabels = function(mode) {
 		this.resize(true);
 	} else {
         this.vis.director.draw();
-        this.helperVis.director.draw();
+        if (this.helperVis) {
+            this.helperVis.director.draw();
+        }
     }
 };
 
@@ -1027,12 +1065,10 @@ Visualizer.prototype.resize = function(forced) {
 	if (resizing || forced) {
 		var canvas = this.main.canvas;
 		var ctx = this.main.ctx;
-		if (resizing) {
-			canvas.width = newSize.w;
-			canvas.height = newSize.h;
-			ctx.fillStyle = '#fff';
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
-		}
+        canvas.width = newSize.w;
+        canvas.height = newSize.h;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 		this.resizing = true;
 		if (this.state.replay.hasDuration && this.state.options['decorated']) {
 			y = this.btnMgr.groups['players'].cascade(newSize.w) + 4;
@@ -1055,21 +1091,22 @@ Visualizer.prototype.resize = function(forced) {
             this.btnMgr.draw();
         }
 
-        this.updateHint();
-
         this.vis.x = 0;
         this.vis.y = y;
-        this.vis.w = newSize.w / 2 - 10;
-        //this.vis.w = newSize.w;
+        this.vis.w = this.helperVis? newSize.w / 2 - 10: newSize.w;
         this.vis.h = newSize.h - y;
+        if (this.helperVis) {
+            this.helperVis.x = newSize.w / 2 + 10;
+            this.helperVis.y = y;
+            this.helperVis.w = newSize.w / 2 - 10;
+            this.helperVis.h = newSize.h - y;
+        }
 
-        this.helperVis.x = newSize.w / 2 + 10;
-        this.helperVis.y = y;
-        this.helperVis.w = newSize.w / 2 - 10;
-        this.helperVis.h = newSize.h - y;
-
+        this.updateHint();
         this.vis.resize();
-        this.helperVis.resize();
+        if (this.helperVis) {
+            this.helperVis.resize();
+        }
 
         this.resizing = false;
 	}
@@ -1084,8 +1121,10 @@ Visualizer.prototype.setZoom = function(zoom) {
     this.vis.setZoom(zoom);
     this.vis.director.draw();
 
-    this.helperVis.setZoom(zoom);
-    this.helperVis.director.draw();
+    if (this.helperVis) {
+        this.helperVis.setZoom(zoom);
+        this.helperVis.director.draw();
+    }
 
     this.setZoomButtonsState();
 };
@@ -1174,7 +1213,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 	if (this.state.options['interactive']) {
         if (this.vis.contains(this.mouseX, this.mouseY)) {
             this.vis.mouseMoved(mx, my);
-        } else if (this.helperVis.contains(this.mouseX, this.mouseY)) {
+        } else if (this.helperVis && this.helperVis.contains(this.mouseX, this.mouseY)) {
             this.helperVis.mouseMoved(mx, my);
         }
         if (this.state.options['decorated']) {
@@ -1189,7 +1228,9 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 	if (oldHint !== this.hint) {
         this.updateHint();
         this.vis.director.draw();
-        this.helperVis.director.draw();
+        if (this.helperVis) {
+            this.helperVis.director.draw();
+        }
 	}
 };
 
@@ -1202,7 +1243,7 @@ Visualizer.prototype.mousePressed = function() {
 	if (this.state.options['interactive']) {
 		if (this.vis.contains(this.mouseX, this.mouseY)) {
             this.vis.mousePressed();
-        } else if (this.helperVis.contains(this.mouseX, this.mouseY)) {
+        } else if (this.helperVis && this.helperVis.contains(this.mouseX, this.mouseY)) {
             this.helperVis.mousePressed();
         }
 		this.btnMgr.mouseDown();
@@ -1224,7 +1265,9 @@ Visualizer.prototype.mouseReleased = function() {
 		this.btnMgr.mouseUp();
 	}
     this.vis.mouseReleased();
-    this.helperVis.mouseReleased();
+    if (this.helperVis) {
+        this.helperVis.mouseReleased();
+    }
 	this.mouseMoved(this.mouseX, this.mouseY);
 };
 

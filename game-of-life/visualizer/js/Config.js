@@ -39,6 +39,7 @@ Config.prototype['speedSlowest'] = 2;
 Config.prototype['speedFastest'] = 8;
 Config.prototype['speedFactor'] = -4;
 Config.prototype['cpu'] = 0.5;
+Config.prototype['helperVisEnabled'] = false;
 
 Config.prototype['ANIM_LEVELS'] = {
     NONE: 0, // not in use now
