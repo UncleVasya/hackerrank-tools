@@ -1,9 +1,4 @@
 /**
- * @fileOverview This file is dedicated to the playback logic of the visualizer.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- */
-
-/**
  * @class The director is supposed to keep track of playback speed and position and keep an eye on
  *        CPU usage. It does that in an acceptable fashion.
  *

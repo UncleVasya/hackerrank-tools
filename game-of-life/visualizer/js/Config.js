@@ -1,16 +1,11 @@
 /**
- * @fileOverview This file is for the persistent configuration of the visualizer.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- */
-
-/**
  * @class This class keeps track of persistent configuration values. The values are stored in
  *        browser "local storage" under "visualizer.&lt;key&gt;" identifiers.
  * @constructor
  * @property {Boolean} fullscreen If set, the visualizer uses the whole browser window to display,
  *           replacing any other content. Default: false
- * @property {Number} label Can take the values 0 = draw no label on ants, 1 = draw letters on ants,
- *           2 = draw the ant id (occurrence in replay file). Default: 0
+ * @property {Number} label Can take the values 0 = draw no label on cells, 1 = draw letters on cells,
+ *           2 = draw the cell id (occurrence in replay file). Default: 0
  * @property {Number} zoom Sets the zoom factor. The actual size of map squares depends on the
  *           visualizer size. Default: 1
  * @property {Number} duration How long a replay should normally play, in seconds. The speed is

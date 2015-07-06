@@ -1,7 +1,6 @@
 /**
  * @fileOverview This file acts as the central import point for the other JavaScript files that make
  *               up the visualizer.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
  */
 
 namespace_vis = {};

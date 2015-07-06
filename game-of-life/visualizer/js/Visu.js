@@ -18,7 +18,7 @@ Visu = function(app) {
     /** @private */
     this.map = undefined;
     /** @private */
-    this.antsMap = undefined;
+    this.cellsMap = undefined;
     /** @private */
     this.shiftedMap = undefined;
     /** @private */
@@ -68,7 +68,7 @@ Visu.prototype.cleanUp = function() {
     this.replay = undefined;
 
     this.map = undefined;
-    this.antsMap = undefined;
+    this.cellsMap = undefined;
     this.shiftedMap = undefined;
     this.miniMap = undefined;
     this.counts = undefined;
@@ -104,8 +104,8 @@ Visu.prototype.init = function(replay) {
     this.state.replay = replay;
 
     this.map = new CanvasElementMap(this.app.state, this.state);
-    this.antsMap = new CanvasElementAntsMap(this.app.state, this.state, this.map);
-    this.shiftedMap = new CanvasElementShiftedMap(this.app.state, this.state, this.antsMap);
+    this.cellsMap = new CanvasElementCellsMap(this.app.state, this.state, this.map);
+    this.shiftedMap = new CanvasElementShiftedMap(this.app.state, this.state, this.cellsMap);
     this.miniMap = new CanvasElementMiniMap(this.app.state, this.state);
     if (this.app.state.options['decorated']) {
         this.counts = new CanvasElementStats(this.app.state, this.state, '# of cells', 'counts', '500 steps');
@@ -353,7 +353,7 @@ Visu.prototype.setZoom = function(zoom) {
 	this.map.setSize(state.scale * this.state.replay.cols, state.scale * this.state.replay.rows);
 	this.map.x = (((this.shiftedMap.w - this.map.w) >> 1) + this.shiftedMap.x) | 0;
 	this.map.y = (((this.shiftedMap.h - this.map.h) >> 1) + this.shiftedMap.y) | 0;
-	this.antsMap.setSize(this.map.w, this.map.h);
+	this.cellsMap.setSize(this.map.w, this.map.h);
 };
 
 /**

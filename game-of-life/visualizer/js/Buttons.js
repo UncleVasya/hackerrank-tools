@@ -1,9 +1,4 @@
 /**
- * @fileoverview This file contains the visualizer UI: buttons.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- */
-
-/**
  * @class The base class for buttons.
  *
  * @constructor
@@ -51,12 +46,7 @@ Button.prototype.draw = function() {
 		ctx.shadowBlur = 4 - 0.75 * this.down;
 		ctx.shadowOffsetX = -0.5 * this.down;
 		ctx.shadowOffsetY = +0.5 * this.down;
-		if (Quirks.fullImageShadowSupport) {
-			ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-		} else {
-			// FireFox 5 with shadow bug or other bad support
-			ctx.shadowColor = 'rgba(0, 0, 0, 0)';
-		}
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
 	}
 	ctx.save();
 	ctx.translate(loc.x, loc.y - 1 + this.down);

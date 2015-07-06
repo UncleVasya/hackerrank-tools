@@ -1,9 +1,4 @@
 /**
- * @fileOverview Classes for loading the used images in the background.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- */
-
-/**
  * @class Stores information about an image source and the result of loading it.
  *
  * @constructor

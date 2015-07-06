@@ -1,9 +1,4 @@
 /**
- * @fileOverview Utility functions used in the visualizer.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- */
-
-/**
  * On a infinite repeating map, this maps a coordinate x into the 'original' instance of the map
  * area. That is the area starting at (0;0) ranging to (width;height). This function operates on a
  * single coordinate so the range parameter can be either the width or height.
@@ -55,142 +50,6 @@ Math.dist_2 = function(x1, y1, x2, y2, w, h) {
 	dx = Math.min(dx, w - dx);
 	dy = Math.min(dy, h - dy);
 	return dx * dx + dy * dy;
-};
-
-var BrowserDetect = {
-	searchString: function (data) {
-		for (var i=0;i<data.length;i++)	{
-			var dataString = data[i].string;
-			var dataProp = data[i].prop;
-			this.versionSearchString = data[i].versionSearch || data[i].identity;
-			if (dataString) {
-				if (dataString.indexOf(data[i].subString) != -1)
-					return data[i].identity;
-			}
-			else if (dataProp)
-				return data[i].identity;
-		}
-	},
-	searchVersion: function (dataString) {
-		var index = dataString.indexOf(this.versionSearchString);
-		if (index == -1) return;
-		return parseFloat(dataString.substring(index+this.versionSearchString.length+1));
-	},
-	dataBrowser: [
-		{
-			string: navigator.userAgent,
-			subString: "Chrome",
-			identity: "Chrome"
-		},
-		{ 	string: navigator.userAgent,
-			subString: "OmniWeb",
-			versionSearch: "OmniWeb/",
-			identity: "OmniWeb"
-		},
-		{
-			string: navigator.vendor,
-			subString: "Apple",
-			identity: "Safari",
-			versionSearch: "Version"
-		},
-		{
-			string: navigator.vendor,
-			subString: "iCab",
-			identity: "iCab"
-		},
-		{
-			string: navigator.vendor,
-			subString: "KDE",
-			identity: "Konqueror"
-		},
-		{
-			string: navigator.userAgent,
-			subString: "Firefox",
-			identity: "Firefox"
-		},
-		{
-			string: navigator.vendor,
-			subString: "Camino",
-			identity: "Camino"
-		},
-		{		// for newer Netscapes (6+)
-			string: navigator.userAgent,
-			subString: "Netscape",
-			identity: "Netscape"
-		},
-		{
-			string: navigator.userAgent,
-			subString: "MSIE",
-			identity: "Explorer",
-			versionSearch: "MSIE"
-		},
-		{
-			string: navigator.userAgent,
-			subString: "Gecko",
-			identity: "Mozilla",
-			versionSearch: "rv"
-		}
-	],
-	dataOS : [
-		{
-			string: navigator.platform,
-			subString: "Win",
-			identity: "Windows"
-		},
-		{
-			string: navigator.platform,
-			subString: "Mac",
-			identity: "Mac"
-		},
-		{
-			   string: navigator.userAgent,
-			   subString: "iPhone",
-			   identity: "iPhone/iPod"
-	    },
-		{
-			string: navigator.platform,
-			subString: "Linux",
-			identity: "Linux"
-		}
-	],
-	filterNotAny : function(list) {
-		var i;
-		var result = false;
-		for (i = 0; i < list.length; i++) {
-			result = result || this.filter(list[i][0], list[i][1], list[i][2]);
-			if (result) break;
-		}
-		return !result;
-	},
-	filter : function(browser, version, system) {
-		return (!(this.browser != browser || this.version != version || this.system != system));
-	},
-	init : function() {
-		this.browser = this.searchString(this.dataBrowser) || "unknown";
-		this.version = this.searchVersion(navigator.userAgent) || this.searchVersion(navigator.appVersion) || "unknown";
-		this.system  = this.searchString(this.dataOS) || "unknown";
-	}
-};
-BrowserDetect.init();
-
-/**
- * A set of browser quirks, that can be queried to take alternate code paths.
- * 
- * @namespace
- */
-var Quirks = {
-	/**
-	 * True for browsers that correctly support the HTML canvas shadow effect.
-	 */
-	fullImageShadowSupport : BrowserDetect.filterNotAny([
-		// shadow applies blur in shadow color to image
-		['Firefox', 5], 
-		// new rendering engine cuts off parts of images
-		['Firefox', 7, 'Windows'],
-		['Firefox', 8, 'Windows'],
-		// no shadow blur support
-		['Chrome', 12], ['Chrome', 13]
-	])
 };
 
 /**
@@ -497,20 +356,10 @@ function rgb_to_hex (C) {
  * Deep copy of an object (make copies of all its object properties, sub-properties, etc.)
  * A stripped version of this: http://stackoverflow.com/a/13333781
  */
-function deep_copy(src, visited) {
+function deep_copy(src) {
     if (src == null || typeof(src) !== 'object') {
         return src;
     }
-    visited = visited || [];
-
-    // ensure src has not already been visited
-    //for (var i = 0; i < visited.length; i++) {
-    //    // if src was already visited, don't try to copy it, just return the reference
-    //    if (src === visited[i]) {
-    //        return src;
-    //    }
-    //}
-    //visited.push(src);
 
     var copy;
 
@@ -519,18 +368,24 @@ function deep_copy(src, visited) {
         copy = src.slice();
         var i = copy.length;
         while (i--) {
-            copy[i] = deep_copy(copy[i], visited);
+            copy[i] = deep_copy(copy[i]);
         }
     } else {
         // normal case
         copy = Object.create(src.__proto__);
         for (var key in src) {
-            copy[key] = deep_copy(src[key], visited);
+            copy[key] = deep_copy(src[key]);
         }
     }
     return copy;
 }
 
+/**
+ * Creates a new WebWorker to execute given function in separate thread.
+ *
+ * @param {Function} func
+ *        A function to execute.
+ */
 function WebWorker (func) {
     // Build a worker from an anonymous function body
     var workerCode = [

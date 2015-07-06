@@ -1,10 +1,4 @@
 /**
- * @fileOverview This file contains the stack of off-screen images that are rendered on top and into
- *               each other to create the final display.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- */
-
-/**
  * @class A canvas that serves as an off-screen buffer for some graphics to be displayed possibly in
  *        tandem with other canvas elements or graphics.
  * @constructor
@@ -162,7 +156,7 @@ function CanvasElementMiniMap(appState, visState) {
 	this.upper(appState, visState);
 	this.scale = 1;
 	this.turn = undefined;
-	this.ants = [];
+	this.cells = [];
 }
 CanvasElementMiniMap.extend(CanvasElementAbstractMap);
 
@@ -177,25 +171,25 @@ CanvasElementMiniMap.prototype.checkState = function() {
 	if ((this.visState.time | 0) !== this.turn) {
 		this.invalid = true;
 		this.turn = (this.visState.time | 0);
-		this.ants = this.visState.replay.getTurn(this.turn);
+		this.cells = this.visState.replay.getTurn(this.turn);
 	}
 };
 
 /**
- * Invokes {@link CanvasElementAbstractMap#draw} to draw the map and then renders ants as pixels on
+ * Invokes {@link CanvasElementAbstractMap#draw} to draw the map and then renders cells as pixels on
  * top of it.
  */
 CanvasElementMiniMap.prototype.draw = function() {
-	var i, ant, color;
+	var i, cell, color;
 	CanvasElementAbstractMap.prototype.draw.call(this, false, false);
-	for (i = this.ants.length - 1; i >= 0; i--) {
-		if ((ant = this.ants[i].interpolate(this.turn))) {
+	for (i = this.cells.length - 1; i >= 0; i--) {
+		if ((cell = this.cells[i].interpolate(this.turn))) {
 			color = '#';
-			color += INT_TO_HEX[ant['r']];
-			color += INT_TO_HEX[ant['g']];
-			color += INT_TO_HEX[ant['b']];
+			color += INT_TO_HEX[cell['r']];
+			color += INT_TO_HEX[cell['g']];
+			color += INT_TO_HEX[cell['b']];
 			this.ctx.fillStyle = color;
-			this.ctx.fillRect(ant['x'], ant['y'], 1, 1);
+			this.ctx.fillRect(cell['x'], cell['y'], 1, 1);
 		}
 	}
 };
@@ -230,7 +224,7 @@ CanvasElementMap.prototype.checkState = function() {
 };
 
 /**
- * @class The main map including ants and indicators
+ * @class The main map including cells and indicators
  * @extends CanvasElement
  *
  * @constructor
@@ -241,21 +235,21 @@ CanvasElementMap.prototype.checkState = function() {
  * @param {CanvasElementMap} map
  *        the background map
  */
-function CanvasElementAntsMap(appState, visState, map) {
+function CanvasElementCellsMap(appState, visState, map) {
 	this.upper();
     this.appState = appState;
     this.visState = visState;
 	this.map = map;
 	this.dependsOn(map);
 	this.time = 0;
-	this.ants = [];
+	this.cells = [];
 	this.drawStates = {};
 	this.scale = 1;
     this.label = 0;
     this.cellShape = 0;
 	this.mouseOverVis = false;
 }
-CanvasElementAntsMap.extend(CanvasElement);
+CanvasElementCellsMap.extend(CanvasElement);
 
 /**
  * Causes a comparison of the relevant values that make up the visible content of this canvas
@@ -264,7 +258,7 @@ CanvasElementAntsMap.extend(CanvasElement);
  * 
  * @returns {Boolean} true, if the internal state has changed
  */
-CanvasElementAntsMap.prototype.checkState = function() {
+CanvasElementCellsMap.prototype.checkState = function() {
 	var i, kf;
 	var hash = undefined;
 	if (this.time !== this.visState.time
@@ -281,13 +275,13 @@ CanvasElementAntsMap.prototype.checkState = function() {
 		// per turn calculations
 		if (this.turn !== (this.time | 0)) {
 			this.turn = this.time | 0;
-			this.ants = this.visState.replay.getTurn(this.turn);
+			this.cells = this.visState.replay.getTurn(this.turn);
 		}
 
-		// interpolate ants for this point in time
+		// interpolate cells for this point in time
 		this.drawStates = {};
-		for (i = this.ants.length - 1; i >= 0; i--) {
-			if ((kf = this.ants[i].interpolate(this.time))) {
+		for (i = this.cells.length - 1; i >= 0; i--) {
+			if ((kf = this.cells[i].interpolate(this.time))) {
 				hash = '#';
 				hash += INT_TO_HEX[kf['r']];
 				hash += INT_TO_HEX[kf['g']];
@@ -301,10 +295,10 @@ CanvasElementAntsMap.prototype.checkState = function() {
 };
 
 /**
- * Draws ants onto the map image. This includes overlay letters / ids, attack lines, effect circles
+ * Draws cells onto the map image. This includes overlay letters / ids, attack lines, effect circles
  * and finally the fog of war.
  */
-CanvasElementAntsMap.prototype.draw = function() {
+CanvasElementCellsMap.prototype.draw = function() {
 	var halfScale, drawList, hash, n, kf, d, fontSize, label, caption, order;
     var w, dx, dy;
     var player;
@@ -314,7 +308,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 
 	halfScale = 0.5 * this.scale;
 
-	// draw ants sorted by color
+	// draw cells sorted by color
 	for (hash in this.drawStates) {
 		this.ctx.fillStyle = hash;
 		drawList = this.drawStates[hash];
@@ -347,7 +341,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 		}
 	}
 
-	// draw A, B, C, D ... on ants or alternatively the global kf id
+	// draw A, B, C, D ... on cells or alternatively the global kf id
 	label = this.appState.config['label'];
 	if (label) {
 		fontSize = Math.ceil(Math.max(this.scale, 10) / label);
@@ -372,7 +366,7 @@ CanvasElementAntsMap.prototype.draw = function() {
                     player = order[kf['owner']];
 					caption = PLAYER_SYMBOLS[player];
 				} else {
-					caption = kf.antId;
+					caption = kf.cellId;
 				}
 				this.ctx.strokeText(caption, kf.mapX, kf.mapY);
 				this.ctx.fillText(caption, kf.mapX, kf.mapY);
@@ -395,7 +389,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 };
 
 /**
- * @class The main map with ants, dragged with the mouse and extended by borders if required
+ * @class The main map with cells, dragged with the mouse and extended by borders if required
  * @extends CanvasElement
  *
  * @constructor
@@ -403,15 +397,15 @@ CanvasElementAntsMap.prototype.draw = function() {
  *        the application state for reference
  * @param {VisState} visState
  *        the visualizer state for reference
- * @param {CanvasElementAntsMap} antsMap
- *        the prepared map with ants
+ * @param {CanvasElementCellsMap} cellsMap
+ *        the prepared map with cells
  */
-function CanvasElementShiftedMap(appState, visState, antsMap) {
+function CanvasElementShiftedMap(appState, visState, cellsMap) {
 	this.upper();
     this.appState = appState;
     this.visState = visState;
-	this.antsMap = antsMap;
-	this.dependsOn(this.antsMap);
+	this.cellsMap = cellsMap;
+	this.dependsOn(this.cellsMap);
 	this.shiftX = 0;
 	this.shiftY = 0;
 	this.fade = undefined;
@@ -437,16 +431,16 @@ CanvasElementShiftedMap.prototype.checkState = function() {
 };
 
 /**
- * Draws the visible portion of the map with ants. If the map is smaller than the view area it is
+ * Draws the visible portion of the map with cells. If the map is smaller than the view area it is
  * repeated in a darker shade on both sides.
  */
 CanvasElementShiftedMap.prototype.draw = function() {
 	var dx, dy, cutoff;
-	var mx = (this.w - this.antsMap.w) >> 1;
-	var my = (this.h - this.antsMap.h) >> 1;
+	var mx = (this.w - this.cellsMap.w) >> 1;
+	var my = (this.h - this.cellsMap.h) >> 1;
 	// max allowed shift
-    dx = -Math.min(0, this.w - this.antsMap.w) >> 1;
-    dy = -Math.min(0, this.h - this.antsMap.h) >> 1;
+    dx = -Math.min(0, this.w - this.cellsMap.w) >> 1;
+    dy = -Math.min(0, this.h - this.cellsMap.h) >> 1;
     // correct shift if needed
     this.shiftX = Math.clamp(this.shiftX, -dx, dx);
     this.shiftY = Math.clamp(this.shiftY, -dy, dy);
@@ -457,11 +451,11 @@ CanvasElementShiftedMap.prototype.draw = function() {
 	my += this.shiftY;
     this.ctx.fillStyle = '#fff';
     this.ctx.fillRect(0,0,this.w,this.h);
-	this.ctx.drawImage(this.antsMap.canvas, mx, my);
+	this.ctx.drawImage(this.cellsMap.canvas, mx, my);
 	// fade out
 	if (this.fade) {
 		this.ctx.fillStyle = this.fade;
-		this.ctx.fillRect(mx, my, this.antsMap.w, this.antsMap.h);
+		this.ctx.fillRect(mx, my, this.cellsMap.w, this.cellsMap.h);
 	}
 	// game cut-off reason
 	cutoff = this.visState.replay.meta['replaydata']['cutoff'];

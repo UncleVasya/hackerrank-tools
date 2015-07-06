@@ -1,11 +1,6 @@
 /**
- * @fileOverview Classes for loading replays and maps into the visualizer.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- */
-
-/**
  * Loads a replay or map in text form. The streaming format is not supported directly, but can by
- * loaded by the Java wrapper. In the visualizer, ants are unique objects, that are mostly a list of
+ * loaded by the Java wrapper. In the visualizer, cells are unique objects, that are mostly a list of
  * animation key-frames that are interpolated for any given time to produce a "tick-less" animation.<br>
  * <b>Called by the Java streaming visualizer.</b>
  * 
@@ -385,7 +380,7 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 };
 
 /**
- * Computes a list of visible ants for a given turn. This list is then used to render the
+ * Computes a list of visible cells for a given turn. This list is then used to render the
  * visualization.
  * <ul>
  * <li>The turns are computed on reqest.</li>
@@ -395,7 +390,7 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
  * 
  * @param {Number} n
  *        The requested turn.
- * @returns {Cell[]} The array of visible ants.
+ * @returns {Cell[]} The array of visible cells.
  */
 Replay.prototype.getTurn = function(n) {
 	var i, turn, cells, cell, aniCell, dead;
@@ -438,19 +433,19 @@ Replay.prototype.getTurn = function(n) {
 };
 
 /**
- * Spawns a new ant.
+ * Spawns a new cell.
  * 
  * @param {Number} id
- *        Global ant id, an auto-incrementing number for each new ant. See {@link Config#label}
+ *        Global cell id, an auto-incrementing number for each new cell. See {@link Config#label}
  * @param {Number} row
- *        Map row to spawn the ant on.
+ *        Map row to spawn the cell on.
  * @param {Number} col
- *        Map column to spawn the ant on.
+ *        Map column to spawn the cell on.
  * @param {Number} spawn
- *        Turn to spawn the ant at.
+ *        Turn to spawn the cell at.
  * @param {Number} owner
  *        the owning player index
- * @returns {Cell} The new animation ant object.
+ * @returns {Cell} The new animation cell object.
  */
 Replay.prototype.spawnCell = function(id, row, col, spawn, owner) {
 	var aniCell = this.aniCells[id] = new Cell(id, spawn - 0.8);
@@ -471,14 +466,14 @@ Replay.prototype.spawnCell = function(id, row, col, spawn, owner) {
 };
 
 /**
- * Animates an ant's death.<br>
+ * Animates an cell's death.<br>
  * <b>Called by the Java streaming visualizer.</b>
  * 
  * @private
  * @param {Cell} aniCell
- *        The ant to be worked on.
+ *        The cell to be worked on.
  * @param {Number} death
- *        The zero-based turn, that the ant died in.
+ *        The zero-based turn, that the cell died in.
  */
 Replay.prototype.killCell = function(aniCell, death) {
 	aniCell.fade('size', 0.0, death - 0.8, death);

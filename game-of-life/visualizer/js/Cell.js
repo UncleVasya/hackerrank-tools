@@ -1,21 +1,15 @@
 /**
- * @fileoverview This file contains an ant and it's animation key frames as used by the
- *               visualization.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- */
-
-/**
  * The constructor initializes it with one key frame.
  * 
- * @class An ant in the visualization. It is used in rendering and created when the replay is parsed
+ * @class A cell in the visualization. It is used in rendering and created when the replay is parsed
  *        as well as extended with animation key frames as more turns are requested. It has turned
- *        out that pre-calculating all key frames for thousand ants over the course of thousand
+ *        out that pre-calculating all key frames for thousand cells over the course of thousand
  *        turns is not feasible. Key frames are practically always appended. There is no support for
  *        jumping to the end of the game and leaving gaps in-between.
  *
  * @constructor
  * @param {Number} id
- *        This is the unique object id of the new ant.
+ *        This is the unique object id of the new cell.
  * @param {Number} time
  *        Sets the time in which the object appears in turn units.
  */
@@ -32,7 +26,7 @@ function Cell(id, time) {
 }
 
 /**
- * Returns a key frame for the ant at the given time. If it has to be newly created and is in
+ * Returns a key frame for the cell at the given time. If it has to be newly created and is in
  * between two existing frames it will be the result of a linear interpolation of those. If the time
  * is beyond the last key frame, the result is a copy of the last key frame. It is an error to
  * specify a time before the first key frame.
@@ -65,7 +59,7 @@ Cell.prototype.frameAt = function(time) {
 
 /**
  * Interpolates the key frames around the given time and returns the result. If the time exceeds the
- * time stamp of the last key frame, that key frame is returned instead. If the ant doesn't exist
+ * time stamp of the last key frame, that key frame is returned instead. If the cell doesn't exist
  * yet at that time, null is returned.
  * 
  * @param {Number} time
@@ -152,7 +146,7 @@ Cell.prototype.fade = function(key, valueb, timea, timeb) {
 /**
  * The constructor is only called from within methods of {@link Cell} that add key frames.
  * 
- * @class A single animation key frame of an ant.
+ * @class A single animation key frame of an cell.
  * @constructor
  */
 function KeyFrame() {
@@ -212,18 +206,18 @@ KeyFrame.prototype.assign = function(other) {
 };
 
 /**
- * @class An extended key frame which holds the owning ant's id and an additional coordinate pair
+ * @class An extended key frame which holds the owning cell's id and an additional coordinate pair
  *        that reflects the pixel position on the scaled map.
  * @extends KeyFrame
  *
  * @constructor
- * @param {Number} antId
- *        the owning ant's id
+ * @param {Number} cellId
+ *        the owning cell's id
  * @param {KeyFrame} keyFrame
  *        the key frame to copy from
  */
-function KeyFrameEx(antId, keyFrame) {
-	this.antId = antId;
+function KeyFrameEx(cellId, keyFrame) {
+	this.cellId = cellId;
 	this.assign(keyFrame);
 	this.mapX = this['x'];
 	this.mapY = this['y'];
@@ -234,7 +228,7 @@ KeyFrameEx.extend(KeyFrame);
  * Updates the map coordinates.
  * 
  * @param scale
- *        pixel size of an ant on the map
+ *        pixel size of an cell on the map
  * @param mapWidth
  *        pixel width of the map
  * @param mapHeight

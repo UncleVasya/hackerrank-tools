@@ -1,14 +1,4 @@
 /**
- * @fileoverview This is a visualizer for the ant game.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- */
-
-// TODO: FEAT: info button showing a message box with game meta data
-// TODO: FEAT: menu items: toggle graph/score bars, cpu use
-// TODO: FEAT: setting for cpu usage
-// TODO: NICE: better player rank display
-// TODO: COSMETIC: draw only visible ants when zoomed in
-/**
  * @namespace Enum for the different states, the visualizer can be in.
  */
 LoadingState = {
@@ -141,7 +131,7 @@ Visualizer = function(container, options, w, h, configOverrides) {
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
 		}
-		this.vis = new Visu(this);
+		this.mainVis = new Visu(this);
         if (this.state.config['helperVisEnabled']) {
             this.helperVis = new Visu(this);
         }
@@ -217,23 +207,23 @@ Visualizer.prototype.progress = function(log, func, id) {
 		if (id === this.progressList[i]) return;
 	}
 	this.progressList.push(id);
-	var vis = this;
+	var app = this;
 	if (log) this.logOut(log);
 	window.setTimeout(function() {
 		var k;
 		try {
 			func();
-			for (k = 0; k < vis.progressList.length; k++) {
-				if (id === vis.progressList[k]) {
-					vis.progressList.splice(k, 1);
+			for (k = 0; k < app.progressList.length; k++) {
+				if (id === app.progressList[k]) {
+					app.progressList.splice(k, 1);
 					break;
 				}
 			}
 		} catch (error) {
-			vis.exceptionOut(error, true);
+			app.exceptionOut(error, true);
 			var selectedPosX = 0;
 			var selectedPosY = 0;
-			var obj = vis.log;
+			var obj = app.log;
 			if (obj.offsetParent) do {
 				selectedPosX += obj.offsetLeft;
 				selectedPosY += obj.offsetTop;
@@ -327,7 +317,7 @@ Visualizer.prototype.cleanUp = function() {
 	if (this.state.options['decorated']) {
         this.imgMgr.cleanUp();
     }
-    this.vis.cleanUp();
+    this.mainVis.cleanUp();
     if (this.helperVis) {
         this.helperVis.cleanUp();
     }
@@ -369,30 +359,30 @@ Visualizer.prototype.preload = function() {
  */
 Visualizer.prototype.loadReplayDataFromURI = function(file) {
 	if (this.preload()) return;
-	var vis = this;
+	var app = this;
 	this.progress('Fetching replay from: ' + Html.italic(String(file)) + '...', function() {
 		var request = new XMLHttpRequest();
-		vis.replayReq = request;
+		app.replayReq = request;
 		/** @ignore */
 		request.onreadystatechange = function() {
 			if (request.readyState === 4) {
-				if (vis.loading === LoadingState.LOADING) {
+				if (app.loading === LoadingState.LOADING) {
 					if (request.status === 200) {
-						vis.replayStr = '' + request.responseText;
-						vis.replayReq = undefined;
-						vis.loadParseReplay();
+						app.replayStr = '' + request.responseText;
+						app.replayReq = undefined;
+						app.loadParseReplay();
 					} else {
-						vis.errorOut('Status ' + request.status + ': ' + request.statusText, true);
+						app.errorOut('Status ' + request.status + ': ' + request.statusText, true);
 					}
 				}
 			}
 		};
 		request.open("GET", file);
-		if (vis.state.options['debug']) {
+		if (app.state.options['debug']) {
 			request.setRequestHeader('Cache-Control', 'no-cache');
 		}
 		request.send();
-		vis.loadCanvas();
+		app.loadCanvas();
 	}, "FETCH");
 };
 
@@ -438,23 +428,23 @@ Visualizer.prototype.streamingStart = function() {
 	if (this.loading === LoadingState.LOADING) {
 		if (this.state.replay.hasDuration) {
 			// set CPU to 100%, we need it
-			this.vis.director.cpu = 1;
+			this.mainVis.director.cpu = 1;
 			this.loadCanvas();
 		}
 	} else {
 		// call resize() in forced mode to update the GUI (graphs)
 		this.resize(true);
 		// resume playback if we are at the end
-		var resume = !this.vis.director.playing() && (this.vis.state.time === this.vis.director.duration);
-		if (this.vis.director.stopAt === this.vis.director.duration) {
-			this.vis.director.stopAt = this.state.replay.duration;
+		var resume = !this.mainVis.director.playing() && (this.mainVis.state.time === this.mainVis.director.duration);
+		if (this.mainVis.director.stopAt === this.mainVis.director.duration) {
+			this.mainVis.director.stopAt = this.state.replay.duration;
 		}
-		this.vis.director.duration = this.state.replay.duration;
+		this.mainVis.director.duration = this.state.replay.duration;
         if (this.helperVis) {
             this.helperVis.director.duration = this.state.replay.duration;
         }
 		if (resume) {
-			this.vis.director.play();
+			this.mainVis.director.play();
 		}
 	}
 };
@@ -466,7 +456,7 @@ Visualizer.prototype.streamingStart = function() {
  *        fpt the number of frames per turn
  */
 Visualizer.prototype.javaVideoOutput = function(fpt) {
-	this.vis.director.fixedFpt = fpt;
+	this.mainVis.director.fixedFpt = fpt;
 };
 
 /**
@@ -476,18 +466,18 @@ Visualizer.prototype.javaVideoOutput = function(fpt) {
  * @private
  */
 Visualizer.prototype.loadParseReplay = function() {
-	var vis = this;
+	var app = this;
 	this.progress('Parsing the replay...', function() {
-		var debug = vis.state.options['debug'];
-		var user = vis.state.options['user'];
+		var debug = app.state.options['debug'];
+		var user = app.state.options['user'];
 		if (user === '') user = undefined;
-		if (vis.replayStr) {
-			vis.state.replay = new Replay({replay: vis.replayStr, debug: debug, highlightUser: user});
-			vis.replayStr = undefined;
-		} else if (vis.loading !== LoadingState.CLEANUP) {
+		if (app.replayStr) {
+			app.state.replay = new Replay({replay: app.replayStr, debug: debug, highlightUser: user});
+			app.replayStr = undefined;
+		} else if (app.loading !== LoadingState.CLEANUP) {
 			throw new Error('Replay is undefined.');
 		}
-		vis.tryStart();
+		app.tryStart();
 	}, "PARSE");
 };
 
@@ -498,18 +488,18 @@ Visualizer.prototype.loadParseReplay = function() {
  * @private
  */
 Visualizer.prototype.loadCanvas = function() {
-	var vis = this;
+	var app = this;
 	this.progress('Creating canvas...', function() {
-		if (!vis.main.canvas) {
-			vis.main.canvas = document.createElement('canvas');
-			vis.main.canvas.style.display = 'none';
+		if (!app.main.canvas) {
+			app.main.canvas = document.createElement('canvas');
+			app.main.canvas.style.display = 'none';
 		}
-		var c = vis.main.canvas;
-		vis.main.ctx = c.getContext('2d');
-		if (vis.container.firstChild !== c) {
-			vis.container.insertBefore(c, vis.log);
+		var c = app.main.canvas;
+		app.main.ctx = c.getContext('2d');
+		if (app.container.firstChild !== c) {
+			app.container.insertBefore(c, app.log);
 		}
-		vis.tryStart();
+		app.tryStart();
 	}, "CANVAS");
 };
 
@@ -585,8 +575,8 @@ Visualizer.prototype.tryStart = function() {
             }
         }
 
-        this.vis.init(this.state.replay);
-		this.vis.director.onTurnChange = function(time) {
+        this.mainVis.init(this.state.replay);
+		this.mainVis.director.onTurnChange = function(time) {
             if (!app.helperVis) return; // helper vis disabled, nothing to do here
 
             var turn = Math.floor(time);
@@ -594,7 +584,7 @@ Visualizer.prototype.tryStart = function() {
 
             app.state.replay.getSimReplay(effectiveTurn, function(replay) {
                 // if main vis turn changed, no need to draw this replay on helper vis
-                if (turn != Math.floor(app.vis.director.time)) return;
+                if (turn != Math.floor(app.mainVis.director.time)) return;
 
                 if (replay !== app.helperVis.state.replay) {
                     app.helperVis.cleanUp();
@@ -699,8 +689,8 @@ Visualizer.prototype.tryStart = function() {
 		Visualizer.focused = this;
 		// move to a specific row and col
 		this.calculateMapCenter(ZOOM_SCALE);
-		this.vis.state.shiftX = this.mapCenterX; //TODO: find a better place for this
-		this.vis.state.shiftY = this.mapCenterY;
+		this.mainVis.state.shiftX = this.mapCenterX; //TODO: find a better place for this
+		this.mainVis.state.shiftY = this.mapCenterY;
         if (this.helperVis) {
             this.helperVis.state.shiftX = this.mapCenterX; //TODO: find a better place for this
             this.helperVis.state.shiftY = this.mapCenterY;
@@ -712,10 +702,10 @@ Visualizer.prototype.tryStart = function() {
 		this.setFullscreen(this.state.config['fullscreen']);
 		if (this.state.replay.hasDuration) {
 			if (!isNaN(this.state.options['turn'])) {
-				this.vis.director.gotoTick(this.state.options['turn'] - 1);
+				this.mainVis.director.gotoTick(this.state.options['turn'] - 1);
                 //this.helperVis.director.gotoTick(this.state.options['turn'] - 1);
 			} else {
-				this.vis.director.play();
+				this.mainVis.director.play();
 			}
 		}
 	} else if (this.replayStr) {
@@ -734,7 +724,7 @@ Visualizer.prototype.centerMap = function() {
 		btn.enabled = false;
 		btn.draw();
 	}
-    this.vis.centerMap();
+    this.mainVis.centerMap();
     if (this.helperVis) this.helperVis.centerMap();
 };
 
@@ -747,7 +737,7 @@ Visualizer.prototype.centerMap = function() {
  */
 Visualizer.prototype.modifySpeed = function(modifier) {
 	this.state.config['speedFactor'] += modifier;
-	this.vis.calculateReplaySpeed();
+	this.mainVis.calculateReplaySpeed();
     this.setSpeedButtonsHints();
 };
 
@@ -800,7 +790,7 @@ Visualizer.prototype.calculateMapCenter = function(scale) {
 Visualizer.prototype.addPlayerButtons = function() {
     var bg, dlg;
 	var i;
-    var vis = this;
+    var app = this;
 
     bg = this.btnMgr.addTextGroup('players', ButtonGroup.MODE_NORMAL, 2);
 	dlg = undefined;
@@ -819,11 +809,11 @@ Visualizer.prototype.addPlayerButtons = function() {
 		bg.addButton('Game #' + gameId + ':', '#000', dlg);
 	}
 	var buttonAdder = function(idx) {
-		var color = vis.state.replay.htmlPlayerColors[idx];
+		var color = app.state.replay.htmlPlayerColors[idx];
 		var dlg = undefined;
-		if (vis.state.replay.meta['user_url'] && vis.state.replay.meta['user_ids']
-				&& vis.state.replay.meta['user_ids'][idx] !== undefined) {
-			dlg = new Delegate(vis, function() {
+		if (app.state.replay.meta['user_url'] && app.state.replay.meta['user_ids']
+				&& app.state.replay.meta['user_ids'][idx] !== undefined) {
+			dlg = new Delegate(app, function() {
 				window.location.href = this.state.replay.meta['user_url'].replace('~',
 						this.state.replay.meta['user_ids'][idx]);
 			});
@@ -851,7 +841,7 @@ Visualizer.prototype.addLeftPanel = function() {
     dlg = new Delegate(this, function() {
         var shape = this.state.config['cellShape'];
         this.state.config['cellShape'] = (shape + 1) % 2;
-        this.vis.director.draw();
+        this.mainVis.director.draw();
         if (this.helperVis) {
             this.helperVis.director.draw();
         }
@@ -879,7 +869,7 @@ Visualizer.prototype.addLeftPanel = function() {
         }
         this.resize(true);
         // synchronize helper vis and main vis
-        this.vis.director.onTurnChange(this.vis.director.time);
+        this.mainVis.director.onTurnChange(this.mainVis.director.time);
         this.state.config['helperVisEnabled'] = !enabled;
     });
     bg.addButton(2, dlg, 'show/hide prognosis');
@@ -930,9 +920,9 @@ Visualizer.prototype.addRightPanel = function() {
 
     dlg = new Delegate(this, function() {
         var lbl = this.state.config['label'];
-        this.setAntLabels((lbl + 1) % 3);
+        this.setCellsLabels((lbl + 1) % 3);
     });
-    bg.addButton(5, dlg, 'toggles: 1. player letters on ants, 2. global ids on ants');
+    bg.addButton(5, dlg, 'toggles: 1. player letters on cells, 2. global ids on cells');
 
     if (this.state.replay.hasDuration) {
         dlg = new Delegate(this, this.modifySpeed, [ +1 ]);
@@ -1003,13 +993,13 @@ Visualizer.prototype.setFullscreen = function(enable) {
 
 
 /**
- * Sets the ant label display mode to a new value.
+ * Sets the cell label display mode to a new value.
  * 
  * @private
  * @param mode
- *        {Number} 0 = no display, 1 = letters, 2 = global ant ids
+ *        {Number} 0 = no display, 1 = letters, 2 = global cells ids
  */
-Visualizer.prototype.setAntLabels = function(mode) {
+Visualizer.prototype.setCellsLabels = function(mode) {
 	var hasDuration = this.state.replay.hasDuration;
 	var recap = hasDuration && (mode === 1) !== (this.state.config['label'] === 1);
 	this.state.config['label'] = mode;
@@ -1019,7 +1009,7 @@ Visualizer.prototype.setAntLabels = function(mode) {
 		this.main.ctx.fillRect(0, 0, this.main.canvas.width, this.main.canvas.height);
 		this.resize(true);
 	} else {
-        this.vis.director.draw();
+        this.mainVis.director.draw();
         if (this.helperVis) {
             this.helperVis.director.draw();
         }
@@ -1088,10 +1078,10 @@ Visualizer.prototype.resize = function(forced) {
             this.btnMgr.draw();
         }
 
-        this.vis.x = 0;
-        this.vis.y = y;
-        this.vis.w = this.helperVis? newSize.w / 2 - 10: newSize.w;
-        this.vis.h = newSize.h - y;
+        this.mainVis.x = 0;
+        this.mainVis.y = y;
+        this.mainVis.w = this.helperVis? newSize.w / 2 - 10: newSize.w;
+        this.mainVis.h = newSize.h - y;
         if (this.helperVis) {
             this.helperVis.x = newSize.w / 2 + 10;
             this.helperVis.y = y;
@@ -1100,7 +1090,7 @@ Visualizer.prototype.resize = function(forced) {
         }
 
         this.updateHint();
-        this.vis.resize();
+        this.mainVis.resize();
         if (this.helperVis) {
             this.helperVis.resize();
         }
@@ -1118,12 +1108,12 @@ Visualizer.prototype.resize = function(forced) {
  */
 Visualizer.prototype.setZoom = function(zoom) {
     zoom = Math.max(1, zoom);
-    if (this.vis.director.fixedFpt === undefined) {
+    if (this.mainVis.director.fixedFpt === undefined) {
         this.state.config['zoom'] = zoom;
     }
 
-    this.vis.setZoom(zoom);
-    this.vis.director.draw();
+    this.mainVis.setZoom(zoom);
+    this.mainVis.director.draw();
 
     if (this.helperVis) {
         this.helperVis.setZoom(zoom);
@@ -1176,9 +1166,9 @@ Visualizer.prototype.updateHint = function() {
 
     if (this.helperVis) {
         // clean up space between visualizers
-        var x = this.vis.x + this.vis.w;
+        var x = this.mainVis.x + this.mainVis.w;
         var w = this.helperVis.x - x;
-        var hint_y = this.vis.shiftedMap.y;
+        var hint_y = this.mainVis.shiftedMap.y;
 
         ctx.fillStyle = '#fff';
         ctx.fillRect(x, hint_y, w, HINT_HEIGHT);
@@ -1203,7 +1193,7 @@ Visualizer.prototype.updateHint = function() {
 Visualizer.prototype.drawHintPart = function(x, w) {
     var ctx = this.main.ctx;
 
-    var hint_y = this.vis.shiftedMap.y;
+    var hint_y = this.mainVis.shiftedMap.y;
 
     ctx.save();
     ctx.beginPath();
@@ -1235,8 +1225,8 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 	this.mouseY = my;
 	this.hint = '';
 	if (this.state.options['interactive']) {
-        if (this.vis.contains(this.mouseX, this.mouseY)) {
-            this.vis.mouseMoved(mx, my);
+        if (this.mainVis.contains(this.mouseX, this.mouseY)) {
+            this.mainVis.mouseMoved(mx, my);
         } else if (this.helperVis && this.helperVis.contains(this.mouseX, this.mouseY)) {
             this.helperVis.mouseMoved(mx, my);
         }
@@ -1251,7 +1241,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 	}
 	if (oldHint !== this.hint) {
         this.updateHint();
-        this.vis.director.draw();
+        this.mainVis.director.draw();
         if (this.helperVis) {
             this.helperVis.director.draw();
         }
@@ -1265,8 +1255,8 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
  */
 Visualizer.prototype.mousePressed = function() {
 	if (this.state.options['interactive']) {
-		if (this.vis.contains(this.mouseX, this.mouseY)) {
-            this.vis.mousePressed();
+		if (this.mainVis.contains(this.mouseX, this.mouseY)) {
+            this.mainVis.mousePressed();
         } else if (this.helperVis && this.helperVis.contains(this.mouseX, this.mouseY)) {
             this.helperVis.mousePressed();
         }
@@ -1288,7 +1278,7 @@ Visualizer.prototype.mouseReleased = function() {
 	if (this.state.options['decorated']) {
 		this.btnMgr.mouseUp();
 	}
-    this.vis.mouseReleased();
+    this.mainVis.mouseReleased();
     if (this.helperVis) {
         this.helperVis.mouseReleased();
     }

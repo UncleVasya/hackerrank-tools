@@ -1,9 +1,4 @@
 /**
- * @fileOverview Miscellaneous constant values.
- * @author <a href="mailto:marco.leise@gmx.de">Marco Leise</a>
- */
-
-/**
  * A lookup table that converts byte values from 0-255 to their hexadecimal two letter
  * representation.
  */
