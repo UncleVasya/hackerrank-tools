@@ -11,7 +11,7 @@
             //options.profile = true;
             options.data_dir = '## PATH PLACEHOLDER ##data/';
             options.embedded = true;
-			var visualizer = new Visualizer(document.body, options);
+			var visualizer = new VisApplication(document.body, options);
 			visualizer.loadReplayData('## REPLAY PLACEHOLDER ##');
 		}
 	</script>
