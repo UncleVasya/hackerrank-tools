@@ -5,11 +5,13 @@
 
 /**
  * @class The base class for buttons.
+ *
  * @constructor
- * @param {ButtonGroup}
- *        group the button group that this button belongs to
- * @param {Delegate}
- *        onclick a callback for the button-click
+ * @param {ButtonGroup} group
+ *        the button group that this button belongs to
+ * @param {Delegate} onclick
+ *        a callback for the button-click
+ *
  * @property {Boolean} locked true, when the button is locked down (radio buttons)
  */
 function Button(group, onclick) {
@@ -123,10 +125,10 @@ Button.prototype.mouseUp = function() {
 /**
  * @class a group of buttons
  * @constructor
- * @param {ButtonManager}
- *        manager the button manager that this button group will belong to
- * @param {Number}
- *        border adds padding around the buttons on each side
+ * @param {ButtonManager} manager
+ *        the button manager that this button group will belong to
+ * @param {Number} border
+ *        adds padding around the buttons on each side
  */
 function ButtonGroup(manager, border) {
 	this.buttons = [];
@@ -162,10 +164,11 @@ ButtonGroup.prototype.draw = function() {
 /**
  * Finds an active button under the mouse cursor.
  * 
- * @param {Number}
- *        mx the mouse x position
- * @param {Number}
- *        my the mouse y position
+ * @param {Number} mx
+ *        the mouse x position
+ * @param {Number} my
+ *        the mouse y position
+ *
  * @returns {Button} the active button under the mouse cursor or null
  */
 ButtonGroup.prototype.mouseMove = function(mx, my) {
@@ -183,17 +186,19 @@ ButtonGroup.prototype.mouseMove = function(mx, my) {
 /**
  * @class A specialized button that displays an image.
  * @extends Button
+ *
  * @constructor
- * @param {ImageButtonGroup}
- *        group the button group that this button belongs to
- * @param {Number}
- *        idx selects the partial image to be shown from the group's image
- * @param {Number}
- *        delta the actual position inside the button group in pixels
- * @param {Delegate}
- *        onclick a callback for the button-click
- * @param {String}
- *        hint a hint that is displayed when the mouse hovers over this button
+ * @param {ImageButtonGroup} group
+ *        the button group that this button belongs to
+ * @param {Number} idx
+ *        selects the partial image to be shown from the group's image
+ * @param {Number} delta
+ *        the actual position inside the button group in pixels
+ * @param {Delegate} onclick
+ *        a callback for the button-click
+ * @param {String} hint
+ *        a hint that is displayed when the mouse hovers over this button
+ *
  * @property {Number} the partial image to be shown from the group's image
  */
 function ImageButton(group, idx, delta, onclick, hint) {
@@ -209,8 +214,8 @@ ImageButton.extend(Button);
  * Draws the partial image into the button.
  * 
  * @private
- * @param {CanvasRenderingContext2D}
- *        ctx the rendering context to use
+ * @param {CanvasRenderingContext2D} ctx
+ *        the rendering context to use
  * @see Button#draw
  */
 ImageButton.prototype.drawInternal = function(ctx) {
@@ -232,21 +237,22 @@ ImageButton.prototype.getLocation = function() {
 /**
  * @class A button group that displays graphics of the same size.
  * @extends ButtonGroup
+ *
  * @constructor
- * @param {ButtonManager}
- *        manager the button manager that this button group will belong to
- * @param {HTMLImageElement}
- *        img the image that contains a row of graphics for this button group
- * @param {Boolean}
- *        layout one of {@link ImageButtonGroup#HORIZONTAL} or {@link ImageButtonGroup#VERTICAL}
- * @param {Number}
- *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
+ * @param {ButtonManager} manager
+ *        the button manager that this button group will belong to
+ * @param {HTMLImageElement} img
+ *        the image that contains a row of graphics for this button group
+ * @param {Boolean} layout
+ *        one of {@link ImageButtonGroup#HORIZONTAL} or {@link ImageButtonGroup#VERTICAL}
+ * @param {Number} mode
+ *        one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
  *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or {@link ButtonGroup#MODE_RADIO} (radio
  *        buttons)
- * @param {Number}
- *        border adds padding around the buttons on each side
- * @param {Number}
- *        extent the size of the button group (height for vertical layouts, width for horizontal
+ * @param {Number} border
+ *        adds padding around the buttons on each side
+ * @param {Number} extent
+ *        the size of the button group (height for vertical layouts, width for horizontal
  *        layouts)
  */
 function ImageButtonGroup(manager, img, layout, mode, border, extent) {
@@ -289,12 +295,13 @@ ImageButtonGroup.prototype.nextDelta = function() {
 /**
  * Adds a button to this group according to given parameters.
  * 
- * @param {Number}
- *        idx selects the partial image to be shown from the group's image
- * @param {Function}
- *        onclick a callback for the button-click
- * @param {String}
- *        hint a hint that is displayed when the mouse hovers over this button
+ * @param {Number} idx
+ *        selects the partial image to be shown from the group's image
+ * @param {Delegate} onclick
+ *        a callback for the button-click
+ * @param {String} hint
+ *        a hint that is displayed when the mouse hovers over this button
+ *
  * @returns {ImageButton} the newly added button
  */
 ImageButtonGroup.prototype.addButton = function(idx, onclick, hint) {
@@ -307,8 +314,8 @@ ImageButtonGroup.prototype.addButton = function(idx, onclick, hint) {
 /**
  * Adds a some space in between buttons.
  * 
- * @param {Number}
- *        size the amount of space in pixels
+ * @param {Number} size
+ *        the amount of space in pixels
  */
 ImageButtonGroup.prototype.addSpace = function(size) {
 	var delta = this.nextDelta();
@@ -321,8 +328,9 @@ ImageButtonGroup.prototype.addSpace = function(size) {
 /**
  * Looks up the button that displays a given partial image.
  * 
- * @param {Number}
- *        idx index into the image atlas of the partial image
+ * @param {Number} idx
+ *        index into the image atlas of the partial image
+ *
  * @returns {ImageButton} the first found button or null if none matches
  */
 ImageButtonGroup.prototype.getButton = function(idx) {
@@ -336,15 +344,16 @@ ImageButtonGroup.prototype.getButton = function(idx) {
 /**
  * @class A specialized button that displays a short label.
  * @extends Button
+ *
  * @constructor
- * @param {TextButtonGroup}
- *        group the button group that this button belongs to
- * @param {String}
- *        text the label that is displayed on the button
+ * @param {TextButtonGroup} group
+ *        the button group that this button belongs to
+ * @param {String} text
+ *        the label that is displayed on the button
  * @param color
  *        a fillStyle to be applied when the label is drawn
- * @param {Delegate}
- *        onclick a callback for the button-click
+ * @param {Delegate} onclick
+ *        a callback for the button-click
  */
 function TextButton(group, text, color, onclick) {
 	this.upper(group, onclick);
@@ -361,8 +370,8 @@ TextButton.extend(Button);
  * Draws the label into the button.
  * 
  * @private
- * @param {CanvasRenderingContext2D}
- *        ctx the rendering context to use
+ * @param {CanvasRenderingContext2D} ctx
+ *        the rendering context to use
  * @see Button#draw
  */
 TextButton.prototype.drawInternal = function(ctx) {
@@ -394,8 +403,8 @@ TextButton.prototype.getLocation = function() {
 /**
  * Updates the button text and resizes the button.
  * 
- * @param {String}
- *        text The new caption.
+ * @param {String} text
+ *        The new caption.
  */
 TextButton.prototype.setText = function(text) {
 	this.text = text;
@@ -406,15 +415,16 @@ TextButton.prototype.setText = function(text) {
 /**
  * @class A group of labeled buttons.
  * @extends ButtonGroup
+ *
  * @constructor
- * @param {ButtonManager}
- *        manager the button manager that this button group will belong to
- * @param {Number}
- *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
+ * @param {ButtonManager} manager
+ *        the button manager that this button group will belong to
+ * @param {Number} mode
+ *        one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
  *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or {@link ButtonGroup#MODE_RADIO} (radio
  *        buttons)
- * @param {Number}
- *        border adds padding around the buttons on each side
+ * @param {Number} border
+ *        adds padding around the buttons on each side
  */
 function TextButtonGroup(manager, mode, border) {
 	this.upper(manager, border);
@@ -429,12 +439,13 @@ TextButtonGroup.extend(ButtonGroup);
 /**
  * Adds a button to this group according to given parameters.
  * 
- * @param {String}
- *        text the label that is displayed on the button
+ * @param {String} text
+ *        the label that is displayed on the button
  * @param color
  *        a fillStyle to be applied when the label is drawn
- * @param {Function}
- *        onclick a callback for the button-click
+ * @param {Delegate} onclick
+ *        a callback for the button-click
+ *
  * @returns {TextButton} the newly added button
  */
 TextButtonGroup.prototype.addButton = function(text, color, onclick) {
@@ -447,8 +458,9 @@ TextButtonGroup.prototype.addButton = function(text, color, onclick) {
  * This will layout the buttons according to a given width, much like left aligned text in a word
  * processor.
  * 
- * @param {Number}
- *        width the maximum line width in pixels
+ * @param {Number} width
+ *        the maximum line width in pixels
+ *
  * @returns {Number} the resulting height of the group after the process
  */
 TextButtonGroup.prototype.cascade = function(width) {
@@ -472,13 +484,14 @@ TextButtonGroup.prototype.cascade = function(width) {
 
 /**
  * @class Manages buttons and their mouse events.
+ *
  * @constructor
- * @param {CanvasRenderingContext2D}
- *        ctx The context into which the buttons are rendered.
+ * @param {CanvasRenderingContext2D} ctx
+ *        The context into which the buttons are rendered.
  */
 function ButtonManager(ctx) {
 	this.ctx = ctx;
-	this.groups = new Object();
+	this.groups = {};
 	this.hover = null;
 	this.pinned = null;
 }
@@ -486,21 +499,22 @@ function ButtonManager(ctx) {
 /**
  * Adds a new image button group.
  * 
- * @param {String}
- *        name a descriptive group name for easy lookup
- * @param {HTMLImageElement}
- *        img the reference image that partial images for the buttons will be taken from
- * @param {Boolean}
- *        layout one of {@link ImageButtonGroup#HORIZONTAL} or {@link ImageButtonGroup#VERTICAL}
- * @param {Number}
- *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
+ * @param {String} name
+ *        a descriptive group name for easy lookup
+ * @param {HTMLImageElement} img
+ *        the reference image that partial images for the buttons will be taken from
+ * @param {Boolean} layout
+ *        one of {@link ImageButtonGroup#HORIZONTAL} or {@link ImageButtonGroup#VERTICAL}
+ * @param {Number} mode
+ *        one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
  *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or {@link ButtonGroup#MODE_RADIO} (radio
  *        buttons)
- * @param {Number}
- *        border adds padding around the buttons on each side
- * @param {Number}
- *        extent the size of the button group (height for vertical layouts, width for horizontal
+ * @param {Number} border
+ *        adds padding around the buttons on each side
+ * @param {Number} extent
+ *        the size of the button group (height for vertical layouts, width for horizontal
  *        layouts)
+ *
  * @returns {ImageButtonGroup} the created button group
  */
 ButtonManager.prototype.addImageGroup = function(name, img, layout, mode, border, extent) {
@@ -510,14 +524,15 @@ ButtonManager.prototype.addImageGroup = function(name, img, layout, mode, border
 /**
  * Adds a new text button group.
  * 
- * @param {String}
- *        name a descriptive group name for easy lookup
- * @param {Number}
- *        mode one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
+ * @param {String} name
+ *        a descriptive group name for easy lookup
+ * @param {Number} mode
+ *        one of {@link ButtonGroup#MODE_HIDDEN} (hides the button group),
  *        {@link ButtonGroup#MODE_NORMAL} (normal buttons) or {@link ButtonGroup#MODE_RADIO} (radio
  *        buttons)
- * @param {Number}
- *        border adds padding around the buttons on each side
+ * @param {Number} border
+ *        adds padding around the buttons on each side
+ *
  * @returns {TextButtonGroup} the created button group
  */
 ButtonManager.prototype.addTextGroup = function(name, mode, border) {
@@ -528,8 +543,7 @@ ButtonManager.prototype.addTextGroup = function(name, mode, border) {
  * Redraws all visible button groups.
  */
 ButtonManager.prototype.draw = function() {
-	var groupName = undefined;
-	for (groupName in this.groups)
+	for (var groupName in this.groups)
 		if (this.groups.hasOwnProperty(groupName)) {
 			if (this.groups[groupName].mode !== ButtonGroup.MODE_HIDDEN) {
 				this.groups[groupName].draw();
@@ -540,8 +554,9 @@ ButtonManager.prototype.draw = function() {
 /**
  * Retrieves a button group with a given name from the manager.
  * 
- * @param {String}
- *        name the name of the group
+ * @param {String} name
+ *        the name of the group
+ *
  * @returns {ButtonGroup} the button group if it exists or undefined
  */
 ButtonManager.prototype.getGroup = function(name) {
@@ -552,16 +567,16 @@ ButtonManager.prototype.getGroup = function(name) {
  * Finds an active button under the mouse cursor. The call is forwarded to matching button groups.
  * 
  * @see ButtonGroup#mouseMove
- * @param {Number}
- *        mx the mouse x position
- * @param {Number}
- *        my the mouse y position
+ * @param {Number} mx
+ *        the mouse x position
+ * @param {Number} my
+ *        the mouse y position
+ *
  * @returns {Button} the active button under the mouse cursor or null
  */
 ButtonManager.prototype.mouseMove = function(mx, my) {
 	var result = null;
-	var groupName = undefined;
-	for (groupName in this.groups) {
+	for (var groupName in this.groups) {
 		// use of method, to allow Eclipse to infer the type
 		var bg = this.getGroup(groupName);
 		if (bg.mode != ButtonGroup.MODE_HIDDEN && my >= bg.y && my < bg.y + bg.h && mx >= bg.x

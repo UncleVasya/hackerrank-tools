@@ -6,9 +6,10 @@
 /**
  * @class The director is supposed to keep track of playback speed and position and keep an eye on
  *        CPU usage. It does that in an acceptable fashion.
+ *
  * @constructor
- * @param {Visualizer}
- *        vis The visualizer that the director will communicate with.
+ * @param {Visu} vis
+ *        The visualizer that the director will communicate with.
  */
 function Director(vis) {
 	this.speed = 0;
@@ -83,8 +84,8 @@ Director.prototype.stop = function() {
 /**
  * Stops playback and jumps to a specific time. This is usually used to jump to the start of a turn.
  * 
- * @param {Number}
- *        time The time in question. 0 will jump to the start of 'turn 1'. Out of range values will
+ * @param {Number} time
+ *        The time in question. 0 will jump to the start of 'turn 1'. Out of range values will
  *        be clamped.
  */
 Director.prototype.gotoTick = function(time) {
@@ -105,8 +106,8 @@ Director.prototype.gotoTick = function(time) {
  * Starts a slow motion playback (forward or backward) from the current position to a given time at
  * a rate of one turn per second.
  * 
- * @param {Number}
- *        time The time in question. 0 will jump to the start of 'turn 1'. Out of range values will
+ * @param {Number} time
+ *        The time in question. 0 will jump to the start of 'turn 1'. Out of range values will
  *        be clamped.
  */
 Director.prototype.slowmoTo = function(time) {
@@ -131,10 +132,10 @@ Director.prototype.slowmoTo = function(time) {
 /**
  * Makes sure fade effects after playback ended are shown on normal speed.
  *
- * @param {Number}
- *        timeStep visualization time passing between two frames at current speed
- * @param {Number}
- *        lastTime clock time of last drawn frame
+ * @param {Number} timeStep
+ *        visualization time passing between two frames at current speed
+ * @param {Number} lastTime
+ *        clock time of last drawn frame
  *
  * @private
  */
@@ -281,8 +282,8 @@ Director.prototype.doDelay = function(delay, cpuTime) {
  * mode the title bar of the browser is updated with an FPS counter.
  * 
  * @private
- * @param {Number}
- *        delay This is the delay that was artificially introduced to meet the CPU usage limit given
+ * @param {Number} delay
+ *        This is the delay that was artificially introduced to meet the CPU usage limit given
  *        in the {@link Config}. It is used to calculate a CPU usage estimate.
  */
 Director.prototype.loop = function(delay) {
@@ -379,8 +380,8 @@ Director.prototype.cleanUp = function() {
 /**
  * Causes the visualizer to draw the current game state.
  * 
- * @param {Boolean}
- *        urgent When the director is currently playing back, the call would be a no-op and the
+ * @param {Boolean} [urgent]
+ *        When the director is currently playing back, the call would be a no-op and the
  *        redraw delayed to the next invocation of loop(). If this is not desired because - for
  *        example a resize occurred, this flag can be set to true.
  */

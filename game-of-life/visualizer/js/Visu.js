@@ -2,8 +2,8 @@
  * @class The visualizer object that handles replay drawing and playback: map, graphs, playback controls.
  *
  * @constructor
- * @param {Object}
- *        app main application object
+ * @param {Object} app
+ *        main application object
  */
 Visu = function(app) {
     this.app = app;
@@ -14,8 +14,6 @@ Visu = function(app) {
     this.h = 0;
 
     this.replay = undefined;
-
-    /** @private */
     this.state = new VisState();
     /** @private */
     this.map = undefined;
@@ -33,11 +31,10 @@ Visu = function(app) {
     this.resizing = false;
     /** @private */
     if (app.state.options['decorated']) {
-        /** @private */
+        /** @protected */
         this.btnMgr = new ButtonManager(null);
 
     }
-    /** @private */
     this.director = new Director(this);
     /** @private */
     this.mouseX = -1;
@@ -62,7 +59,7 @@ Visu = function(app) {
 /**
  * Resets the visualizer and associated objects to an initial state.
  *
- * @private
+ * @public
  */
 Visu.prototype.cleanUp = function() {
 	this.director.cleanUp();
@@ -82,7 +79,7 @@ Visu.prototype.cleanUp = function() {
  * {@link Config#speedSlowest}, {@link Config#speedFastest} and {@link Config#speedFactor}. The
  * latter can be controlled by the speed buttons.
  *
- * @private
+ * @protected
  */
 Visu.prototype.calculateReplaySpeed = function() {
     var state = this.app.state;
@@ -99,9 +96,9 @@ Visu.prototype.calculateReplaySpeed = function() {
  * Creates all different objects needed (canvas layers, director object)
  * and prepares them for visualizing provided replay.
  *
- * @private
- * @param {Object}
- *        replay replay to visualize
+ * @public
+ * @param {Object} replay replay
+ *        to visualize
  */
 Visu.prototype.init = function(replay) {
     this.state.replay = replay;
@@ -143,6 +140,8 @@ Visu.prototype.init = function(replay) {
  * @private
  */
 Visu.prototype.addPlaybackPanel = function() {
+    var bg, dlg;
+
     bg = this.btnMgr.addImageGroup('playback', this.app.imgMgr.get('playback'),
         ImageButtonGroup.HORIZONTAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
@@ -329,7 +328,7 @@ Visu.prototype.resize = function() {
  * This value is then multiplied by the zoom given to this function and ultimately clamped to a
  * range of [1..20].
  *
- * @private
+ * @protected
  * @param zoom
  *        {Number} The new zoom level in pixels. Map squares will be scaled to this value. It will
  *        be clamped to the range [1..20].
@@ -370,7 +369,7 @@ Visu.prototype.centerMap = function() {
 /**
  * Internal wrapper around mouse move events.
  *
- * @private
+ * @protected
  * @param mx
  *        {Number} the X coordinate of the mouse relative to the upper-left corner of the
  *        visualizer.
@@ -432,7 +431,7 @@ Visu.prototype.mouseMoved = function(mx, my) {
 /**
  * Internal wrapper around mouse down events.
  *
- * @private
+ * @protected
  */
 Visu.prototype.mousePressed = function() {
 	if (this.app.state.options['interactive']) {
@@ -449,7 +448,7 @@ Visu.prototype.mousePressed = function() {
 			this.btnMgr.mouseDown();
 			return;
 		}
-		this.mouseMoved(this.mouseX, this.mouseY); // TODO: find out why do we need this
+		this.mouseMoved(this.mouseX, this.mouseY);
 	} else if (this.app.state.options['decorated']) {
 		// handle game/player links if in non-interactive mode
 		this.btnMgr.mouseDown();
@@ -459,7 +458,7 @@ Visu.prototype.mousePressed = function() {
 /**
  * Internal wrapper around mouse button release events.
  *
- * @private
+ * @protected
  */
 Visu.prototype.mouseReleased = function() {
 	this.mouseDown = 0;
@@ -472,10 +471,10 @@ Visu.prototype.mouseReleased = function() {
  * Checks if a coordinate pair is within the canvas area. The canvas' x and y properties are used as
  * it's offset.
  *
- * @param {Number}
- *        x the x coordinate in question
- * @param {Number}
- *        y the y coordinate in question
+ * @param {Number} x
+ *        the x coordinate in question
+ * @param {Number} y
+ *        the y coordinate in question
  * @returns {Boolean} true, if the coordinates are contained within the canvas area
  */
 Visu.prototype.contains = function(x, y) {
@@ -485,6 +484,7 @@ Visu.prototype.contains = function(x, y) {
 
 /**
  * @class Holds public variables that need to be accessed from multiple modules of the visualizer.
+ *
  * @constructor
  * @property {Number} time The current visualizer time or position in turns, starting with 0 at the
  *           start of 'turn 1'.
@@ -493,9 +493,9 @@ Visu.prototype.contains = function(x, y) {
  * @property {Boolean} mouseOverVis True, if the mouse is currently in the active area of the map.
  *           This is used to quickly check if mouse-over effects need to be drawn.
  * @property {Number} mouseCol The current wrapped map column, the mouse is hovering over. This
- *           value is only valid when {@link State#mouseOverVis} is true.
+ *           value is only valid when {@link AppState#mouseOverVis} is true.
  * @property {Number} mouseRow The current wrapped map row, the mouse is hovering over. This value
- *           is only valid when {@link State#mouseOverVis} is true.
+ *           is only valid when {@link AppState#mouseOverVis} is true.
  * @property fade Undefined, unless a fade out/in effect is to be drawn. Then this is set to a
  *           rgba() fill style.
  * @property {Replay} replay The currently loaded replay.
@@ -512,7 +512,7 @@ VisState.prototype.cleanUp = function() {
 	this.shiftX = 0;
 	this.shiftY = 0;
 	this.mouseOverVis = false;
-	this.mouseCol = undefined;
-	this.mouseRow = undefined;
-	this.fade = undefined;
+	this.mouseCol = null;
+	this.mouseRow = null;
+	this.fade = null;
 };

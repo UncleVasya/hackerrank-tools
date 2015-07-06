@@ -12,16 +12,16 @@
  *        out that pre-calculating all key frames for thousand ants over the course of thousand
  *        turns is not feasible. Key frames are practically always appended. There is no support for
  *        jumping to the end of the game and leaving gaps in-between.
+ *
  * @constructor
- * @param {Number}
- *        id This is the unique object id of the new ant.
- * @param {Number}
- *        time Sets the time in which the object appears in turn units.
- * @constructor
+ * @param {Number} id
+ *        This is the unique object id of the new ant.
+ * @param {Number} time
+ *        Sets the time in which the object appears in turn units.
  */
 function Cell(id, time) {
 	this.id = id;
-	this.death = undefined;
+	this.death = null;
 	this.keyFrames = [ new KeyFrame() ];
 	this.keyFrames[0].time = time;
 	this.owner = undefined;
@@ -37,8 +37,9 @@ function Cell(id, time) {
  * is beyond the last key frame, the result is a copy of the last key frame. It is an error to
  * specify a time before the first key frame.
  * 
- * @param {Number}
- *        time the time in question
+ * @param {Number} time
+ *        the time in question
+ *
  * @returns {KeyFrame} a key frame for the time or null, if the time is before the first key frame
  */
 Cell.prototype.frameAt = function(time) {
@@ -67,8 +68,9 @@ Cell.prototype.frameAt = function(time) {
  * time stamp of the last key frame, that key frame is returned instead. If the ant doesn't exist
  * yet at that time, null is returned.
  * 
- * @param {Number}
- *        time the time in question
+ * @param {Number} time
+ *        the time in question
+ *
  * @returns {KeyFrameEx} the interpolated key frame
  */
 Cell.prototype.interpolate = function(time) {
@@ -117,14 +119,14 @@ Cell.prototype.interpolate = function(time) {
  * The attribute stays unchanged at the start time. This method is used by the {@link Replay} to
  * create animation effects.
  * 
- * @param {String}
- *        key attribute name
- * @param {Number}
- *        valueb target value
- * @param {Number}
- *        timea start time
- * @param {Number}
- *        timeb end time
+ * @param {String} key
+ *        attribute name
+ * @param {Number} valueb
+ *        target value
+ * @param {Number} timea
+ *        start time
+ * @param {Number} timeb
+ *        end time
  */
 Cell.prototype.fade = function(key, valueb, timea, timeb) {
 	var i, valuea, mix, f0, f1;
@@ -148,7 +150,7 @@ Cell.prototype.fade = function(key, valueb, timea, timeb) {
 };
 
 /**
- * The constructor is only called from within methods of {@link Ant} that add key frames.
+ * The constructor is only called from within methods of {@link Cell} that add key frames.
  * 
  * @class A single animation key frame of an ant.
  * @constructor
@@ -166,14 +168,14 @@ function KeyFrame() {
 
 /**
  * Assigns the interpolation of two other key frames at a given time to this key frame. This method
- * is used by {@link Ant}.
+ * is used by {@link Cell}.
  * 
- * @param {KeyFrame}
- *        a first key frame
- * @param {KeyFrame}
- *        b second key frame
- * @param {Number}
- *        time the time, which should be between a and b
+ * @param {KeyFrame} a
+ *        first key frame
+ * @param {KeyFrame} b
+ *        second key frame
+ * @param {Number} time
+ *        the time, which should be between a and b
  * @returns {KeyFrame} this object
  */
 KeyFrame.prototype.interpolate = function(a, b, time) {
@@ -193,8 +195,8 @@ KeyFrame.prototype.interpolate = function(a, b, time) {
 /**
  * Assigns the values of another key frame object to this one.
  * 
- * @param {KeyFrame}
- *        other the other key frame
+ * @param {KeyFrame} other
+ *        the other key frame
  * @returns {KeyFrame} this object
  */
 KeyFrame.prototype.assign = function(other) {
@@ -213,11 +215,12 @@ KeyFrame.prototype.assign = function(other) {
  * @class An extended key frame which holds the owning ant's id and an additional coordinate pair
  *        that reflects the pixel position on the scaled map.
  * @extends KeyFrame
+ *
  * @constructor
- * @param {Number}
- *        antId the owning ant's id
- * @param {KeyFrame}
- *        keyFrame the key frame to copy from
+ * @param {Number} antId
+ *        the owning ant's id
+ * @param {KeyFrame} keyFrame
+ *        the key frame to copy from
  */
 function KeyFrameEx(antId, keyFrame) {
 	this.antId = antId;

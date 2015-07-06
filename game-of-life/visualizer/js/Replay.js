@@ -12,6 +12,7 @@
  * @class The replay class loads a replay or map in string form and prepares it for playback. All
  *        per turn data is lazily evaluated to avoid long load times. The Java wrapper has some
  *        extensions to load streaming replays. Make sure changes here don't break it.
+ *
  * @constructor
  * @param {String} params.replay
  *        The replay or map text.
@@ -22,11 +23,10 @@
  *        color in the player colors array.
  * @see Options#user
  * @see #addMissingMetaData
- * @see Ant
+ * @see Cell
  */
 function Replay(params) {
-	var i, k, player_scores, highlightPlayer, c, n, r, regex;
-	var storeslist = undefined;
+	var i, highlightPlayer, n, p;
 	/**
 	 * @private
 	 */
@@ -34,7 +34,7 @@ function Replay(params) {
 	if (!params.replay && !params.meta) {
 		// This code path is taken by the Java wrapper for streaming replay and initializes only the
 		// basics. Most of the rest is faster done in native Java, than through Rhino.
-		this.meta = new Object();
+		this.meta = {};
 		this.meta['challenge'] = 'lifegame';
 		this.meta['replayformat'] = format;
 		this.meta['replaydata'] = {
@@ -57,12 +57,12 @@ function Replay(params) {
             this.gamePhaseDuration = 0;
 
 			this.meta['status'] = Object.create(this.meta.status);
-            for (var p = 0; p < this.players; ++p) {
+            for (p = 0; p < this.players; ++p) {
                 this.meta['status'][p] = 'survived';
             }
 
             this.meta['playerturns'] = Object.create(this.meta['playerturns']);
-            for (var p = 0; p < this.players; ++p) {
+            for (p = 0; p < this.players; ++p) {
                 this.meta['playerturns'][p] = 0;
             }
         }
@@ -75,9 +75,8 @@ function Replay(params) {
         }
 
         // simulate universe
-        // TODO: make Simulation class
-        var active_players = 0
-        for (var p = 0; p < this.players; ++p) {
+        var active_players = 0;
+        for (p = 0; p < this.players; ++p) {
             if (this.meta['status'][p] === 'survived') {
                 ++active_players;
             }
@@ -155,7 +154,7 @@ Replay.prototype.parseReplay = function(replay) {
 
 	// check if we have meta data or just replay data
 	if (replay['challenge'] === undefined) {
-		this.meta = new Object();
+		this.meta = {};
 		this.meta['challenge'] = 'lifegame';
 		this.meta['replayformat'] = format;
 		this.meta['replaydata'] = replay;
@@ -267,9 +266,10 @@ Replay.prototype.parseReplay = function(replay) {
 	this.cols = map['cols'];
 	var mapdata = enterObj(map, 'data');
 	var regex = /[^-wbz]/;
-	for (r = 0; r < mapdata.length; r++) {
+	for (var r = 0; r < mapdata.length; r++) {
 		keyIsStr(mapdata, r, map['cols'], map['cols']);
-		var maprow = new String(mapdata[r]);
+		var maprow = String(mapdata[r]);
+        var i;
 		if ((i = maprow.search(regex)) !== -1 && !this.debug) {
 			throw new Error('Invalid character "' + maprow.charAt(i)
 					+ '" in map. Zero based row/col: ' + r + '/' + i);
@@ -283,7 +283,7 @@ Replay.prototype.parseReplay = function(replay) {
 	keyIsArr(replay, 'cells', 0, undefined);
 	stack.push('cells');
 	var cells = replay['cells'];
-	for (n = 0; n < cells.length; n++) {
+	for (var n = 0; n < cells.length; n++) {
 		keyIsArr(cells, n, 4, 4);
 		stack.push(n);
 		var obj = cells[n];
@@ -311,8 +311,8 @@ Replay.prototype.parseReplay = function(replay) {
  * Adds optional meta data to the replay as required. This includes default player names and colors.
  * 
  * @private
- * @param {Number}
- *        highlightPlayer The index of a player who's default color should be exchanged with the first
+ * @param {Number} highlightPlayer
+ *        The index of a player who's default color should be exchanged with the first
  *        player's color. This is useful to identify a selected player by its color (the first one
  *        in the PĹAYER_COLORS array).
  */
@@ -339,11 +339,12 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
 	if (this.meta['challenge_rank']) {
         rank = this.meta['challenge_rank'].slice();
 	}
+    var COLOR_MAP;
 	if (highlightPlayer !== undefined) {
-		var COLOR_MAP = COLOR_MAPS[this.players-1];
+		COLOR_MAP = COLOR_MAPS[this.players-1];
         rank.splice(highlightPlayer, 1);
 	} else {
-		var COLOR_MAP = COLOR_MAPS[this.players];
+		COLOR_MAP = COLOR_MAPS[this.players];
 	}
     if (rank) {
         rank_sorted = rank.slice().sort(function (a, b) { return a - b; });
@@ -371,7 +372,7 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
                     color = PLAYER_COLORS[COLOR_MAP[i]];
                 }
             }
-            this.meta['playercolors'][i] = color = hsl_to_rgb(color);;
+            this.meta['playercolors'][i] = color = hsl_to_rgb(color);
 		}
 	}
 	this.htmlPlayerColors = new Array(this.players);
@@ -392,12 +393,12 @@ Replay.prototype.addMissingMetaData = function(highlightPlayer) {
  * <li>Turns are calculated iteratively so there is no quick random access to turn 1000.</li>
  * </ul>
  * 
- * @param {Number}
- *        n The requested turn.
- * @returns {Ant[]} The array of visible ants.
+ * @param {Number} n
+ *        The requested turn.
+ * @returns {Cell[]} The array of visible ants.
  */
 Replay.prototype.getTurn = function(n) {
-	var i, idx, turn, cells, cell, aniCell, lastFrame, dead, food, moves, activation;
+	var i, turn, cells, cell, aniCell, dead;
 	if (this.turns[n] === undefined) {
 		if (n !== 0) this.getTurn(n - 1);
 		turn = this.turns[n] = [];
@@ -439,17 +440,17 @@ Replay.prototype.getTurn = function(n) {
 /**
  * Spawns a new ant.
  * 
- * @param {Number}
- *        id Global ant id, an auto-incrementing number for each new ant. See {@link Config#label}
- * @param {Number}
- *        row Map row to spawn the ant on.
- * @param {Number}
- *        col Map column to spawn the ant on.
- * @param {Number}
- *        spawn Turn to spawn the ant at.
- * @param {Number}
- *        owner the owning player index
- * @returns {Ant} The new animation ant object.
+ * @param {Number} id
+ *        Global ant id, an auto-incrementing number for each new ant. See {@link Config#label}
+ * @param {Number} row
+ *        Map row to spawn the ant on.
+ * @param {Number} col
+ *        Map column to spawn the ant on.
+ * @param {Number} spawn
+ *        Turn to spawn the ant at.
+ * @param {Number} owner
+ *        the owning player index
+ * @returns {Cell} The new animation ant object.
  */
 Replay.prototype.spawnCell = function(id, row, col, spawn, owner) {
 	var aniCell = this.aniCells[id] = new Cell(id, spawn - 0.8);
@@ -474,10 +475,10 @@ Replay.prototype.spawnCell = function(id, row, col, spawn, owner) {
  * <b>Called by the Java streaming visualizer.</b>
  * 
  * @private
- * @param {Ant}
- *        aniAnt The ant to be worked on.
- * @param {Number}
- *        death The zero-based turn, that the ant died in.
+ * @param {Cell} aniCell
+ *        The ant to be worked on.
+ * @param {Number} death
+ *        The zero-based turn, that the ant died in.
  */
 Replay.prototype.killCell = function(aniCell, death) {
 	aniCell.fade('size', 0.0, death - 0.8, death);
@@ -535,12 +536,13 @@ Replay.prototype.getSimReplay = function(turn, callback) {
  * This method will try and recreate the bot input generated by the engine as seen by a particular
  * player in this replay.<br>
  * 
- * @param {Number}
- *        player The index of the participating player.
- * @param {Number}
- *        min The first turn.
- * @param {Number}
- *        max The last turn.
+ * @param {Number} player
+ *        The index of the participating player.
+ * @param {Number} min
+ *        The first turn.
+ * @param {Number} max
+ *        The last turn.
+ *
  * @returns {String} The bot input text.
  */
 Replay.prototype.generateBotInput = function(player, min, max) {

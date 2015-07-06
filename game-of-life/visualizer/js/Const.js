@@ -41,7 +41,7 @@ BOTTOM_PANEL_H = 64;
  *
  * @const
  */
-PLAYER_SYMBOLS = 'wb'
+PLAYER_SYMBOLS = 'wb';
 
 /**
  * map different colors depending on player count

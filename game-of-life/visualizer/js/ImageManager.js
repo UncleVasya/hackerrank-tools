@@ -5,9 +5,12 @@
 
 /**
  * @class Stores information about an image source and the result of loading it.
+ *
  * @constructor
- * @param {String}
- *        src The image source.
+ * @param {String} src
+ *        The image source.
+ * @param {String} name
+ *        The image name.
  */
 function ImageInfo(src, name) {
 	this.src = src;
@@ -19,11 +22,12 @@ function ImageInfo(src, name) {
  * @class This class keeps a list of images and loads them in the background. It also offers a
  *        pattern slot for every image that is setup by certain methods to contain special modified
  *        versions of that image.
+ *
  * @constructor
- * @param {String}
- *        dataDir The base directory string that will be prepended to all image load requests.
- * @param {Delegate}
- *        callback A delegate that will be invoked when the loading of images has completed.
+ * @param {String} dataDir
+ *        The base directory string that will be prepended to all image load requests.
+ * @param {Delegate} callback
+ *        A delegate that will be invoked when the loading of images has completed.
  */
 function ImageManager(dataDir, callback) {
 	this.dataDir = dataDir;
@@ -41,8 +45,10 @@ function ImageManager(dataDir, callback) {
  * Announces an image that must be loaded. Calling this method after startRequests() results in
  * unexpected behavior.
  * 
- * @param {String}
- *        source The image name relative to the data directory.
+ * @param {String} source
+ *        The image filename relative to the data directory.
+ * @param {String} name
+ *        The name given to a loading image.
  * @see #startRequests
  */
 ImageManager.prototype.add = function(source, name) {
@@ -54,8 +60,8 @@ ImageManager.prototype.add = function(source, name) {
 /**
  * Returns image specified by name or null if image is not found (or is not loaded yet)
  * 
- * @param {String}
- *        name The image name given in ImageManager#add.
+ * @param {String} name
+ *        The image name given in ImageManager#add.
  */
 ImageManager.prototype.get = function(name) {
 	for (var i = 0; i < this.images.length; i++) {
@@ -69,8 +75,8 @@ ImageManager.prototype.get = function(name) {
 /**
  * Returns pattern specified by image name or null if image is not found (or is not loaded yet)
  * 
- * @param {String}
- *        name The image name given in ImageManager#add.
+ * @param {String} name
+ *        The image name given in ImageManager#add.
  */
 ImageManager.prototype.getPattern = function(name) {
 	for (var i = 0; i < this.images.length; i++) {
@@ -83,9 +89,9 @@ ImageManager.prototype.getPattern = function(name) {
 
 /**
  * Returns id of image specified by name or -1 if image is not found (or is not loaded yet)
- * 
- * @param {String}
- *        name The image name given in ImageManager#add.
+ *
+ * @param {String} name
+ *        The image name given in ImageManager#add.
  */
 ImageManager.prototype.getId = function(name) {
 	for (var i = 0; i < this.images.length; i++) {
@@ -101,6 +107,8 @@ ImageManager.prototype.getId = function(name) {
  * time. This does not apply to the applet version which handles these cases internally.
  * 
  * @see Visualizer#cleanUp
+ *
+ * @public
  */
 ImageManager.prototype.cleanUp = function() {
 	for ( var i = 0; i < this.images.length; i++) {
@@ -123,7 +131,7 @@ ImageManager.prototype.startRequests = function() {
 		if (this.info[i].success === undefined && !this.images[i]) {
 			img = new Image();
 			this.images[i] = img;
-			var that = this;
+			const that = this;
 			/** @ignore */
 			img.onload = function() {
 				that.imgHandler(this, true);
@@ -144,10 +152,10 @@ ImageManager.prototype.startRequests = function() {
  * pending, the visualizer is signaled.
  * 
  * @private
- * @param {HTMLImageElement}
- *        img The image that finished loading.
- * @param {Boolean}
- *        success If false, an error message for this image will be added.
+ * @param {HTMLImageElement} img
+ *        The image that finished loading.
+ * @param {Boolean} success
+ *        If false, an error message for this image will be added.
  */
 ImageManager.prototype.imgHandler = function(img, success) {
 	var i;
@@ -169,12 +177,12 @@ ImageManager.prototype.imgHandler = function(img, success) {
  * create a repeated tile texture. The new pattern overrides the current pattern slot for the image
  * and activates the pattern for drawing.
  * 
- * @param {Number}
- *        idx The index of the image.
- * @param {CanvasRenderingContext2D}
- *        ctx The rendering context to create the pattern in.
- * @param {String}
- *        repeat the pattern repeat mode according to the HTML canvas createPattern() method.
+ * @param {Number} idx
+ *        The index of the image.
+ * @param {CanvasRenderingContext2D} ctx
+ *        The rendering context to create the pattern in.
+ * @param {String} repeat
+ *        the pattern repeat mode according to the HTML canvas createPattern() method.
  */
 ImageManager.prototype.pattern = function(idx, ctx, repeat) {
 	if (!this.patterns[idx]) {
@@ -187,10 +195,10 @@ ImageManager.prototype.pattern = function(idx, ctx, repeat) {
  * Sets the pattern of an image to a set of colorized copies of itself. Only gray pixels will be
  * touched. The new pattern overrides the current pattern slot for the image.
  * 
- * @param {String}
- *        name The name of the image.
- * @param {Array}
- *        colors An array of colors to use. Every array slot can be either an array of rgb values
+ * @param {String} name
+ *        The name of the image.
+ * @param {Array} colors
+ *        An array of colors to use. Every array slot can be either an array of rgb values
  *        ([31, 124, 59]) or HTML color string ("#f90433").
  */
 ImageManager.prototype.colorize = function(name, colors) {

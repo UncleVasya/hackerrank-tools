@@ -8,10 +8,11 @@
  * area. That is the area starting at (0;0) ranging to (width;height). This function operates on a
  * single coordinate so the range parameter can be either the width or height.
  * 
- * @param {Number}
- *        x The coordinate that should be remapped.
- * @param {Number}
- *        range The maximum for that coordinate.
+ * @param {Number} x
+ *        The coordinate that should be remapped.
+ * @param {Number} range
+ *        The maximum for that coordinate.
+ *
  * @return {Number} x' such that, 0 &lt;= x &lt; range.
  */
 Math.wrapAround = function(x, range) {
@@ -21,12 +22,13 @@ Math.wrapAround = function(x, range) {
 /**
  * A simple clamp function that makes sure, a value x doesn't violate a given range.
  * 
- * @param {Number}
- *        x The value that should be clamped to the range.
- * @param {Number}
- *        min The minimum value of a range.
- * @param {Number}
- *        max The maximum value of a range.
+ * @param {Number} x
+ *        The value that should be clamped to the range.
+ * @param {Number} min
+ *        The minimum value of a range.
+ * @param {Number} max
+ *        The maximum value of a range.
+ *
  * @return {Number} x, clamped to the range [min..max]
  */
 Math.clamp = function(x, min, max) {
@@ -36,18 +38,15 @@ Math.clamp = function(x, min, max) {
 /**
  * Calculate the (squared) distance between two points on a wrapped map.
  * 
- * @param {Number}
- *        x1
- * @param {Number}
- *        y1
- * @param {Number}
- *        x2
- * @param {Number}
- *        y2
- * @param {Number}
- *        w The map width.
- * @param {Number}
- *        h The map height.
+ * @param {Number} x1
+ * @param {Number} y1
+ * @param {Number} x2
+ * @param {Number} y2
+ * @param {Number} w
+ *        The map width.
+ * @param {Number} h
+ *        The map height.
+ *
  * @returns {Number} The squared minimum distance between the points.
  */
 Math.dist_2 = function(x1, y1, x2, y2, w, h) {
@@ -223,8 +222,9 @@ var Html = {
 	/**
 	 * Creates a table HTML element.
 	 * 
-	 * @param {Function}
-	 *        content function that returns the content of the table
+	 * @param {Function} content
+	 *        function that returns the content of the table
+     *
 	 * @returns {String} the HTML table
 	 */
 	table : function(content) {
@@ -234,8 +234,9 @@ var Html = {
 	/**
 	 * Creates a table row HTML element.
 	 * 
-	 * @param {Function}
-	 *        content function that returns the content of the table
+	 * @param {Function} content
+	 *        function that returns the content of the table
+     *
 	 * @returns {String} the HTML table row
 	 */
 	tr : function(content) {
@@ -245,8 +246,9 @@ var Html = {
 	/**
 	 * Creates a table data HTML element.
 	 * 
-	 * @param {Function}
-	 *        content function that returns the content of the table
+	 * @param {Function} content
+	 *        function that returns the content of the table
+     *
 	 * @returns {String} the HTML table cell
 	 */
 	td : function(content) {
@@ -256,8 +258,9 @@ var Html = {
 	/**
 	 * Creates a HTML font element with underlined style.
 	 * 
-	 * @param {Function}
-	 *        content function that returns the content of the font element
+	 * @param {Function} content
+	 *        function that returns the content of the font element
+     *
 	 * @returns {String} the HTML font element
 	 */
 	underline : function(content) {
@@ -267,8 +270,9 @@ var Html = {
 	/**
 	 * Creates a HTML font element with bold style.
 	 * 
-	 * @param {Function}
-	 *        content function that returns the content of the font element
+	 * @param {Function} content
+	 *        function that returns the content of the font element
+     *
 	 * @returns {String} the HTML font element
 	 */
 	bold : function(content) {
@@ -278,8 +282,9 @@ var Html = {
 	/**
 	 * Creates a HTML font element with italic style.
 	 * 
-	 * @param {Function}
-	 *        content function that returns the content of the font element
+	 * @param {Function} content
+	 *        function that returns the content of the font element
+     *
 	 * @returns {String} the HTML font element
 	 */
 	italic : function(content) {
@@ -290,19 +295,19 @@ var Html = {
 	 * Helper function to create a HTML element from generic info.
 	 * 
 	 * @private
-	 * @param {String}
-	 *        element the element name
-	 * @param {String}
-	 *        style some CSS to be added
+	 * @param {String} element
+	 *        the element name
+	 * @param {String} style
+	 *        some CSS to be added
 	 * @param content
 	 *        a function or any other data type that forms the elements inner HTML
+     *
 	 * @returns {String} the resulting element string
 	 */
 	element : function(element, style, content) {
 		return '<' + element + ' style="' + style + '">'
 				+ (typeof content == 'function' ? content() : content) + '</' + element + '>';
 	}
-
 };
 
 /**
@@ -315,20 +320,16 @@ var Shape = {
 	 * Draws the rounded rectangles used by buttons. Drawing attributes must be set before calling
 	 * this function.
 	 * 
-	 * @param {RenderingContext2D}
-	 *        ctx The rendering context to use.
-	 * @param {Number}
-	 *        x
-	 * @param {Number}
-	 *        y
-	 * @param {Number}
-	 *        w
-	 * @param {Number}
-	 *        h
-	 * @param {Number}
-	 *        margin How much to indent the center of the line.
-	 * @param {Number}
-	 *        r Radius of the rounded corners.
+	 * @param {RenderingContext2D} ctx
+	 *        The rendering context to use.
+	 * @param {Number} x
+	 * @param {Number} y
+	 * @param {Number} w
+	 * @param {Number} h
+	 * @param {Number} margin
+	 *        How much to indent the center of the line.
+	 * @param {Number} r
+	 *         Radius of the rounded corners.
 	 */
 	roundedRect : function(ctx, x, y, w, h, margin, r) {
 		var d = 0.5 * Math.PI;
@@ -348,30 +349,30 @@ var Shape = {
 /**
  * This function is called on functors to make their classes sub-classes of another class.
  * 
- * @param {Function}
- *        clazz The functor to inherit from.
+ * @param {Function} clazz
+ *        The functor to inherit from.
  */
 Function.prototype.extend = function(clazz) {
-	var property = undefined;
-	for (property in clazz.prototype) {
+	for (var property in clazz.prototype) {
 		this.prototype[property] = clazz.prototype[property];
 	}
 	// Simulates a super() call.
-	var upper = function() {
+	this.prototype.upper = function() {
 		if (clazz.prototype.upper) this.upper = clazz.prototype.upper;
 		clazz.apply(this, arguments);
 		delete this.upper;
 	};
-	this.prototype.upper = upper;
 };
 
 /**
  * @class A simple class storing 2-dimensional size extents.
+ *
  * @constructor
- * @param {Number}
- *        w width
- * @param {Number}
- *        h height
+ * @param {Number} w
+ *        width
+ * @param {Number} h
+ *        height
+ *
  * @property {Number} w width
  * @property {Number} h height
  */
@@ -382,15 +383,17 @@ function Size(w, h) {
 
 /**
  * @class A simple location class that stores information about a rectangle.
+ *
  * @constructor
- * @param {Number}
- *        x left coordinate
- * @param {Number}
- *        y top coordinate
- * @param {Number}
- *        w width
- * @param {Number}
- *        h height
+ * @param {Number} x
+ *        left coordinate
+ * @param {Number} y
+ *        top coordinate
+ * @param {Number} w
+ *        width
+ * @param {Number} h
+ *        height
+ *
  * @property {Number} x left coordinate
  * @property {Number} y top coordinate
  * @property {Number} w width
@@ -406,10 +409,10 @@ function Location(x, y, w, h) {
 /**
  * Checks if a given coordinate pair is within the area described by this object.
  * 
- * @param {Number}
- *        x left coordinate
- * @param {Number}
- *        y top coordinate
+ * @param {Number} x
+ *        left coordinate
+ * @param {Number} y
+ *        top coordinate
  * @returns {Boolean} true, if the point is inside the rectangle
  */
 Location.prototype.contains = function(x, y) {
@@ -419,12 +422,12 @@ Location.prototype.contains = function(x, y) {
 /**
  * @class A delegate that calls a method on an object, with optional static parameters.
  * @constructor
- * @param {Object}
- *        obj The 'this' object.
- * @param {Function}
- *        func The member function.
- * @param {Array}
- *        args The arguments array. This parameter is optional here and it can be overridden in
+ * @param {Object} obj
+ *        The 'this' object.
+ * @param {Function} func
+ *        The member function.
+ * @param {Array} [args]
+ *        The arguments array. This parameter is optional here and it can be overridden in
  *        #invoke.
  */
 function Delegate(obj, func, args) {
@@ -436,8 +439,8 @@ function Delegate(obj, func, args) {
 /**
  * Invokes the method stored in this Delegate.
  * 
- * @param {Array}
- *        args Optional argument list that overrides any arguments passed in the constructor.
+ * @param {Array} [args]
+ *        Optional argument list that overrides any arguments passed in the constructor.
  */
 Delegate.prototype.invoke = function(args) {
 	if (args) {
@@ -450,7 +453,9 @@ Delegate.prototype.invoke = function(args) {
 /**
  * Converts a hsl color value to rgb.
  *
- * @param {Color} a list of 3 values representing hue, saturation and luminosity
+ * @param {Color} C
+ *        a list of 3 values representing hue, saturation and luminosity
+ *
  * @returns {Color} a list of 3 values representing red, green and blue
  */
 function hsl_to_rgb (C) {
@@ -479,15 +484,17 @@ function hsl_to_rgb (C) {
 /**
  * Converts a rgb color value to hexidecimal.
  *
- * @param {Color} a list of 3 values representing red, green and blue
- * @returns {Color} the hexidecimal representation of a color
+ * @param {Color} C
+ *        a list of 3 values representing red, green and blue
+ *
+ * @returns {Color} the hexadecimal representation of a color
  */
 function rgb_to_hex (C) {
     return '#' + INT_TO_HEX[C[0]] + INT_TO_HEX[C[1]] + INT_TO_HEX[C[2]];
 }
 
 /**
- * Deep copy an object (make copies of all its object properties, sub-properties, etc.)
+ * Deep copy of an object (make copies of all its object properties, sub-properties, etc.)
  * A stripped version of this: http://stackoverflow.com/a/13333781
  */
 function deep_copy(src, visited) {
@@ -497,12 +504,12 @@ function deep_copy(src, visited) {
     visited = visited || [];
 
     // ensure src has not already been visited
-    for (var i = 0; i < visited.length; i++) {
-        // if src was already visited, don't try to copy it, just return the reference
-        if (src === visited[i]) {
-            return src;
-        }
-    }
+    //for (var i = 0; i < visited.length; i++) {
+    //    // if src was already visited, don't try to copy it, just return the reference
+    //    if (src === visited[i]) {
+    //        return src;
+    //    }
+    //}
     //visited.push(src);
 
     var copy;

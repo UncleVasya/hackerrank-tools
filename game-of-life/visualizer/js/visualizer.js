@@ -23,8 +23,8 @@ $import('CanvasElement');
 /**
  * Imports a file in Java package notation.
  * 
- * @param {String}
- *        file the 'package' name
+ * @param {String} file
+ *        the 'package' name
  */
 function $import(file) {
 	var ends_with = function(str, pat) {
@@ -41,7 +41,7 @@ function $import(file) {
 		}
 	}
 	file = namespace_vis.$import_base + file.replace(/[.]/g, '/') + '.js';
-	for ( var i = 0; i < scripts.length; i++) {
+	for (i = 0; i < scripts.length; i++) {
 		if (scripts[i].src === file) {
 			return;
 		}

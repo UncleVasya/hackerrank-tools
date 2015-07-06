@@ -37,19 +37,20 @@ LoadingState = {
  * @class The main 'application' object that provides all necessary methods for the use in a web
  *        page. Usually you just construct an instance and then call
  *        {@link Visualizer#loadReplayData} or {@link Visualizer#loadReplayDataFromURI}.
+ *
  * @constructor
- * @param {Node}
- *        container the HTML element, that the visualizer will embed into
- * @param {Options}
- *        options Adds immutable options. These can be overridden via URL parameters. The visualizer
+ * @param {Node} container
+ *        the HTML element, that the visualizer will embed into
+ * @param {Options} options
+ *        Adds immutable options. These can be overridden via URL parameters. The visualizer
  *        will not copy this {@link Options} instance, but instead use it directly. Modifications to
  *        the object at a later point will result in undefined behavior.
- * @param {Number}
- *        w an optional maximum width or undefined
- * @param {Number}
- *        h an optional maximum height or undefined
- * @param {Object}
- *        configOverrides an optional configuration; each field overrides the respective value in
+ * @param {Number} w
+ *        an optional maximum width or undefined
+ * @param {Number} h
+ *        an optional maximum height or undefined
+ * @param {Object} configOverrides
+ *        an optional configuration; each field overrides the respective value in
  *        the user's configuration or the default; see {@link Config} for possible options
  */
 Visualizer = function(container, options, w, h, configOverrides) {
@@ -72,8 +73,7 @@ Visualizer = function(container, options, w, h, configOverrides) {
 
 	// proceed with initialization
 	try {
-		/** @private */
-		this.state = new State();
+		this.state = new AppState();
 		/** @private */
 		this.w = w;
 		/** @private */
@@ -141,10 +141,7 @@ Visualizer = function(container, options, w, h, configOverrides) {
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
 		}
-        /** @private */
 		this.vis = new Visu(this);
-        /** @private */
-        this.helperVisEnabled = true;
         if (this.state.config['helperVisEnabled']) {
             this.helperVis = new Visu(this);
         }
@@ -206,12 +203,12 @@ Visualizer = function(container, options, w, h, configOverrides) {
  * also printed.
  * 
  * @private
- * @param {String}
- *        log a message to be logged before executing the function
- * @param {Function}
- *        func a function to be called after displaying the message
- * @param {String}
- *        id An identification of the progress that will be used to filter duplicates in the queue.
+ * @param {String} log
+ *        a message to be logged before executing the function
+ * @param {Function} func
+ *        a function to be called after displaying the message
+ * @param {String} id
+ *        An identification of the progress that will be used to filter duplicates in the queue.
  */
 Visualizer.prototype.progress = function(log, func, id) {
 	var i;
@@ -240,7 +237,7 @@ Visualizer.prototype.progress = function(log, func, id) {
 			if (obj.offsetParent) do {
 				selectedPosX += obj.offsetLeft;
 				selectedPosY += obj.offsetTop;
-			} while ((obj = obj.offsetParent))
+			} while ((obj = obj.offsetParent));
 			window.scrollTo(selectedPosX, selectedPosY);
 		}
 	}, 50);
@@ -250,8 +247,8 @@ Visualizer.prototype.progress = function(log, func, id) {
  * Places a paragraph with a message in the visualizer DOM element.
  * 
  * @private
- * @param {String}
- *        text the message text
+ * @param {String} text
+ *        the message text
  */
 Visualizer.prototype.logOut = function(text) {
 	this.log.innerHTML += text.replace(/\n/g, '<br>') + '<br>';
@@ -261,10 +258,10 @@ Visualizer.prototype.logOut = function(text) {
  * Stops loading, cleans up the instance and calls {@link Visualizer#logOut} with the text in red.
  * 
  * @private
- * @param {string}
- *        text the error message text
- * @param {Boolean}
- *        cleanUp whether the visualizer should try to reset itself; this is only useful if the
+ * @param {string} text
+ *        the error message text
+ * @param {Boolean} cleanUp
+ *        whether the visualizer should try to reset itself; this is only useful if the
  *        error is not coming from the constructor.
  */
 Visualizer.prototype.errorOut = function(text, cleanUp) {
@@ -277,10 +274,10 @@ Visualizer.prototype.errorOut = function(text, cleanUp) {
  * web page.
  * 
  * @private
- * @param {Error|String}
- *        error a thrown error or string
- * @param {Boolean}
- *        cleanUp whether the visualizer should try to reset itself; this is only useful if the
+ * @param {Error|String} error
+ *        a thrown error or string
+ * @param {Boolean} cleanUp
+ *        whether the visualizer should try to reset itself; this is only useful if the
  *        error is not coming from the constructor.
  */
 Visualizer.prototype.exceptionOut = function(error, cleanUp) {
@@ -299,7 +296,7 @@ Visualizer.prototype.exceptionOut = function(error, cleanUp) {
 		for (key in error) {
 			if (key !== 'name') {
 				try {
-					escaped = new String(error[key]);
+					escaped = String(error[key]);
 					escaped = escaped.replace('&', '&amp;');
 					escaped = escaped.replace('<', '&lt;');
 					escaped = escaped.replace('>', '&gt;');
@@ -367,8 +364,8 @@ Visualizer.prototype.preload = function() {
 /**
  * Loads a replay or map file located on the same server using a XMLHttpRequest.
  * 
- * @param {string}
- *        file the relative file name
+ * @param {string} file
+ *        the relative file name
  */
 Visualizer.prototype.loadReplayDataFromURI = function(file) {
 	if (this.preload()) return;
@@ -402,8 +399,8 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
 /**
  * Loads a replay string directly.
  * 
- * @param {string}
- *        data the replay string
+ * @param {string} data
+ *        the replay string
  */
 Visualizer.prototype.loadReplayData = function(data) {
 	if (this.preload()) return;
@@ -448,7 +445,7 @@ Visualizer.prototype.streamingStart = function() {
 		// call resize() in forced mode to update the GUI (graphs)
 		this.resize(true);
 		// resume playback if we are at the end
-		resume = !this.vis.director.playing() && (this.vis.state.time === this.vis.director.duration);
+		var resume = !this.vis.director.playing() && (this.vis.state.time === this.vis.director.duration);
 		if (this.vis.director.stopAt === this.vis.director.duration) {
 			this.vis.director.stopAt = this.state.replay.duration;
 		}
@@ -541,7 +538,7 @@ Visualizer.prototype.completedImages = function(error) {
  * @private
  */
 Visualizer.prototype.tryStart = function() {
-	var bg, i, k, dlg, scores;
+	var i, k, scores;
 	var app = this;
 	// we need to parse the replay, unless it has been parsed by the
 	// XmlHttpRequest callback
@@ -596,12 +593,6 @@ Visualizer.prototype.tryStart = function() {
             var effectiveTurn = Math.min(turn, app.state.replay.gamePhaseDuration); // make prognoses only for game phase positions
 
             app.state.replay.getSimReplay(effectiveTurn, function(replay) {
-                document.title = 'Replay cache |  ' +
-                    'size: ' +  app.state.replay.simReplays.length + '  ' +
-                    'count: ' + app.state.replay.simReplays.reduce(function(cnt, x) {return x? ++cnt: cnt}, 0) + '  ' +
-                    'misses: ' + app.state.replay.replayCacheMisses + '  ' +
-                    'success: ' + app.state.replay.replayCacheSuccess;
-
                 // if main vis turn changed, no need to draw this replay on helper vis
                 if (turn != Math.floor(app.vis.director.time)) return;
 
@@ -655,15 +646,15 @@ Visualizer.prototype.tryStart = function() {
 			if (this.offsetParent) do {
 				mx += obj.offsetLeft;
 				my += obj.offsetTop;
-			} while ((obj = obj.offsetParent))
+			} while ((obj = obj.offsetParent));
 			mx = event.clientX
 					- mx
-					+ ((window.scrollX === undefined) ? (document.body.parentNode.scrollLeft !== undefined) ? document.body.parentNode.scrollLeft
+					+ ((window.scrollX == null) ? (document.body.parentNode.scrollLeft != null) ? document.body.parentNode.scrollLeft
 							: document.body.scrollLeft
 							: window.scrollX);
 			my = event.clientY
 					- my
-					+ ((window.scrollY === undefined) ? (document.body.parentNode.scrollTop !== undefined) ? document.body.parentNode.scrollTop
+					+ ((window.scrollY == null) ? (document.body.parentNode.scrollTop != null) ? document.body.parentNode.scrollTop
 							: document.body.scrollTop
 							: window.scrollY);
 			app.mouseMoved(mx, my);
@@ -695,10 +686,8 @@ Visualizer.prototype.tryStart = function() {
 		};
 		/**
 		 * @ignore
-		 * @param event
-		 *        The input event.
 		 */
-		this.main.canvas.ondblclick = function(event) {
+		this.main.canvas.ondblclick = function() {
 			if (app.shiftedMap.contains(app.mouseX, app.mouseY)) app.centerMap();
 		};
 		/** @ignore */
@@ -737,7 +726,7 @@ Visualizer.prototype.tryStart = function() {
 /**
  * Centers map drawn by visualizers and disables CenterMap button.
  *
- * @private
+ * @protected
  */
 Visualizer.prototype.centerMap = function() {
 	if (this.state.options['decorated']) {
@@ -753,8 +742,8 @@ Visualizer.prototype.centerMap = function() {
  * Changes the replay speed.
  * 
  * @private
- * @param {Number}
- *        modifier {@link Config#speedFactor} is changed by this amount.
+ * @param {Number} modifier
+ *        {@link Config#speedFactor} is changed by this amount.
  */
 Visualizer.prototype.modifySpeed = function(modifier) {
 	this.state.config['speedFactor'] += modifier;
@@ -809,10 +798,12 @@ Visualizer.prototype.calculateMapCenter = function(scale) {
  * @private
  */
 Visualizer.prototype.addPlayerButtons = function() {
+    var bg, dlg;
 	var i;
-	var bg = this.btnMgr.addTextGroup('players', ButtonGroup.MODE_NORMAL, 2);
-	var vis = this;
-	var dlg = undefined;
+    var vis = this;
+
+    bg = this.btnMgr.addTextGroup('players', ButtonGroup.MODE_NORMAL, 2);
+	dlg = undefined;
 	var gameId = this.state.replay.meta['game_id'];
 	if (gameId === undefined && this.state.options['game']) {
 		gameId = this.state.options['game'];
@@ -852,6 +843,8 @@ Visualizer.prototype.addPlayerButtons = function() {
  * @private
  */
 Visualizer.prototype.addLeftPanel = function() {
+    var bg, dlg;
+
     bg = this.btnMgr.addImageGroup('toolbarLeft', this.imgMgr.get('toolbarLeft'),
         ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
@@ -898,6 +891,8 @@ Visualizer.prototype.addLeftPanel = function() {
  * @private
  */
 Visualizer.prototype.addRightPanel = function() {
+    var bg, dlg;
+
     bg = this.btnMgr.addImageGroup('toolbarRight', this.imgMgr.get('toolbarRight'),
     ImageButtonGroup.VERTICAL, ButtonGroup.MODE_NORMAL, 2, 0);
 
@@ -1225,7 +1220,7 @@ Visualizer.prototype.drawHintPart = function(x, w) {
 /**
  * Internal wrapper around mouse move events.
  * 
- * @private
+ * @public
  * @param mx
  *        {Number} the X coordinate of the mouse relative to the upper-left corner of the
  *        visualizer.
@@ -1266,7 +1261,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
 /**
  * Internal wrapper around mouse down events.
  * 
- * @private
+ * @protected
  */
 Visualizer.prototype.mousePressed = function() {
 	if (this.state.options['interactive']) {
@@ -1286,7 +1281,7 @@ Visualizer.prototype.mousePressed = function() {
 /**
  * Internal wrapper around mouse button release events.
  * 
- * @private
+ * @protected
  */
 Visualizer.prototype.mouseReleased = function() {
 	this.mouseDown = 0;
@@ -1303,7 +1298,7 @@ Visualizer.prototype.mouseReleased = function() {
 /**
  * Internal wrapper around mouse exit window events.
  * 
- * @private
+ * @protected
  */
 Visualizer.prototype.mouseExited = function() {
 	if (this.state.options['decorated']) {
@@ -1455,6 +1450,7 @@ Options.toBool = function(value) {
 
 /**
  * @class Holds public variables that need to be accessed from multiple modules of the visualizer.
+ *
  * @constructor
  * @property {Number} scale The size of map squares in pixels.
  * @property {Array} ranks Stores the rank of each player.
@@ -1467,16 +1463,16 @@ Options.toBool = function(value) {
  * @property {Boolean} mouseOverVis True, if the mouse is currently in the active area of the map.
  *           This is used to quickly check if mouse-over effects need to be drawn.
  * @property {Number} mouseCol The current wrapped map column, the mouse is hovering over. This
- *           value is only valid when {@link State#mouseOverVis} is true.
+ *           value is only valid when {@link AppState#mouseOverVis} is true.
  * @property {Number} mouseRow The current wrapped map row, the mouse is hovering over. This value
- *           is only valid when {@link State#mouseOverVis} is true.
+ *           is only valid when {@link AppState#mouseOverVis} is true.
  * @property {Boolean} isStreaming This should be true as long as the visualizer is receiving data
  *           from a game in progress and be set to false when the last turn has been sent as
  *           indicated by the result of Stream.visualizerReady() in Stream.java.
  * @property fade Undefined, unless a fade out/in effect is to be drawn. Then this is set to a
  *           rgba() fill style.
  */
-function State() {
+function AppState() {
 	this.cleanUp();
 	this.options = null;
 	this.config = new Config();
@@ -1484,11 +1480,13 @@ function State() {
 
 /**
  * Resets the state to initial values.
+ *
+ * @public
  */
-State.prototype.cleanUp = function() {
+AppState.prototype.cleanUp = function() {
 	this.scale = NaN;
-	this.ranks = undefined;
-	this.order = undefined;
+	this.ranks = null;
+	this.order = null;
 	this.replay = null;
 	this.isStreaming = false;
 };

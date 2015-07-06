@@ -25,10 +25,10 @@ function CanvasElement() {
 /**
  * Sets the size of this canvas and invalidates it, if an actual change is detected.
  * 
- * @param {Number}
- *        width the new width
- * @param {Number}
- *        height the new height
+ * @param {Number} width
+ *        the new width
+ * @param {Number} height
+ *        the new height
  */
 CanvasElement.prototype.setSize = function(width, height) {
 	if (this.w !== width || this.h !== height) {
@@ -47,10 +47,11 @@ CanvasElement.prototype.setSize = function(width, height) {
  * Checks if a coordinate pair is within the canvas area. The canvas' x and y properties are used as
  * it's offset.
  * 
- * @param {Number}
- *        x the x coordinate in question
- * @param {Number}
- *        y the y coordinate in question
+ * @param {Number} x
+ *        the x coordinate in question
+ * @param {Number} y
+ *        the y coordinate in question
+ *
  * @returns {Boolean} true, if the coordinates are contained within the canvas area
  */
 CanvasElement.prototype.contains = function(x, y) {
@@ -93,8 +94,8 @@ CanvasElement.prototype.checkState = function() {
  * the dependency becomes invalid and will cause this canvas to validate the dependency before
  * attempting to validate itself. Do not create cyclic dependencies!
  * 
- * @param {CanvasElement}
- *        element the dependency
+ * @param {CanvasElement} element
+ *        the dependency
  */
 CanvasElement.prototype.dependsOn = function(element) {
 	this.dependencies.push(element);
@@ -106,10 +107,10 @@ CanvasElement.prototype.dependsOn = function(element) {
  * @extends CanvasElement
  *
  * @constructor
- * @param {appState}
- *        appState the application state for reference
- * @param {visState}
- *        visState the visualizer state for reference
+ * @param {AppState} appState
+ *        the application state for reference
+ * @param {VisState} visState
+ *        the visualizer state for reference
  */
 function CanvasElementAbstractMap(appState, visState) {
 	this.upper();
@@ -152,10 +153,10 @@ CanvasElementAbstractMap.prototype.draw = function(resized, drawGrid) {
  * @extends CanvasElementAbstractMap
  *
  * @constructor
- * @param {appState}
- *        appState the application state for reference
- * @param {visState}
- *        visState the visualizer state for reference
+ * @param {AppState} appState
+ *        the application state for reference
+ * @param {VisState} visState
+ *        the visualizer state for reference
  */
 function CanvasElementMiniMap(appState, visState) {
 	this.upper(appState, visState);
@@ -204,10 +205,10 @@ CanvasElementMiniMap.prototype.draw = function() {
  * @extends CanvasElementAbstractMap
  *
  * @constructor
- * @param {appState}
- *        appState the application state for reference
- * @param {visState}
- *        visState the visualizer state for reference
+ * @param {AppState} appState
+ *        the application state for reference
+ * @param {VisState} visState
+ *        the visualizer state for reference
  */
 function CanvasElementMap(appState, visState) {
 	this.upper(appState, visState);
@@ -233,12 +234,12 @@ CanvasElementMap.prototype.checkState = function() {
  * @extends CanvasElement
  *
  * @constructor
- * @param {appState}
- *        appState the application state for reference
- * @param {visState}
- *        visState the visualizer state for reference
- * @param {CanvasElementMap}
- *        map the background map
+ * @param {AppState} appState
+ *        the application state for reference
+ * @param {VisState} visState
+ *        the visualizer state for reference
+ * @param {CanvasElementMap} map
+ *        the background map
  */
 function CanvasElementAntsMap(appState, visState, map) {
 	this.upper();
@@ -248,8 +249,7 @@ function CanvasElementAntsMap(appState, visState, map) {
 	this.dependsOn(map);
 	this.time = 0;
 	this.ants = [];
-	this.drawStates = new Object();
-	this.pairing = [];
+	this.drawStates = {};
 	this.scale = 1;
     this.label = 0;
     this.cellShape = 0;
@@ -265,7 +265,7 @@ CanvasElementAntsMap.extend(CanvasElement);
  * @returns {Boolean} true, if the internal state has changed
  */
 CanvasElementAntsMap.prototype.checkState = function() {
-	var i, k, kf, p_i, p_k, dx, dy, rows, cols, ar, owner;
+	var i, kf;
 	var hash = undefined;
 	if (this.time !== this.visState.time
         || this.scale !== this.appState.scale
@@ -285,7 +285,7 @@ CanvasElementAntsMap.prototype.checkState = function() {
 		}
 
 		// interpolate ants for this point in time
-		this.drawStates = new Object();
+		this.drawStates = {};
 		for (i = this.ants.length - 1; i >= 0; i--) {
 			if ((kf = this.ants[i].interpolate(this.time))) {
 				hash = '#';
@@ -305,8 +305,9 @@ CanvasElementAntsMap.prototype.checkState = function() {
  * and finally the fog of war.
  */
 CanvasElementAntsMap.prototype.draw = function() {
-	var halfScale, drawList, n, kf, d, fontSize, label, caption, order;
-	var hash = undefined;
+	var halfScale, drawList, hash, n, kf, d, fontSize, label, caption, order;
+    var w, dx, dy;
+    var player;
 
 	// draw map
 	this.ctx.drawImage(this.map.canvas, 0, 0);
@@ -368,7 +369,7 @@ CanvasElementAntsMap.prototype.draw = function() {
 				kf = drawList[n];
 				if (label === 1) {
 					if (kf['owner'] === undefined) continue;
-                    player = order[kf['owner']]
+                    player = order[kf['owner']];
 					caption = PLAYER_SYMBOLS[player];
 				} else {
 					caption = kf.antId;
@@ -398,12 +399,12 @@ CanvasElementAntsMap.prototype.draw = function() {
  * @extends CanvasElement
  *
  * @constructor
- * @param {appState}
- *        appState the application state for reference
- * @param {visState}
- *        visState the visualizer state for reference
- * @param {CanvasElementAntsMap}
- *        antsMap the prepared map with ants
+ * @param {AppState} appState
+ *        the application state for reference
+ * @param {VisState} visState
+ *        the visualizer state for reference
+ * @param {CanvasElementAntsMap} antsMap
+ *        the prepared map with ants
  */
 function CanvasElementShiftedMap(appState, visState, antsMap) {
 	this.upper();
@@ -440,7 +441,7 @@ CanvasElementShiftedMap.prototype.checkState = function() {
  * repeated in a darker shade on both sides.
  */
 CanvasElementShiftedMap.prototype.draw = function() {
-	var x, y, dx, dy, cutoff;
+	var dx, dy, cutoff;
 	var mx = (this.w - this.antsMap.w) >> 1;
 	var my = (this.h - this.antsMap.h) >> 1;
 	// max allowed shift
@@ -481,12 +482,12 @@ CanvasElementShiftedMap.prototype.draw = function() {
  * @class A canvas element for statistical time graphs.
  * @extends CanvasElement
  * @constructor
- * @param {appState}
- *        appState the application state for reference
- * @param {visState}
- *        visState the visualizer state for reference
- * @param {String}
- *        stats name of the stats to query from the visualizer
+ * @param {AppState} appState
+ *        the application state for reference
+ * @param {VisState} visState
+ *        the visualizer state for reference
+ * @param {String} stats
+ *        name of the stats to query from the visualizer
  */
 function CanvasElementGraph(appState, visState, stats) {
 	this.upper();
@@ -502,9 +503,10 @@ CanvasElementGraph.extend(CanvasElement);
  * basically to reduce the noise caused by the longer textual descriptions.
  * 
  * @private
- * @param {Number}
- *        i the zero based player index
- * @returns Returns a well supported Unicode glyph for some known status, or the original status
+ * @param {Number} i
+ *        the zero-based player index
+ *
+ * @returns {String} Returns a well supported Unicode glyph for some known status, or the original status
  *          text otherwise.
  */
 CanvasElementGraph.prototype.statusToGlyph = function(i) {
@@ -536,7 +538,7 @@ CanvasElementGraph.prototype.checkState = function() {
  * it's last turn.
  */
 CanvasElementGraph.prototype.draw = function() {
-	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx, razed;
+	var min, max, i, k, t, scaleX, scaleY, txt, x, y, tw, tx;
 	var w = this.w - 1;
 	var h = this.h - 1;
 	var replay = this.visState.replay;
@@ -630,8 +632,9 @@ CanvasElementGraph.prototype.draw = function() {
  * Helper function that returns a replay property with the given name, that should refer to a
  * statistics array. If the name is 'scores' the replay is also checked for the end game bonus.
  * 
- * @param {String}
- *        name The property name to be queried.
+ * @param {String} name
+ *        The property name to be queried.
+ *
  * @returns {Stats} the statistics set for the given item name.
  */
 CanvasElementGraph.prototype.getStats = function(name) {
@@ -652,16 +655,16 @@ CanvasElementGraph.prototype.getStats = function(name) {
  * @class A canvas element for statistics. It makes use of {@link CanvasElementGraph}.
  * @extends CanvasElement
  * @constructor
- * @param {appState}
- *        appState the application state for reference
- * @param {visState}
- *        visState the visualizer state for reference
- * @param {String}
- *        caption the caption that is show to the left of the bar graph
- * @param {String}
- *        stats name of the stats to query from the visualizer
- * @param {String}
- *        bonusText Title over bonus section in the graph.
+ * @param {AppState} appState
+ *        the application state for reference
+ * @param {VisState} visState
+ *        the visualizer state for reference
+ * @param {String} caption
+ *        the caption that is show to the left of the bar graph
+ * @param {String} stats
+ *        name of the stats to query from the visualizer
+ * @param {String} bonusText
+ *        Title over bonus section in the graph.
  */
 function CanvasElementStats(appState, visState, caption, stats, bonusText) {
 	this.upper();
@@ -690,10 +693,10 @@ CanvasElementStats.MAX_HEIGHT = CanvasElementStats.MIN_HEIGHT + 70;
  * Sets the size of this CanvasElementStats and the contained {@link CanvasElementGraph} and
  * invalidates both, if an actual change is detected.
  * 
- * @param {Number}
- *        width the new width
- * @param {Number}
- *        height the new height
+ * @param {Number} width
+ *        the new width
+ * @param {Number} height
+ *        the new height
  * @see CanvasElement#setSize
  */
 CanvasElementStats.prototype.setSize = function(width, height) {
@@ -782,10 +785,10 @@ CanvasElementStats.prototype.draw = function(resized) {
  * Helper function that returns a replay property with the given name, that should refer to a
  * statistics array. If the name is 'scores' the replay is also checked for the end game bonus.
  * 
- * @param {String}
- *        name The property name to be queried.
- * @param {Number}
- *        turn The turn for which to fetch the stats
+ * @param {String} name
+ *        The property name to be queried.
+ * @param {Number} turn
+ *        The turn for which to fetch the stats
  * @returns {Stats} the statistics set for the given item name.
  */
 CanvasElementStats.prototype.getStats = function(name, turn) {
@@ -803,27 +806,27 @@ CanvasElementStats.prototype.getStats = function(name, turn) {
  * Renders a horizontal 'stacked' bar graph.
  * 
  * @private
- * @param {Number}
- *        x the left coordinate
- * @param {Number}
- *        y the top coordinate
- * @param {Number}
- *        w the width
- * @param {Number}
- *        h the height
- * @param {Stats}
- *        stats The values and boni to display. The bonus field can be undefined or contain
+ * @param {Number} x
+ *        the left coordinate
+ * @param {Number} y
+ *        the top coordinate
+ * @param {Number} w
+ *        the width
+ * @param {Number} h
+ *        the height
+ * @param {Stats} stats
+ *        The values and boni to display. The bonus field can be undefined or contain
  *        undefined values.
- * @param {String}
- *        bonusText Title over bonus section.
+ * @param {String} bonusText
+ *        Title over bonus section.
  */
 CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusText) {
 	var i, idx, wUsable, xNegSep, text;
 	var showBoni = false;
 	var boni = new Array(stats.values.length);
 	var boniList = new Array(stats.values.length);
-	var negatives = new Array();
-	var positives = new Array();
+	var negatives = [];
+	var positives = [];
 	var sumBoni = 0;
 	var sumNegative = 0;
 	var sumPositive = 0;

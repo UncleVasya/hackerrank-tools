@@ -57,12 +57,11 @@ Config.prototype['cellShape'] = 0;
 /**
  * Loads all keys from a generic object into the configuration.
  * 
- * @param {Object}
- *        preset the object containing configuration values
+ * @param {Object} preset
+ *        the object containing configuration values
  */
 Config.prototype.overrideFrom = function(preset) {
-	var key = undefined;
-	for (key in preset) {
+	for (var key in preset) {
 		if (!Config.prototype.hasOwnProperty(key) || (typeof this[key] === 'function'))
 			throw new Error("Cannot override '" + key
 					+ "', because it is not a known configuration value.");
@@ -88,6 +87,7 @@ Config.prototype.hasLocalStorage = function() {
  * 
  * @throws {Error}
  *         Throws an error, if something different than a string, number or boolean is stored.
+ *
  * @return {Boolean} True, if successful.
  */
 Config.prototype.save = function() {
