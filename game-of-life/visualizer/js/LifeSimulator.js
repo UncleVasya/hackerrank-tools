@@ -1,3 +1,17 @@
+/**
+ * @class This class used for simulating Game of Life universe.
+ *
+ * @constructor
+ * @param {Array} cells
+ *        List of cells representing starting position of universe.
+ *        During simulation this list is updated with new info (marking death times, adding new cells).
+ * @param {Number} rows
+ *        Map height.
+ * @param {Number} cols
+ *        Map width.
+ * @param {Number} startTurn
+ *        The turn number from when simulation starts.
+ */
 function LifeSimulator(cells, rows, cols, startTurn) {
     this.cells = cells;
     this.rows = rows;
@@ -7,6 +21,11 @@ function LifeSimulator(cells, rows, cols, startTurn) {
 
 LifeSimulator.SIM_LENGTH = 500;
 
+/**
+ * Launches Game of Life simulations.
+ *
+ * @protected
+ */
 LifeSimulator.prototype.simulate = function() {
     var map = new Array(this.rows);
     for (var row = 0; row < this.rows; ++row) {
@@ -23,6 +42,19 @@ LifeSimulator.prototype.simulate = function() {
     this.simStep(map, aliveCells, LifeSimulator.SIM_LENGTH);
 };
 
+/**
+ * Calculates next step of simulation
+ *
+ * @private
+ * @param {Array} map
+ *        Current state of universe.
+ * @param {Array} aliveCells
+ *        A list of living cells. Having it besides map allows to optimize simulation.
+ * @param {Number} totalSteps
+ *        Total amount of steps that should be simulated.
+ * @param {Number} stepsDone
+ *        Amount of steps that was already simulated.
+ */
 LifeSimulator.prototype.simStep = function(map, aliveCells, totalSteps, stepsDone) {
     stepsDone = stepsDone || 0;
     if (stepsDone >= totalSteps) return;
@@ -57,6 +89,17 @@ LifeSimulator.prototype.simStep = function(map, aliveCells, totalSteps, stepsDon
     this.simStep(map, aliveCells, totalSteps, stepsDone+1);
 };
 
+/**
+ * Calculates grid of neighbours counts around living cells.
+ *
+ * @private
+ * @param {Array} map
+ *        Current state of universe.
+ * @param {Array} aliveCells
+ *        A list of living cells. Having it besides map allows to optimize simulation.
+ *
+ * @returns Returns a grid representing neighbours counts around living cells.
+ */
 LifeSimulator.prototype.calcNeighsCnt = function(map, aliveCells) {
     var row, col, cell, owner, i;
     var cntNeighs = this.initNeighsCnt();
@@ -85,6 +128,12 @@ LifeSimulator.prototype.calcNeighsCnt = function(map, aliveCells) {
     return cntNeighs
 };
 
+/**
+ * Initializes new neighbours-count grid.
+ *
+ * @private
+ * @reruns Returns a neighbours-count grid filled with 0.
+ */
 LifeSimulator.prototype.initNeighsCnt = function() {
     var row, col;
 
