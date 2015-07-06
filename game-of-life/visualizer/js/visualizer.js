@@ -8,8 +8,8 @@ namespace_vis.scripts = [];
 
 $import('Util');
 $import('Cell');
-$import('Visu');
-$import('Application');
+$import('VisContainer');
+$import('VisApplication');
 $import('Buttons');
 $import('Config');
 $import('Const');

@@ -101,7 +101,7 @@ ImageManager.prototype.getId = function(name) {
  * We clean up the state of all images that failed to download in hope that they will succeed next
  * time. This does not apply to the applet version which handles these cases internally.
  * 
- * @see Visualizer#cleanUp
+ * @see VisApplication#cleanUp
  *
  * @public
  */

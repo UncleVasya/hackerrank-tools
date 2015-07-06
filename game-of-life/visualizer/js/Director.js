@@ -3,7 +3,7 @@
  *        CPU usage. It does that in an acceptable fashion.
  *
  * @constructor
- * @param {Visu} vis
+ * @param {VisContainer} vis
  *        The visualizer that the director will communicate with.
  */
 function Director(vis) {
@@ -271,7 +271,7 @@ Director.prototype.doDelay = function(delay, cpuTime) {
 };
 
 /**
- * Performs one playback step. Basically it calls {@link Visualizer#draw}, and will schedule the
+ * Performs one playback step. Basically it calls {@link VisApplication#draw}, and will schedule the
  * next call to itself if the playback hasn't met an end condition (like the target time for a
  * slow-mo). The CPU usage limit is obeyed here and if the visualizer is in {@link Config#debug}
  * mode the title bar of the browser is updated with an FPS counter.
@@ -364,7 +364,7 @@ Director.prototype.loop = function(delay) {
 /**
  * The clean up method for the director resets the loop timeout and calls stop().
  * 
- * @see Visualizer#cleanUp
+ * @see VisApplication#cleanUp
  */
 Director.prototype.cleanUp = function() {
 	window.clearTimeout(this.timeout);

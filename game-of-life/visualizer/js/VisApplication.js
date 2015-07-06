@@ -18,7 +18,7 @@ LoadingState = {
 	 * The visualizer is currently cleaning up.
 	 *
 	 * @const
-	 * @see Visualizer#cleanUp
+	 * @see VisApplication#cleanUp
 	 */
 	CLEANUP : 2
 };
@@ -26,7 +26,7 @@ LoadingState = {
 /**
  * @class The main 'application' object that provides all necessary methods for the use in a web
  *        page. Usually you just construct an instance and then call
- *        {@link Visualizer#loadReplayData} or {@link Visualizer#loadReplayDataFromURI}.
+ *        {@link VisApplication#loadReplayData} or {@link VisApplication#loadReplayDataFromURI}.
  *
  * @constructor
  * @param {Node} container
@@ -43,7 +43,7 @@ LoadingState = {
  *        an optional configuration; each field overrides the respective value in
  *        the user's configuration or the default; see {@link Config} for possible options
  */
-Visualizer = function(container, options, w, h, configOverrides) {
+VisApplication = function(container, options, w, h, configOverrides) {
 	var parameters, equalPos, value, i, text, imgDir;
 	var key = undefined;
 	var app = this;
@@ -131,9 +131,9 @@ Visualizer = function(container, options, w, h, configOverrides) {
 			/** @private */
 			this.btnMgr = new ButtonManager(null);
 		}
-		this.mainVis = new Visu(this);
+		this.mainVis = new VisContainer(this);
         if (this.state.config['helperVisEnabled']) {
-            this.helperVis = new Visu(this);
+            this.helperVis = new VisContainer(this);
         }
 		/** @private */
 		this.mouseX = -1;
@@ -200,7 +200,7 @@ Visualizer = function(container, options, w, h, configOverrides) {
  * @param {String} id
  *        An identification of the progress that will be used to filter duplicates in the queue.
  */
-Visualizer.prototype.progress = function(log, func, id) {
+VisApplication.prototype.progress = function(log, func, id) {
 	var i;
 	if (this.loading !== LoadingState.LOADING) return;
 	for (i = 0; i < this.progressList.length; i++) {
@@ -240,12 +240,12 @@ Visualizer.prototype.progress = function(log, func, id) {
  * @param {String} text
  *        the message text
  */
-Visualizer.prototype.logOut = function(text) {
+VisApplication.prototype.logOut = function(text) {
 	this.log.innerHTML += text.replace(/\n/g, '<br>') + '<br>';
 };
 
 /**
- * Stops loading, cleans up the instance and calls {@link Visualizer#logOut} with the text in red.
+ * Stops loading, cleans up the instance and calls {@link VisApplication#logOut} with the text in red.
  * 
  * @private
  * @param {string} text
@@ -254,7 +254,7 @@ Visualizer.prototype.logOut = function(text) {
  *        whether the visualizer should try to reset itself; this is only useful if the
  *        error is not coming from the constructor.
  */
-Visualizer.prototype.errorOut = function(text, cleanUp) {
+VisApplication.prototype.errorOut = function(text, cleanUp) {
 	this.logOut('<font style="color:red">' + text + '</font>');
 	if (cleanUp) this.cleanUp();
 };
@@ -270,7 +270,7 @@ Visualizer.prototype.errorOut = function(text, cleanUp) {
  *        whether the visualizer should try to reset itself; this is only useful if the
  *        error is not coming from the constructor.
  */
-Visualizer.prototype.exceptionOut = function(error, cleanUp) {
+VisApplication.prototype.exceptionOut = function(error, cleanUp) {
 	var msg;
 	var key = undefined;
 	if (typeof error == 'string') {
@@ -311,7 +311,7 @@ Visualizer.prototype.exceptionOut = function(error, cleanUp) {
  * 
  * @private
  */
-Visualizer.prototype.cleanUp = function() {
+VisApplication.prototype.cleanUp = function() {
 	this.loading = LoadingState.CLEANUP;
 	if (this.replayReq) this.replayReq.abort();
 	if (this.state.options['decorated']) {
@@ -344,7 +344,7 @@ Visualizer.prototype.cleanUp = function() {
  * @private
  * @returns {Boolean} true, if the visualizer was idle.
  */
-Visualizer.prototype.preload = function() {
+VisApplication.prototype.preload = function() {
 	if (this.loading !== LoadingState.IDLE) return true;
 	this.cleanUp();
 	this.loading = LoadingState.LOADING;
@@ -357,7 +357,7 @@ Visualizer.prototype.preload = function() {
  * @param {string} file
  *        the relative file name
  */
-Visualizer.prototype.loadReplayDataFromURI = function(file) {
+VisApplication.prototype.loadReplayDataFromURI = function(file) {
 	if (this.preload()) return;
 	var app = this;
 	this.progress('Fetching replay from: ' + Html.italic(String(file)) + '...', function() {
@@ -392,7 +392,7 @@ Visualizer.prototype.loadReplayDataFromURI = function(file) {
  * @param {string} data
  *        the replay string
  */
-Visualizer.prototype.loadReplayData = function(data) {
+VisApplication.prototype.loadReplayData = function(data) {
 	if (this.preload()) return;
 	this.replayStr = data;
 	this.loadCanvas();
@@ -407,14 +407,14 @@ Visualizer.prototype.loadReplayData = function(data) {
  * 
  * @returns {Replay} the replay object is exposed to the Java wrapper
  */
-Visualizer.prototype.streamingInit = function() {
+VisApplication.prototype.streamingInit = function() {
 	this.preload();
 	this.state.isStreaming = true;
 	return this.state.replay = new Replay();
 };
 
 /**
- * This is called internally by {@link Visualizer#draw} to request the next turn after a rendered
+ * This is called internally by {@link VisApplication#draw} to request the next turn after a rendered
  * frame (throttling the data stream) and as a one-time, asynchronous call from Stream.java, where
  * it is issued after the Java wrapper has set up a global 'stream' variable in the JavaScript
  * context that refers to the Java Stream instance. First the visualizer will request new data from
@@ -423,7 +423,7 @@ Visualizer.prototype.streamingInit = function() {
  * playback.<br>
  * <b>Called by the Java streaming visualizer.</b>
  */
-Visualizer.prototype.streamingStart = function() {
+VisApplication.prototype.streamingStart = function() {
 	this.state.isStreaming = stream.visualizerReady();
 	if (this.loading === LoadingState.LOADING) {
 		if (this.state.replay.hasDuration) {
@@ -455,17 +455,17 @@ Visualizer.prototype.streamingStart = function() {
  * @param {Number}
  *        fpt the number of frames per turn
  */
-Visualizer.prototype.javaVideoOutput = function(fpt) {
+VisApplication.prototype.javaVideoOutput = function(fpt) {
 	this.mainVis.director.fixedFpt = fpt;
 };
 
 /**
  * In this method the replay string that has been passed directly or downloaded is parsed into a
- * {@link Replay}. Afterwards an attempt is made to start the visualization ({@link Visualizer#tryStart}).
+ * {@link Replay}. Afterwards an attempt is made to start the visualization ({@link VisApplication#tryStart}).
  * 
  * @private
  */
-Visualizer.prototype.loadParseReplay = function() {
+VisApplication.prototype.loadParseReplay = function() {
 	var app = this;
 	this.progress('Parsing the replay...', function() {
 		var debug = app.state.options['debug'];
@@ -483,11 +483,11 @@ Visualizer.prototype.loadParseReplay = function() {
 
 /**
  * Creates the main canvas element and insert it into the web page. An attempt is made to start the
- * visualization ({@link Visualizer#tryStart}).
+ * visualization ({@link VisApplication#tryStart}).
  * 
  * @private
  */
-Visualizer.prototype.loadCanvas = function() {
+VisApplication.prototype.loadCanvas = function() {
 	var app = this;
 	this.progress('Creating canvas...', function() {
 		if (!app.main.canvas) {
@@ -505,13 +505,13 @@ Visualizer.prototype.loadCanvas = function() {
 
 /**
  * Called by the ImageManager when no more images are loading. Since image loading is a background
- * operation, an attempt is made to start the visualization ({@link Visualizer#tryStart}). If some
+ * operation, an attempt is made to start the visualization ({@link VisApplication#tryStart}). If some
  * images didn't load, the visualizer is stopped with an error message.
  * 
  * @param error
  *        {String} Contains the error message for images that didn't load or is empty.
  */
-Visualizer.prototype.completedImages = function(error) {
+VisApplication.prototype.completedImages = function(error) {
 	if (error) {
 		this.errorOut(error, true);
 	} else {
@@ -527,7 +527,7 @@ Visualizer.prototype.completedImages = function(error) {
  * 
  * @private
  */
-Visualizer.prototype.tryStart = function() {
+VisApplication.prototype.tryStart = function() {
 	var i, k, scores;
 	var app = this;
 	// we need to parse the replay, unless it has been parsed by the
@@ -612,7 +612,7 @@ Visualizer.prototype.tryStart = function() {
 			 */
 			document.onkeydown = function(event) {
 				if (!(event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || (document.activeElement || {}).tagName == "INPUT")) {
-					if (Visualizer.focused.keyPressed(event.keyCode)) {
+					if (VisApplication.focused.keyPressed(event.keyCode)) {
 						if (event.preventDefault)
 							event.preventDefault();
 						else
@@ -660,7 +660,7 @@ Visualizer.prototype.tryStart = function() {
 		 */
 		this.main.canvas.onmousedown = function(event) {
 			if (event.which === 1) {
-				Visualizer.focused = app;
+				VisApplication.focused = app;
 				app.mousePressed();
 			}
 		};
@@ -686,7 +686,7 @@ Visualizer.prototype.tryStart = function() {
 		};
         this.setSpeedButtonsHints();
         this.setZoomButtonsState();
-		Visualizer.focused = this;
+		VisApplication.focused = this;
 		// move to a specific row and col
 		this.calculateMapCenter(ZOOM_SCALE);
 		this.mainVis.state.shiftX = this.mapCenterX; //TODO: find a better place for this
@@ -718,7 +718,7 @@ Visualizer.prototype.tryStart = function() {
  *
  * @protected
  */
-Visualizer.prototype.centerMap = function() {
+VisApplication.prototype.centerMap = function() {
 	if (this.state.options['decorated']) {
 		var btn = this.btnMgr.groups['toolbarRight'].getButton(4);
 		btn.enabled = false;
@@ -735,7 +735,7 @@ Visualizer.prototype.centerMap = function() {
  * @param {Number} modifier
  *        {@link Config#speedFactor} is changed by this amount.
  */
-Visualizer.prototype.modifySpeed = function(modifier) {
+VisApplication.prototype.modifySpeed = function(modifier) {
 	this.state.config['speedFactor'] += modifier;
 	this.mainVis.calculateReplaySpeed();
     this.setSpeedButtonsHints();
@@ -746,7 +746,7 @@ Visualizer.prototype.modifySpeed = function(modifier) {
  *
  * @private
  */
-Visualizer.prototype.setSpeedButtonsHints = function() {
+VisApplication.prototype.setSpeedButtonsHints = function() {
     var hintText = function(base) {
 		return 'set speed modifier to ' + ((base > 0) ? '+' + base : base);
 	};
@@ -769,7 +769,7 @@ Visualizer.prototype.setSpeedButtonsHints = function() {
  * @param scale
  *        {Number} Since the position is in pixels, it depends on the map scale.
  */
-Visualizer.prototype.calculateMapCenter = function(scale) {
+VisApplication.prototype.calculateMapCenter = function(scale) {
 	var options = this.state.options;
 	var cols = this.state.replay.cols;
 	var rows = this.state.replay.rows;
@@ -787,7 +787,7 @@ Visualizer.prototype.calculateMapCenter = function(scale) {
  * 
  * @private
  */
-Visualizer.prototype.addPlayerButtons = function() {
+VisApplication.prototype.addPlayerButtons = function() {
     var bg, dlg;
 	var i;
     var app = this;
@@ -832,7 +832,7 @@ Visualizer.prototype.addPlayerButtons = function() {
  * 
  * @private
  */
-Visualizer.prototype.addLeftPanel = function() {
+VisApplication.prototype.addLeftPanel = function() {
     var bg, dlg;
 
     bg = this.btnMgr.addImageGroup('toolbarLeft', this.imgMgr.get('toolbarLeft'),
@@ -861,7 +861,7 @@ Visualizer.prototype.addLeftPanel = function() {
             this.helperVis = null;
 
         } else { // enable helper vis
-            this.helperVis = new Visu(this);
+            this.helperVis = new VisContainer(this);
             this.helperVis.init(this.state.replay);
             // pre-calculate helper replays for the first and last turns
             this.state.replay.getSimReplay(0);
@@ -880,7 +880,7 @@ Visualizer.prototype.addLeftPanel = function() {
  * 
  * @private
  */
-Visualizer.prototype.addRightPanel = function() {
+VisApplication.prototype.addRightPanel = function() {
     var bg, dlg;
 
     bg = this.btnMgr.addImageGroup('toolbarRight', this.imgMgr.get('toolbarRight'),
@@ -944,7 +944,7 @@ Visualizer.prototype.addRightPanel = function() {
  * @private
  * @returns {Size} the size the visualizer should have
  */
-Visualizer.prototype.calculateCanvasSize = function() {
+VisApplication.prototype.calculateCanvasSize = function() {
 	var width, height;
 	var embed = this.state.options['embedded'];
 	embed = embed || !this.state.config['fullscreen'];
@@ -962,7 +962,7 @@ Visualizer.prototype.calculateCanvasSize = function() {
  * @param enable
  *        {Boolean} If true, the visualizer will switch to fullscreen mode if supported.
  */
-Visualizer.prototype.setFullscreen = function(enable) {
+VisApplication.prototype.setFullscreen = function(enable) {
 	if (!this.state.options['embedded']) {
 		if (window.setFullscreen) {
 			this.state.config['fullscreen'] = window.setFullscreen(enable);
@@ -999,7 +999,7 @@ Visualizer.prototype.setFullscreen = function(enable) {
  * @param mode
  *        {Number} 0 = no display, 1 = letters, 2 = global cells ids
  */
-Visualizer.prototype.setCellsLabels = function(mode) {
+VisApplication.prototype.setCellsLabels = function(mode) {
 	var hasDuration = this.state.replay.hasDuration;
 	var recap = hasDuration && (mode === 1) !== (this.state.config['label'] === 1);
 	this.state.config['label'] = mode;
@@ -1021,7 +1021,7 @@ Visualizer.prototype.setCellsLabels = function(mode) {
  * 
  * @private
  */
-Visualizer.prototype.updatePlayerButtonText = function() {
+VisApplication.prototype.updatePlayerButtonText = function() {
 	var i, idx, caption;
 	var btnGrp = this.btnMgr.getGroup('players');
 	for (i = 0; i < this.state.replay.players; i++) {
@@ -1044,7 +1044,7 @@ Visualizer.prototype.updatePlayerButtonText = function() {
  *        {Boolean} If true, the layouting and redrawing is performed even if no size change can be
  *        detected. This is useful on startup or if the canvas content has been invalidated.
  */
-Visualizer.prototype.resize = function(forced) {
+VisApplication.prototype.resize = function(forced) {
 	var y;
 	var olds = new Size(this.main.canvas.width, this.main.canvas.height);
 	var newSize = this.calculateCanvasSize();
@@ -1106,7 +1106,7 @@ Visualizer.prototype.resize = function(forced) {
  * @param zoom
  *        {Number} New zoom level. Values less than 1 are set to 1.
  */
-Visualizer.prototype.setZoom = function(zoom) {
+VisApplication.prototype.setZoom = function(zoom) {
     zoom = Math.max(1, zoom);
     if (this.mainVis.director.fixedFpt === undefined) {
         this.state.config['zoom'] = zoom;
@@ -1130,7 +1130,7 @@ Visualizer.prototype.setZoom = function(zoom) {
  *
  * @private
  */
-Visualizer.prototype.setZoomButtonsState = function() {
+VisApplication.prototype.setZoomButtonsState = function() {
     if (this.state.options['interactive'] && this.state.options['decorated']) {
 		var zoomInBtn = this.btnMgr.groups['toolbarRight'].getButton(2);
 		zoomInBtn.enabled = !(this.state.scale === ZOOM_SCALE);
@@ -1147,7 +1147,7 @@ Visualizer.prototype.setZoomButtonsState = function() {
  *
  * @private
  */
-Visualizer.prototype.updateHint = function() {
+VisApplication.prototype.updateHint = function() {
 	var ctx = this.main.ctx;
     var hint = this.hint;
 
@@ -1190,7 +1190,7 @@ Visualizer.prototype.updateHint = function() {
  * @param w
  *        {Number} Weight of hint part.
  */
-Visualizer.prototype.drawHintPart = function(x, w) {
+VisApplication.prototype.drawHintPart = function(x, w) {
     var ctx = this.main.ctx;
 
     var hint_y = this.mainVis.shiftedMap.y;
@@ -1218,7 +1218,7 @@ Visualizer.prototype.drawHintPart = function(x, w) {
  *        {Number} the Y coordinate of the mouse relative to the upper-left corner of the
  *        visualizer.
  */
-Visualizer.prototype.mouseMoved = function(mx, my) {
+VisApplication.prototype.mouseMoved = function(mx, my) {
 	var oldHint = this.hint;
 	var btn = null;
 	this.mouseX = mx;
@@ -1253,7 +1253,7 @@ Visualizer.prototype.mouseMoved = function(mx, my) {
  * 
  * @protected
  */
-Visualizer.prototype.mousePressed = function() {
+VisApplication.prototype.mousePressed = function() {
 	if (this.state.options['interactive']) {
 		if (this.mainVis.contains(this.mouseX, this.mouseY)) {
             this.mainVis.mousePressed();
@@ -1273,7 +1273,7 @@ Visualizer.prototype.mousePressed = function() {
  * 
  * @protected
  */
-Visualizer.prototype.mouseReleased = function() {
+VisApplication.prototype.mouseReleased = function() {
 	this.mouseDown = 0;
 	if (this.state.options['decorated']) {
 		this.btnMgr.mouseUp();
@@ -1290,7 +1290,7 @@ Visualizer.prototype.mouseReleased = function() {
  * 
  * @protected
  */
-Visualizer.prototype.mouseExited = function() {
+VisApplication.prototype.mouseExited = function() {
 	if (this.state.options['decorated']) {
 		this.btnMgr.mouseMove(-1, -1);
 		this.btnMgr.mouseUp();
@@ -1307,7 +1307,7 @@ Visualizer.prototype.mouseExited = function() {
  * @returns {Boolean} false, if the browser should handle this key and true, if the visualizer
  *          handled the key
  */
-Visualizer.prototype.keyPressed = function(key) {
+VisApplication.prototype.keyPressed = function(key) {
 	var d = this.director;
 	var tryOthers = true;
 	if (!this.state.options['embedded']) {
@@ -1372,7 +1372,7 @@ Visualizer.prototype.keyPressed = function(key) {
  * This method will ask the user for some input to convert the replay into a bot input string for
  * debugging.
  */
-Visualizer.prototype.generateBotInput = function() {
+VisApplication.prototype.generateBotInput = function() {
     alert('Not implemented for this game. Ping me if you need it.');
 };
 
@@ -1383,7 +1383,7 @@ Visualizer.prototype.generateBotInput = function() {
  *        '...?game=1&turn=20' will display game 1 and jump to turn 20 immediately. For boolean
  *        values 'true' or '1' are interpreted as true, everything else as false. Be aware that it
  *        is also possible to add a parameter named 'config' to the URL that will be handled
- *        specially by {@link Visualizer} to override {@link Config} settings. Also note that any
+ *        specially by {@link VisApplication} to override {@link Config} settings. Also note that any
  *        additional options should have an initial value that makes it clear wether the setting is
  *        a number, a boolean or a string, because options are passed as strings to the Java applet
  *        and it will parse these strings to the data type it finds in the Options object.

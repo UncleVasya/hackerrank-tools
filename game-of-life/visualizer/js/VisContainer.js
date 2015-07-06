@@ -2,10 +2,10 @@
  * @class The visualizer object that handles replay drawing and playback: map, graphs, playback controls.
  *
  * @constructor
- * @param {Object} app
+ * @param {VisApplication} app
  *        main application object
  */
-Visu = function(app) {
+VisContainer = function(app) {
     this.app = app;
 
     this.x = 0;
@@ -61,7 +61,7 @@ Visu = function(app) {
  *
  * @public
  */
-Visu.prototype.cleanUp = function() {
+VisContainer.prototype.cleanUp = function() {
 	this.director.cleanUp();
     this.state.cleanUp();
 
@@ -81,7 +81,7 @@ Visu.prototype.cleanUp = function() {
  *
  * @protected
  */
-Visu.prototype.calculateReplaySpeed = function() {
+VisContainer.prototype.calculateReplaySpeed = function() {
     var state = this.app.state;
 	var speed = this.director.duration / state.config['duration'];
 	speed = Math.max(speed, state.config['speedSlowest']);
@@ -100,7 +100,7 @@ Visu.prototype.calculateReplaySpeed = function() {
  * @param {Object} replay replay
  *        to visualize
  */
-Visu.prototype.init = function(replay) {
+VisContainer.prototype.init = function(replay) {
     this.state.replay = replay;
 
     this.map = new CanvasElementMap(this.app.state, this.state);
@@ -139,7 +139,7 @@ Visu.prototype.init = function(replay) {
  *
  * @private
  */
-Visu.prototype.addPlaybackPanel = function() {
+VisContainer.prototype.addPlaybackPanel = function() {
     var bg, dlg;
 
     bg = this.btnMgr.addImageGroup('playback', this.app.imgMgr.get('playback'),
@@ -179,7 +179,7 @@ Visu.prototype.addPlaybackPanel = function() {
  * Redraws the map display and it's overlays. It is called by the {@link Director} and resembles the
  * core of the visualization.
 */
-Visu.prototype.draw = function() {
+VisContainer.prototype.draw = function() {
     var w, h, mx, my, x, y;
     var loc = this.shiftedMap;
     var ctx = this.app.main.ctx;
@@ -268,7 +268,7 @@ Visu.prototype.draw = function() {
 /**
  * Called upon window size or visualiser size changes to layout the visualizer elements.
  */
-Visu.prototype.resize = function() {
+VisContainer.prototype.resize = function() {
     var y = this.y;
     //this.resizing = true;
 
@@ -333,7 +333,7 @@ Visu.prototype.resize = function() {
  *        {Number} The new zoom level in pixels. Map squares will be scaled to this value. It will
  *        be clamped to the range [1..20].
  */
-Visu.prototype.setZoom = function(zoom) {
+VisContainer.prototype.setZoom = function(zoom) {
     var state = this.app.state;
 	var oldScale = state.scale;
 	if (this.director.fixedFpt === undefined) {
@@ -360,7 +360,7 @@ Visu.prototype.setZoom = function(zoom) {
  * Centers the map drawn by this visualizer.
  *
  */
-Visu.prototype.centerMap = function() {
+VisContainer.prototype.centerMap = function() {
     this.state.shiftX = this.app.mapCenterX;
 	this.state.shiftY = this.app.mapCenterY;
     this.director.draw();
@@ -377,7 +377,7 @@ Visu.prototype.centerMap = function() {
  *        {Number} the Y coordinate of the mouse relative to the upper-left corner of the
  *        visualizer.
  */
-Visu.prototype.mouseMoved = function(mx, my) {
+VisContainer.prototype.mouseMoved = function(mx, my) {
 	var tick;
 	var deltaX = mx - this.mouseX;
 	var deltaY = my - this.mouseY;
@@ -433,7 +433,7 @@ Visu.prototype.mouseMoved = function(mx, my) {
  *
  * @protected
  */
-Visu.prototype.mousePressed = function() {
+VisContainer.prototype.mousePressed = function() {
 	if (this.app.state.options['interactive']) {
 		if (this.state.replay.hasDuration
 				&& this.app.state.options['decorated']
@@ -460,7 +460,7 @@ Visu.prototype.mousePressed = function() {
  *
  * @protected
  */
-Visu.prototype.mouseReleased = function() {
+VisContainer.prototype.mouseReleased = function() {
 	this.mouseDown = 0;
 	if (this.app.state.options['decorated']) {
 		this.btnMgr.mouseUp();
@@ -477,7 +477,7 @@ Visu.prototype.mouseReleased = function() {
  *        the y coordinate in question
  * @returns {Boolean} true, if the coordinates are contained within the canvas area
  */
-Visu.prototype.contains = function(x, y) {
+VisContainer.prototype.contains = function(x, y) {
 	return (x >= this.x && x < this.x + this.w && y >= this.y && y < this.y + this.h);
 };
 
