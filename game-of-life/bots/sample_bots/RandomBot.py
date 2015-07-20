@@ -50,8 +50,6 @@ def main():
     
     state = LifeGame(map_data)
     doTurn(state)
-    
-    raw_input()
 
 
 if __name__ == '__main__':

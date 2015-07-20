@@ -5,16 +5,17 @@
 // This sample bot makes a move on the first empty cell it founds 
 """
 
-from LifeGame import LifeGame
+from LightOutGame import LightsOutGame
 
-def doTurn(state):
+def do_turn(state):
     for row in range(state.height):
         for col in range(state.width):
             loc = row, col
-            if state.isEmpty(loc):
-                state.issueOrder(loc)
+            if state.is_on(loc):
+                state.issue_order(loc)
                 return
-    
+
+
 def main():
     map_data = ''
     line = raw_input()
@@ -23,10 +24,10 @@ def main():
         try:
             line = raw_input()
         except: 
-            break # end of input
+            break  # end of input
     
-    state = LifeGame(map_data)
-    doTurn(state)
+    state = LightsOutGame(map_data)
+    do_turn(state)
       
 if __name__ == '__main__':
   try:

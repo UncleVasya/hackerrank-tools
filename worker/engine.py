@@ -103,6 +103,8 @@ def run_game(game, botcmds, options):
             verbose_log.write('running for %s turns \n\n' % turns)
         game.start_game()
         for turn in range(1, turns+1):
+            game.start_turn()
+
             # send game state to each player
             for b, bot in enumerate(bots):
                 if game.is_alive(b) and game.is_his_turn(b):
@@ -118,6 +120,7 @@ def run_game(game, botcmds, options):
                     bot.close_stdin()
                     if input_logs and input_logs[b]:
                         input_logs[b].write(state)
+                        input_logs[b].write('\n\n')
                         input_logs[b].flush()
                     bot_turns[b] = turn
 
@@ -126,7 +129,6 @@ def run_game(game, botcmds, options):
                 stream_log.write('score %s\n' % ' '.join([str(s) for s in game.get_scores()]))
                 stream_log.write(game.get_state())
                 stream_log.flush()
-            game.start_turn()
 
             # get moves from each player
             if options.get('serial', False):
