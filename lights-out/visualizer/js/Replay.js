@@ -288,7 +288,16 @@ Replay.prototype.getTurnChanges = function(turn) {
     changes = changes.filter(function(change) {
        return change[2] === turn;
     });
+
+    // make left-top cell the first
+    changes = changes.sort(function(a, b) {
+        return a[0] === b[0]? a[1] - b[1]: a[0] - b[0];
+    });
     return changes;
+};
+
+Replay.prototype.getCurrentPlayer = function(turn) {
+    return turn % 2;
 };
 
 /**

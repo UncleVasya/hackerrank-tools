@@ -300,8 +300,11 @@ CanvasElementCellsMap.prototype.checkState = function() {
  */
 CanvasElementCellsMap.prototype.draw = function() {
 	var halfScale, drawList, hash, n, kf, d, fontSize, label, caption, order;
+    var changes, change, i, mapX, mapY;
     var w, dx, dy;
     var player;
+    var turn = Math.floor(this.time);
+    var replay = this.visState.replay;
 
 	// draw map
 	this.ctx.drawImage(this.map.canvas, 0, 0);
@@ -386,6 +389,19 @@ CanvasElementCellsMap.prototype.draw = function() {
 		}
 		this.ctx.restore();
 	}
+
+    // draw indicator of player move
+    this.ctx.lineWidth += 3;
+    player = replay.getCurrentPlayer(turn);
+    this.ctx.strokeStyle = replay.htmlPlayerColors[player];
+    changes = replay.getTurnChanges(turn+1);
+    for (i = 0; i < 1; ++i) {
+        change = changes[i];
+        mapX = Math.round(this.scale * change[1]);
+        mapY = Math.round(this.scale * change[0]);
+        this.ctx.strokeRect(mapX, mapY, this.scale, this.scale);
+    }
+    this.ctx.lineWidth -= 3;
 };
 
 /**
