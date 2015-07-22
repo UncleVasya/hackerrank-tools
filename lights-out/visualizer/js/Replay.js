@@ -49,14 +49,12 @@ function Replay(params) {
         this['scores'] = new Array(this.duration + 1);
         this['counts'] = new Array(this.duration + 1);
         this['stores'] = new Array(this.duration + 1);
-        for (n = 0; n <= 80 + 1; n++) {
+        for (n = 0; n < this.duration + 1; ++n) {
             this['scores'][n] = new Array(this.players);
             for (i = 0; i < this.players; i++)
                 this['scores'][n][i] = 0;
 
-            this['counts'][n] = new Array(this.players);
-            for (i = 0; i < this.players; i++)
-                this['counts'][n][i] = 0;
+            this['counts'][n] = [0];
 
             this['stores'][n] = new Array(this.players);
             for (i = 0; i < this.players; i++)
@@ -66,7 +64,7 @@ function Replay(params) {
         // calculate cell counts per turn per player
         for (i = 0; i < cells.length; i++) {
             for (n = cells[i][2]; n < cells[i][4]; n++) {
-                this['counts'][n][cells[i][3]]++;
+                this['counts'][n][0]++;
             }
         }
          // prepare caches
@@ -256,7 +254,7 @@ Replay.prototype.buildCellsList = function() {
     for (row = 0; row < this.rows; ++row)
         for (col = 0; col < this.cols; ++col)
             if (map[row][col] === ON) {
-                cell = [row, col, 0, 0, this.duration + 1];
+                cell = [row, col, 0, null, this.duration + 1];
                 cells.push(cell);
                 state[row][col] = cell;
             }
@@ -277,7 +275,7 @@ Replay.prototype.buildCellsList = function() {
                 state[row][col] = null;
             } else {
                 // cell is OFF, switching on
-                cell = [row, col, turn, 0, this.duration + 1];
+                cell = [row, col, turn, null, this.duration + 1];
                 cells.push(cell);
                 state[row][col] = cell;
             }
@@ -440,7 +438,7 @@ Replay.prototype.getTurn = function(n) {
  */
 Replay.prototype.spawnCell = function(id, row, col, spawn, owner) {
 	var aniCell = this.aniCells[id] = new Cell(id, spawn - 0.8);
-	var color = this.meta['playercolors'][owner];
+	var color = owner? this.meta['playercolors'][owner]: DEFAULT_CELL_COLOR;
 	var f = aniCell.frameAt(spawn - 0.8);
 	aniCell.owner = owner;
 	f['x'] = col;

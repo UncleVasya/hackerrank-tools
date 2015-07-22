@@ -74,7 +74,7 @@ PLAYER_COLORS = [ [ 350, 85, 45 ], [ 20, 80, 55 ],
  * 
  * @const
  */
-FOOD_COLOR = hsl_to_rgb([ 50, 20, 50 ]);
+DEFAULT_CELL_COLOR = hsl_to_rgb([ 180, 100, 50 ]);
 
 /**
  * color of land squares

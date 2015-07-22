@@ -584,7 +584,7 @@ CanvasElementGraph.prototype.draw = function() {
 	// time line
 	this.ctx.textAlign = 'left';
 	for (i = values[0].length - 1; i >= 0; i--) {
-		this.ctx.strokeStyle = replay.htmlPlayerColors[i];
+		this.ctx.strokeStyle = rgb_to_hex(DEFAULT_CELL_COLOR);
 		this.ctx.beginPath();
 		this.ctx.moveTo(0.5, 0.5 + scaleY * (max - scaleFn(values[0][i])));
 		for (k = 1; k <= this.duration; k++) {
@@ -593,11 +593,11 @@ CanvasElementGraph.prototype.draw = function() {
 		this.ctx.stroke();
 	}
 	if (!this.appState.isStreaming && replay.meta['status']) {
-		for (i = values[0].length - 1; i >= 0; i--) {
+		for (i = replay.players - 1; i >= 0; i--) {
 			k = replay.meta['playerturns'][i];
 			this.ctx.beginPath();
 			x = 0.5 + k * scaleX;
-			y = 0.5 + scaleY * (max - scaleFn(values[k][i]));
+			y = 0.5 + scaleY * max;
 			this.ctx.moveTo(x, y);
 			txt = this.statusToGlyph(i);
 			tw = this.ctx.measureText(txt).width;
@@ -831,7 +831,7 @@ CanvasElementStats.prototype.drawColorBar = function(x, y, w, h, stats, bonusTex
 		ctx.save();
 		for (k = 0; k < list.length; k++) {
 			kIdx = appState.order[list[k]];
-			ctx.fillStyle = visState.replay.htmlPlayerColors[kIdx];
+			ctx.fillStyle = rgb_to_hex(DEFAULT_CELL_COLOR);
 			ctx.strokeStyle = STAT_COLOR;
 			ctx.lineWidth = 0.5;
 			if (div) {
