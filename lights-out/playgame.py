@@ -102,7 +102,7 @@ def main(argv):
 
     # maximum number of turns that the game will be played
     parser.add_option("-t", "--turns", dest="turns",
-                      default=80, type="int",
+                      default=100, type="int",
                       help="Number of turns in the game")
 
     parser.add_option("--serial", dest="serial",

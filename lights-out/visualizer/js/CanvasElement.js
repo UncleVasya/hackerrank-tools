@@ -299,32 +299,32 @@ CanvasElementCellsMap.prototype.checkState = function() {
  * and finally the fog of war.
  */
 CanvasElementCellsMap.prototype.draw = function() {
-	var halfScale, drawList, hash, n, kf, d, fontSize, label, caption, order;
+    var halfScale, drawList, hash, n, kf, d, fontSize, label, caption, order;
     var changes, change, i, mapX, mapY;
     var w, dx, dy;
     var player;
     var turn = Math.floor(this.time);
     var replay = this.visState.replay;
 
-	// draw map
-	this.ctx.drawImage(this.map.canvas, 0, 0);
+    // draw map
+    this.ctx.drawImage(this.map.canvas, 0, 0);
 
-	halfScale = 0.5 * this.scale;
+    halfScale = 0.5 * this.scale;
 
-	// draw cells sorted by color
-	for (hash in this.drawStates) {
-		this.ctx.fillStyle = hash;
-		drawList = this.drawStates[hash];
-		for (n = drawList.length - 1; n >= 0; n--) {
-			kf = drawList[n];
-			if (kf['owner'] !== undefined) {
+    // draw cells sorted by color
+    for (hash in this.drawStates) {
+        this.ctx.fillStyle = hash;
+        drawList = this.drawStates[hash];
+        for (n = drawList.length - 1; n >= 0; n--) {
+            kf = drawList[n];
+            if (kf['owner'] !== undefined) {
                 var cellShape = this.appState.config['cellShape'];
                 var shapes = this.appState.config['CELL_SHAPES'];
                 switch (cellShape) {
                     case shapes['CIRCLE']:
                         this.ctx.beginPath();
-                        this.ctx.arc(kf.mapX + halfScale, kf.mapY + halfScale, halfScale * kf['size'], 
-                                     0, 2 * Math.PI, false);
+                        this.ctx.arc(kf.mapX + halfScale, kf.mapY + halfScale, halfScale * kf['size'],
+                            0, 2 * Math.PI, false);
                         this.ctx.fill();
                         break;
                     case shapes['RECTANGLE']:
@@ -340,68 +340,70 @@ CanvasElementCellsMap.prototype.draw = function() {
                         this.ctx.fillRect(dx, dy, w, w);
                         break;
                 }
-			}
-		}
-	}
+            }
+        }
+    }
 
-	// draw A, B, C, D ... on cells or alternatively the global kf id
-	label = this.appState.config['label'];
-	if (label) {
-		fontSize = Math.ceil(Math.max(this.scale, 10) / label);
-		this.ctx.save();
-		this.ctx.translate(halfScale, halfScale);
-		this.ctx.textBaseline = 'middle';
-		this.ctx.textAlign = 'center';
-		this.ctx.font = 'bold ' + fontSize + 'px Arial';
-		this.ctx.fillStyle = '#000';
-		this.ctx.strokeStyle = '#fff';
-		this.ctx.lineWidth = 0.2 * fontSize;
-		order = new Array(this.appState.order.length);
-		for (n = 0; n < order.length; n++) {
-			order[this.appState.order[n]] = n;
-		}
-		for (hash in this.drawStates) {
-			drawList = this.drawStates[hash];
-			for (n = drawList.length - 1; n >= 0; n--) {
-				kf = drawList[n];
-				if (label === 1) {
-					if (kf['owner'] === undefined) continue;
+    // draw A, B, C, D ... on cells or alternatively the global kf id
+    label = this.appState.config['label'];
+    if (label) {
+        fontSize = Math.ceil(Math.max(this.scale, 10) / label);
+        this.ctx.save();
+        this.ctx.translate(halfScale, halfScale);
+        this.ctx.textBaseline = 'middle';
+        this.ctx.textAlign = 'center';
+        this.ctx.font = 'bold ' + fontSize + 'px Arial';
+        this.ctx.fillStyle = '#000';
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 0.2 * fontSize;
+        order = new Array(this.appState.order.length);
+        for (n = 0; n < order.length; n++) {
+            order[this.appState.order[n]] = n;
+        }
+        for (hash in this.drawStates) {
+            drawList = this.drawStates[hash];
+            for (n = drawList.length - 1; n >= 0; n--) {
+                kf = drawList[n];
+                if (label === 1) {
+                    if (kf['owner'] === undefined) continue;
                     player = order[kf['owner']];
-					caption = PLAYER_SYMBOLS[player];
-				} else {
-					caption = kf.cellId;
-				}
-				this.ctx.strokeText(caption, kf.mapX, kf.mapY);
-				this.ctx.fillText(caption, kf.mapX, kf.mapY);
-				if (kf.mapX < 0) {
-					this.ctx.strokeText(caption, kf.mapX + this.map.w, kf.mapY);
-					this.ctx.fillText(caption, kf.mapX + this.map.w, kf.mapY);
-					if (kf.mapY < 0) {
-						this.ctx.strokeText(caption, kf.mapX + this.map.w, kf.mapY + this.map.h);
-						this.ctx.fillText(caption, kf.mapX + this.map.w, kf.mapY + this.map.h);
-					}
-				}
-				if (kf.mapY < 0) {
-					this.ctx.strokeText(caption, kf.mapX, kf.mapY + this.map.h);
-					this.ctx.fillText(caption, kf.mapX, kf.mapY + this.map.h);
-				}
-			}
-		}
-		this.ctx.restore();
-	}
+                    caption = PLAYER_SYMBOLS[player];
+                } else {
+                    caption = kf.cellId;
+                }
+                this.ctx.strokeText(caption, kf.mapX, kf.mapY);
+                this.ctx.fillText(caption, kf.mapX, kf.mapY);
+                if (kf.mapX < 0) {
+                    this.ctx.strokeText(caption, kf.mapX + this.map.w, kf.mapY);
+                    this.ctx.fillText(caption, kf.mapX + this.map.w, kf.mapY);
+                    if (kf.mapY < 0) {
+                        this.ctx.strokeText(caption, kf.mapX + this.map.w, kf.mapY + this.map.h);
+                        this.ctx.fillText(caption, kf.mapX + this.map.w, kf.mapY + this.map.h);
+                    }
+                }
+                if (kf.mapY < 0) {
+                    this.ctx.strokeText(caption, kf.mapX, kf.mapY + this.map.h);
+                    this.ctx.fillText(caption, kf.mapX, kf.mapY + this.map.h);
+                }
+            }
+        }
+        this.ctx.restore();
+    }
 
     // draw indicator of player move
-    this.ctx.lineWidth += 3;
-    player = replay.getCurrentPlayer(turn);
-    this.ctx.strokeStyle = replay.htmlPlayerColors[player];
-    changes = replay.getTurnChanges(turn+1);
-    for (i = 0; i < 1; ++i) {
-        change = changes[i];
-        mapX = Math.round(this.scale * change[1]);
-        mapY = Math.round(this.scale * change[0]);
-        this.ctx.strokeRect(mapX, mapY, this.scale, this.scale);
+    if (this.time > 0 && turn < replay.duration) {
+        this.ctx.lineWidth += 3;
+        player = replay.getCurrentPlayer(turn);
+        this.ctx.strokeStyle = replay.htmlPlayerColors[player];
+        changes = replay.getTurnChanges(turn + 1);
+        if (changes) {
+            change = changes[0];
+            mapX = Math.round(this.scale * change[1]);
+            mapY = Math.round(this.scale * change[0]);
+            this.ctx.strokeRect(mapX, mapY, this.scale, this.scale);
+        }
+        this.ctx.lineWidth -= 3;
     }
-    this.ctx.lineWidth -= 3;
 };
 
 /**
@@ -451,8 +453,9 @@ CanvasElementShiftedMap.prototype.checkState = function() {
  * repeated in a darker shade on both sides.
  */
 CanvasElementShiftedMap.prototype.draw = function() {
-	var dx, dy, cutoff;
-	var mx = (this.w - this.cellsMap.w) >> 1;
+    var dx, dy, cutoff, winner;
+	var replay = this.visState.replay;
+    var mx = (this.w - this.cellsMap.w) >> 1;
 	var my = (this.h - this.cellsMap.h) >> 1;
 	// max allowed shift
     dx = -Math.min(0, this.w - this.cellsMap.w) >> 1;
@@ -474,9 +477,16 @@ CanvasElementShiftedMap.prototype.draw = function() {
 		this.ctx.fillRect(mx, my, this.cellsMap.w, this.cellsMap.h);
 	}
 	// game cut-off reason
-	cutoff = this.visState.replay.meta['replaydata']['cutoff'];
+	cutoff = replay.meta['replaydata']['cutoff'];
 	if (this.time > this.visState.replay.duration - 1 && cutoff) {
-		cutoff = '"' + cutoff + '"';
+        if (cutoff === 'rankstabilized') {
+            winner = replay.meta['rank'][0];
+            cutoff = replay.meta['playernames'][winner] + '   won';
+        } else if (cutoff === 'turnlimitreached') {
+            cutoff = "Draw";
+        } else {
+            cutoff = '"' + cutoff + '"';
+        }
 		this.ctx.font = FONT;
 		dx = 0.5 * (this.w - this.ctx.measureText(cutoff).width);
 		dy = this.h - 5;

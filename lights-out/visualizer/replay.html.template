@@ -2,7 +2,7 @@
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<title>Game of Life Canvas</title>
+	<title>Lights Out Canvas</title>
 	<script type="text/javascript" src="## PATH PLACEHOLDER ##js/visualizer.js"></script>
 	<script type="text/javascript">
 		function init() {
