@@ -197,7 +197,7 @@ class LightsOut(Game):
     def is_his_turn(self, player):
         """ Used to determine if player has right to make moves this turn
         """
-        return self.turn % 2 == player
+        return (self.turn + 1) % 2 == player
 
     def do_orders(self):
         """ Execute player orders and handle conflicts
@@ -263,7 +263,7 @@ class LightsOut(Game):
             # game ended normally
             self.cutoff = 'turn limit reached'
         elif self.cutoff == 'rank stabilized':
-            winner = self.turn % 2  # bot who made last move
+            winner = (self.turn + 1) % 2  # bot who made last move
             self.score[winner] = 100
         else:
             # game ended because of bots failure
