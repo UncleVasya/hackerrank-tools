@@ -1,16 +1,22 @@
-.PHONY: run
-
-VIRTUALENV = $(HOME)/.virtualenvs/hackerrank-tools
+.PHONY: run deploy
 
 SHELL = /bin/bash
+
+PROJECT_NAME = hackerrank-tools
+VIRTUALENV = $(HOME)/.virtualenvs/$(PROJECT_NAME)
+
 venv = source $(VIRTUALENV)/bin/activate
 
-# uses Foreman to launch website locally
+#
+# Launches website locally with Foreman
+#
 run:
 	$(venv); \
 	cd website; \
 	foreman start web;
 
-# pushes website folder on heroku
+#
+# Pushes website folder on heroku
+#
 deploy:
 	git subtree push --prefix website heroku master
