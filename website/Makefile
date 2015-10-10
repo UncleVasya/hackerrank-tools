@@ -1,8 +1,26 @@
-.PHONY: manage shell migrate makemigrations update_games
+.PHONY: manage shell migrate makemigrations update_games myscript
 
-include ../Makefile
+#
+# This is similar to "include ../Makefile"
+# but supports target overrides.
+#
+%: force
+	@$(MAKE) -f ../Makefile $@
+force: ;
 
 manage = foreman run python manage.py
+
+#
+# Launches website locally with Foreman
+#
+run:
+	@echo Collecting static files...
+	$(manage) collectstatic --noinput
+
+	@echo Launching website with Foreman...
+	foreman start web
+
+	@echo Done
 
 #
 # Executes manage command with Foreman
@@ -25,18 +43,18 @@ shell:
 #
 migrate:
 ifndef APP_NAME
-	@echo Making migrations
+	@echo Making migrations...
 	$(manage) makemigrations
 
-	@echo Applying migrations
+	@echo Applying migrations...
 	$(manage) migrate
 
 	@echo Done
 else
-	@echo Making migrations for $(APP_NAME)
+	@echo Making migrations for $(APP_NAME)...
 	$(manage) makemigrations $(APP_NAME)
 
-	@echo Applying migrations for $(APP_NAME)
+	@echo Applying migrations for $(APP_NAME)...
 	$(manage) migrate $(APP_NAME)
 
 	@echo Done
@@ -46,7 +64,7 @@ endif
 # Updates game list from hackerrank.com
 #
 update_games:
-	@echo Updating game list from hackerrank.com
+	@echo Updating game list from hackerrank.com...
 	$(manage) update_games
 
 myscript:

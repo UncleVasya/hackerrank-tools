@@ -13,6 +13,7 @@ venv = source $(VIRTUALENV)/bin/activate
 run:
 	$(venv); \
 	cd website; \
+	python manage.py collectstatic --noinput; \
 	foreman start web;
 
 #
