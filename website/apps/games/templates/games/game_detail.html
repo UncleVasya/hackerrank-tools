@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{% static 'games/css/base.css' %}">
+{% endblock page_styles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-5">
+            <br>
+            <div class="labels">
+                <p> Name: </p>
+                <p> Difficulty: </p>
+            </div>
+
+            <div class="values">
+                <p> {{ game.name }} </p>
+                <p> {{ game.difficulty }} </p>
+            </div>
+        </div>
+
+         <div class=" col-md-7">
+            <br>
+            <p class="labels"> Description: </p>
+            {{ game.description|linebreaks }}
+        </div>
+    </div> <!-- row -->
+{% endblock %} <!-- content -->

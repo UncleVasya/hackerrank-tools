@@ -2,18 +2,23 @@
 {% load staticfiles %}
 
 {% block content %}
-    <h1> Games list</h1>
+    <h1> Players: </h1>
     <br>
     <div class="table-responsive">
         <table class="table table-bordered table-hover">
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Difficulty</th>
+                    <th>Country</th>
                 </tr>
             </thead>
             <tbody>
-                {% include "games/game_table_body.html" %}
+            {% for player in player_list %}
+                <tr class="player_row">
+                    <td> {{ player.name }} </td>
+                    <td> {{ player.country}} </td>
+                </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>

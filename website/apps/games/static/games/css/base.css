@@ -1,0 +1,8 @@
+div.labels {
+    float: left;
+}
+
+.values {
+    float: left;
+    margin-left: 30px;
+}

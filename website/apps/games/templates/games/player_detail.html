@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{% static 'games/css/base.css' %}">
+{% endblock page_styles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-5">
+            <br>
+            <div class="labels">
+                <p> Name: </p>
+                <p> Country: </p>
+            </div>
+
+            <div class="values">
+                <p> {{ player.name }} </p>
+                <p> {{ player.country }} </p>
+            </div>
+        </div>
+    </div> <!-- row -->
+{% endblock %} <!-- content -->
