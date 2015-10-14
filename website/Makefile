@@ -1,4 +1,4 @@
-.PHONY: manage shell migrate makemigrations update_games myscript
+.PHONY: manage shell migrate update_games update_bots myscript
 
 #
 # This is similar to "include ../Makefile"
@@ -66,6 +66,14 @@ endif
 update_games:
 	@echo Updating game list from hackerrank.com...
 	$(manage) update_games
+
+#
+# Updates bot list from hackerrank.com
+# This also updates a list of bot owners (players)
+#
+update_bots:
+	@echo Updating bot list from hackerrank.com...
+	$(manage) update_bots
 
 myscript:
 	$(manage) myscript
