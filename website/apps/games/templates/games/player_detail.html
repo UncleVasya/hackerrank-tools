@@ -20,4 +20,6 @@
             </div>
         </div>
     </div> <!-- row -->
+
+    {% include "games/bot_list.html" with bot_list=player.bot_set.all%}
 {% endblock %} <!-- content -->

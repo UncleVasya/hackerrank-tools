@@ -8,12 +8,37 @@
         <table class="table table-bordered table-hover">
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>Name</th>
+                    <th>Bots</th>
+                    <th>Leader</th>
                     <th>Difficulty</th>
                 </tr>
             </thead>
             <tbody>
-                {% include "games/game_table_body.html" %}
+            {% for game in game_list %}
+                {% url 'games:game-detail' game.slug as game_url %}
+                {% url 'games:player-detail' game.leader.player.name as leader_url %}
+
+                {# color row accordingly to game difficulty #}
+                {% if game.difficulty == "Difficult" %}
+                    <tr class="game_row warning">
+                {% elif game.difficulty == "Expert" %}
+                    <tr class="game_row danger">
+                {% else %}
+                    <tr class="game_row success">
+                {% endif %}
+                        <td> {{ forloop.counter }} </td>
+                        <td>
+                            <a href="{{ game_url }}"> {{ game.name }} </a>
+                        </td>
+                        <td> {{ game.bot_count }} </td>
+                        <td>
+                            <a href="{{ leader_url }}"> {{ game.leader.player.name }} </a>
+                        </td>
+                        <td> {{ game.difficulty}} </td>
+                    </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>

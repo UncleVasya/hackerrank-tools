@@ -8,14 +8,28 @@
         <table class="table table-bordered table-hover">
             <thead>
                 <tr>
-                    <th>Name</th>
+                    <th>#</th>
+                    <th>Player</th>
+                    <th>Bots</th>
+                    <th>1st place </th>
+                    <th>Top 10%</th>
+                    <th>Score</th>
                     <th>Country</th>
                 </tr>
             </thead>
             <tbody>
             {% for player in player_list %}
+                {% url 'games:player-detail' player.name as player_url %}
+
                 <tr class="player_row">
-                    <td> {{ player.name }} </td>
+                    <td> {{ forloop.counter }} </td>
+                    <td>
+                        <a href="{{ player_url }}"> {{ player.name }} </a>
+                    </td>
+                    <td> {{ player.bot_count }} </td>
+                    <td> {{ player.top1 }} </td>
+                    <td> {{ player.top10 }} </td>
+                    <td> {{ player.score }} </td>
                     <td> {{ player.country}} </td>
                 </tr>
             {% endfor %}

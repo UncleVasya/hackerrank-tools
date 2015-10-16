@@ -28,7 +28,7 @@ class Player(models.Model):
 class Bot(models.Model):
     game = models.ForeignKey(Game)
     player = models.ForeignKey(Player)
-    score = models.FloatField()
+    score = models.DecimalField(max_digits=15, decimal_places=12)
     language = models.CharField(max_length=200)
     submitted_at = models.CharField(max_length=200)
 

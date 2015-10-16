@@ -1,0 +1,44 @@
+<h1> Bots: </h1>
+<br>
+<div class="table-responsive">
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+            <!-- if this is game page, show players on bots table and vice versa -->
+            {% if game %}
+                <th>Player</th>
+            {% elif player %}
+                <th>Game</th>
+            {% endif %}
+
+                <th>Score</th>
+                <th>Language</th>
+                <th>Submitted</th>
+                <th>Country</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for bot in bot_list %}
+            <tr class="bot_row">
+            {# if this is game page, show players on bots table and vice versa #}
+            {% if game %}
+                {% url 'games:player-detail' bot.player.name as url %}
+                <td>
+                    <a href="{{ url }}"> {{ bot.player.name }} </a>
+                </td>
+            {% elif player %}
+                {% url 'games:game-detail' bot.game.slug as url %}
+                <td>
+                    <a href="{{ url }}"> {{ bot.game.name }} </a>
+                </td>
+            {% endif %}
+
+                <td> {{ bot.score}} </td>
+                <td> {{ bot.language}} </td>
+                <td> {{ bot.submitted_at}} </td>
+                <td> {{ bot.player.country}} </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

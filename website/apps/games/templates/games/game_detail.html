@@ -26,4 +26,6 @@
             {{ game.description|linebreaks }}
         </div>
     </div> <!-- row -->
+
+     {% include "games/bot_list.html" with bot_list=game.bot_set.all %}
 {% endblock %} <!-- content -->
