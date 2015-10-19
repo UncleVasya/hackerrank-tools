@@ -1,4 +1,5 @@
 from django.db import models
+from solo.models import SingletonModel
 
 
 class Game(models.Model):
@@ -31,4 +32,21 @@ class Bot(models.Model):
     score = models.DecimalField(max_digits=15, decimal_places=12)
     language = models.CharField(max_length=200)
     submitted_at = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return u'%s (%s)' % (self.player, self.game)
+
+
+class Match(models.Model):
+    game = models.ForeignKey(Game)
+    bots = models.ManyToManyField(Bot)
+    result = models.PositiveIntegerField()
+    message = models.TextField()
+    date = models.DateTimeField()
+    hk_id = models.PositiveIntegerField(unique=True)  # id on hackerrank.com
+
+
+class ParsingInfo(SingletonModel):
+    oldest_parsed_match = models.PositiveIntegerField(null=True, blank=True)
+    newest_parsed_match = models.PositiveIntegerField(null=True, blank=True)
 

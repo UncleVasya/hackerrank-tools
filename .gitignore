@@ -1,7 +1,9 @@
 *.pyc
 *.exe
 *log*.txt
+*.env~
 
 .idea/
 
 game_logs/
+myscript.py

@@ -1,6 +1,7 @@
 import requests
 
 from django.core.management.base import BaseCommand
+import time
 
 from apps.games.management.commands.const import API_URL
 from apps.games.models import Game, Player, Bot
@@ -8,11 +9,21 @@ from apps.games.models import Game, Player, Bot
 URL = API_URL + 'challenges/%game%/leaderboard'  # %game% is a game slug
 API_LIMIT = 100  # max number of objects returned by hackerrank API
 
+SLEEP_TIME = 1  # seconds between requests
+
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument('-g', '--games', nargs='*', type=str)
+
     def handle(self, *args, **options):
+        if options['games']:
+            games = Game.objects.filter(slug__in=options['games'])
+        else:
+            games = Game.objects.all()
+
         bots_parsed = bots_added = players_added = 0
-        for game in Game.objects.all():
+        for game in games:
             print 'Parsing %s leaderboard' % game.name
 
             objects = get_bots_data(game)
@@ -40,7 +51,7 @@ def get_bots_data(game):
         params = {
             'offset': offset,
             'limit': API_LIMIT,
-            'include_practice': True,
+            'include_practice': 'true',
         }
         r = requests.get(url, params=params)
         data = r.json()
@@ -48,6 +59,7 @@ def get_bots_data(game):
         offset = len(objects)
 
         print 'offset: %d  total: %d' % (offset, data['total'])
+        time.sleep(SLEEP_TIME)  # let's be gentle with hackerrank.com
 
         if offset >= data['total']:
             break

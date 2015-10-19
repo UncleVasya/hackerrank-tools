@@ -1,5 +1,7 @@
 from django.contrib import admin
-from apps.games.models import Game, Bot, Player
+from django.db.models import Prefetch
+from solo.admin import SingletonModelAdmin
+from apps.games.models import Game, Bot, Player, ParsingInfo, Match
 
 
 class BotInline(admin.TabularInline):
@@ -46,6 +48,27 @@ class PlayerAdmin(admin.ModelAdmin):
     list_display = ('name', 'country')
 
 
+class MatchAdmin(admin.ModelAdmin):
+    model = Match
+
+    fieldsets = [
+        (None, {'fields': ['game', 'date', 'bots', ('message', 'result')]}),
+    ]
+    readonly_fields = ('bots',)
+
+    list_display = ('game', 'date')
+
+    def get_queryset(self, request):  # performance optimisation
+        qs = super(MatchAdmin, self).get_queryset(request)
+        return qs.prefetch_related(Prefetch(
+            'bots',
+            queryset=Bot.objects.select_related('player', 'game')
+        ))
+
+
 admin.site.register(Game, GameAdmin)
 admin.site.register(Bot, BotAdmin)
 admin.site.register(Player, PlayerAdmin)
+admin.site.register(Match, MatchAdmin)
+
+admin.site.register(ParsingInfo, SingletonModelAdmin)
