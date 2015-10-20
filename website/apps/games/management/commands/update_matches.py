@@ -1,4 +1,5 @@
 import datetime
+from django.db.models import Count
 import requests
 
 from django.core.management.base import BaseCommand
@@ -29,9 +30,9 @@ parsing = ParsingInfo.get_solo()
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('-l', '--limit',
-                            nargs='?', type=int, default=100)
+                            nargs='?', type=int, default=100, const=100)
         parser.add_argument('-b', '--backwards',
-                            nargs='?', type=bool, default=False)
+                            nargs='?', type=bool, default=False, const=False)
 
     def handle(self, *args, **options):
         latest_match = parsing.newest_parsed_match
@@ -55,6 +56,8 @@ class Command(BaseCommand):
 
             matches = get_old_matches(latest_match, options['limit'])
 
+        matches += get_broken_matches()
+
         print 'SAVING MATCHES'
         print '-----------------------'
 
@@ -69,12 +72,12 @@ class Command(BaseCommand):
 
 def get_new_matches(match_id, limit=100):
     print '-----------------------'
-    print 'GETTING NEW MATCHES'
+    print 'GETTING %d NEW MATCHES' % limit
     print '-----------------------'
 
     objects = []
     while len(objects) < limit:
-        print 'id: %d...    ' % match_id,
+        print 'id: %d    ' % match_id,
 
         r = requests.get(URL.replace('%id%', str(match_id)))
         time.sleep(SLEEP_TIME)  # let's be gentle with hackerrank.com
@@ -94,10 +97,11 @@ def get_new_matches(match_id, limit=100):
             else:
                 print '[SKIPPED]'
         except:
+            print '[NOT FOUND]'
             break  # no more Matches
-        finally:
-            parsing.newest_parsed_match = match_id
-            match_id += 1
+
+        parsing.newest_parsed_match = match_id
+        match_id += 1
 
     parsing.save()
 
@@ -113,7 +117,7 @@ def get_old_matches(match_id, limit=100):
 
     objects = []
     while len(objects) < limit and match_id >= 0:
-        print 'id: %d...    ' % match_id,
+        print 'id: %d    ' % match_id,
 
         r = requests.get(URL.replace('%id%', str(match_id)))
         time.sleep(SLEEP_TIME)  # let's be gentle with hackerrank.com
@@ -136,10 +140,42 @@ def get_old_matches(match_id, limit=100):
         except:
             print '[NOT FOUND]'
 
-        parsing.oldest_parsed_match = match_id + 1
+        parsing.oldest_parsed_match = match_id
         match_id -= 1
 
     parsing.save()
+
+    return objects
+
+
+def get_broken_matches():
+    print '-----------------------'
+    print 'GETTING MATCHES WITH MISSING BOTS'
+    print '-----------------------'
+
+    matches = Match.objects.annotate(
+        bots_num=Count('bots')
+    ).filter(bots_num__lt=2)
+
+    print ' matches to fix: %d' % matches.count()
+    print '-----------------------'
+
+    objects = []
+    for match in matches:
+        print 'id: %d     %s' % (match.hk_id, match.game)
+
+        r = requests.get(URL.replace('%id%', str(match.hk_id)))
+        time.sleep(SLEEP_TIME)  # let's be gentle with hackerrank.com
+
+        data = r.json()['model']
+        objects.append(data)
+
+        if len(objects) % 10 == 0:
+            print '-----------------------'
+            print 'matches added: %d' % len(objects)
+            print '-----------------------'
+
+    print '-----------------------'
 
     return objects
 
@@ -157,7 +193,6 @@ def parse_match(data):
         }
     )
 
-    match.bots.clear()
     for bot_data in data['actors']:
         try:
             match.bots.add(Bot.objects.get(
@@ -169,8 +204,13 @@ def parse_match(data):
             print 'game: %s  player: %s' % (match.game, bot_data['hacker_username'])
             print 'exception: %s' % e
             print '-----------------------'
-            print 'You can fix this with update_bots command.'
+            print 'To fix this:'
+            print '1) run update_bots command'
+            print '2) run update_matches again'
             print '-----------------------'
+
+            match.bots.clear()
+            break
 
 
 def find_latest_match():
