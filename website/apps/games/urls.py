@@ -1,5 +1,5 @@
 from django.conf.urls import url
-from apps.games.views import GameList, GameDetail
+from apps.games.views import GameList, GameDetail, MatchList, MatchDetail
 from apps.games.views import PlayerList, PlayerDetail
 
 urlpatterns = [
@@ -15,4 +15,9 @@ urlpatterns = [
         name='player-list'),
     url(r'^players/(?P<slug>[-\w]+)/$', PlayerDetail.as_view(),
         name='player-detail'),
+
+    url(r'^matches/$', MatchList.as_view(),
+        name='match-list'),
+    url(r'^matches/(?P<slug>[-\w]+)/$', MatchDetail.as_view(),
+        name='match-detail'),
 ]

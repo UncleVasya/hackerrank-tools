@@ -1,7 +1,7 @@
 from decimal import Decimal
 from django.db.models import Prefetch, Max, Count, Sum, Case, When
 from django.views.generic import ListView, DetailView
-from apps.games.models import Game, Player, Bot
+from apps.games.models import Game, Player, Bot, Match
 
 
 class GameList(ListView):
@@ -45,7 +45,6 @@ class PlayerList(ListView):
     def get_queryset(self):
         queryset = super(PlayerList, self).get_queryset()
 
-        # data prefetch greatly reduces number of DB queries
         queryset = queryset.prefetch_related(
             Prefetch(
                 'bot_set',
@@ -78,3 +77,33 @@ class PlayerDetail(DetailView):
 
     queryset = Player.objects.prefetch_related(
         Prefetch('bot_set', queryset=Bot.objects.select_related('game')))
+
+
+class MatchList(ListView):
+    model = Match
+    ordering = ['-date']
+
+    def get_queryset(self):
+        queryset = super(MatchList, self).get_queryset()
+
+        queryset = queryset.select_related('game').prefetch_related(
+            Prefetch(
+                'bots',
+                queryset=Bot.objects.select_related('player'),
+            )
+        )
+
+        return queryset
+
+
+class MatchDetail(DetailView):
+    slug_field = 'hk_id'
+
+    queryset = Match.objects.select_related(
+        'game'
+    ).prefetch_related(
+        Prefetch(
+            'bots',
+            queryset=Bot.objects.select_related('player')
+        )
+    )

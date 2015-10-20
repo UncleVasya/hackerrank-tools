@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}
+    <h1> Matches: </h1>
+    <br>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>id</th>
+                    <th>Date</th>
+                    <th>Game</th>
+                    <th colspan="2">Opponents</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for match in match_list %}
+                {% url 'games:match-detail' match.hk_id as match_url %}
+                {% url 'games:game-detail' match.game.slug as game_url %}
+
+                <tr class="match_row">
+                    <td> {{ forloop.counter }} </td>
+                    <td>
+                        <a href="{{ match_url }}"> {{ match.hk_id }} </a>
+                    </td>
+                    <td> {{ match.date }} </td>
+                    <td>
+                        <a href="{{ game_url }}"> {{ match.game }} </a>
+                    </td>
+
+                    {% for bot in match.bots.all %}
+                        {% url 'games:player-detail' bot.player.name as player_url %}
+
+                        {% if match.result == 0 %}
+                            <td class="warning">
+                        {% elif match.result == forloop.counter %}
+                            <td class="success">
+                        {% else %}
+                            <td class="danger">
+                        {% endif %}
+
+                            <a href="{{ player_url }}"> {{ bot.player }} </a>
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

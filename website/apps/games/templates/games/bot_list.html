@@ -33,10 +33,10 @@
                 </td>
             {% endif %}
 
-                <td> {{ bot.score}} </td>
-                <td> {{ bot.language}} </td>
-                <td> {{ bot.submitted_at}} </td>
-                <td> {{ bot.player.country}} </td>
+                <td> {{ bot.score|floatformat:2 }} </td>
+                <td> {{ bot.language }} </td>
+                <td> {{ bot.submitted_at }} </td>
+                <td> {{ bot.player.country }} </td>
             </tr>
         {% endfor %}
         </tbody>

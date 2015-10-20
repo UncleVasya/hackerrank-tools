@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{% static 'games/css/base.css' %}">
+{% endblock page_styles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-5">
+            <br>
+            <div class="labels">
+                <p> Game: </p>
+                <p> Date: </p>
+                <p> Result: </p>
+            </div>
+
+            <div class="values">
+                <p> {{ match.game.name }} </p>
+                <p> {{ match.date }} </p>
+                <p> {{ match.result }} </p>
+            </div>
+        </div>
+
+         <div class=" col-md-7">
+            <br>
+            <p class="labels"> Message: </p>
+            {{ match.message|linebreaks }}
+        </div>
+    </div> <!-- row -->
+
+     {% include "games/bot_list.html" with bot_list=match.bots.all %}
+{% endblock %} <!-- content -->

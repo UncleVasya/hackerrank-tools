@@ -29,7 +29,7 @@
                     <td> {{ player.bot_count }} </td>
                     <td> {{ player.top1 }} </td>
                     <td> {{ player.top10 }} </td>
-                    <td> {{ player.score }} </td>
+                    <td> {{ player.score|floatformat:2 }} </td>
                     <td> {{ player.country}} </td>
                 </tr>
             {% endfor %}
