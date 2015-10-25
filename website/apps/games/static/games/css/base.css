@@ -6,3 +6,54 @@ div.labels {
     float: left;
     margin-left: 30px;
 }
+
+section header{
+	font-size:16px;
+	color:white;
+	position:relative;
+	padding:6px 4px;
+	text-shadow:1px 1px 2px black;
+	text-transform:uppercase;
+	font-weight:normal
+}
+
+section article{
+	box-shadow:0 0 3px rgba(10,10,10,0.4);
+	border:1px solid #242F39;
+	border-radius:1px;
+	background:#242F39;
+	padding:4px;
+	clear:right
+}
+
+section article p{
+	color:#cccccc;
+	padding:4px
+}
+
+section article a,
+section article a:visited,
+section article a:hover,
+section article a:active,
+section article a:focus{
+    color: #A9CF54;
+}
+
+.table-borderless,
+.table-borderless tbody tr td,
+.table-borderless tbody tr th,
+.table-borderless thead tr th {
+    border: none;
+}
+
+table {
+    font-size: 0.9em;
+}
+
+tbody tr {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+tbody tr:nth-child(2n) {
+	background-color:rgba(255,255,255,0.04)
+}
