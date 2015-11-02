@@ -1,34 +1,44 @@
-div.labels {
-    float: left;
-}
-
-.values {
-    float: left;
-    margin-left: 30px;
-}
-
 section header{
-	font-size:16px;
-	color:white;
-	position:relative;
-	padding:6px 4px;
-	text-shadow:1px 1px 2px black;
-	text-transform:uppercase;
-	font-weight:normal
+	font-size: 16px;
+	color: white;
+	position: relative;
+	padding: 6px 4px;
+	text-shadow: 1px 1px 2px black;
+	text-transform: uppercase;
+	font-weight: normal
+}
+
+section header small {
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    margin-left: 4px;
+    text-shadow: none;
+}
+
+section header .more {
+    float: right;
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+section header .more a {
+    display: block;
+    color: white;
+    margin-left: 10px;
 }
 
 section article{
-	box-shadow:0 0 3px rgba(10,10,10,0.4);
-	border:1px solid #242F39;
-	border-radius:1px;
-	background:#242F39;
-	padding:4px;
-	clear:right
+	box-shadow: 0 0 3px rgba(10,10,10,0.4);
+	border: 1px solid #242F39;
+	border-radius: 1px;
+	background: #242F39;
+	padding: 4px;
+	clear: right
 }
 
 section article p{
-	color:#cccccc;
-	padding:4px
+	color: #cccccc;
+	padding: 4px
 }
 
 section article a,
@@ -56,4 +66,150 @@ tbody tr {
 
 tbody tr:nth-child(2n) {
 	background-color:rgba(255,255,255,0.04)
+}
+
+tbody tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.page-overview {
+    background: #2E3740;
+    position: relative;
+    padding: 8px;
+    box-shadow: 0 0 3px rgba(10,10,10,0.4);
+    border-radius: 1px;
+    margin: 13px 0 0 0;
+}
+
+.page-overview-avatar {
+    display: inline-block;
+    margin-right: 8px;
+    vertical-align: top;
+}
+
+.page-overview-avatar img {
+    width: 62px;
+    height: 62px;
+    display: block;
+}
+
+.page-overview-title {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.page-overview-title h1 {
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: white;
+    font-size: 24px;
+    line-height: inherit;
+    margin: 0;
+    padding: 2px;
+}
+
+.page-overview-title h1 small {
+    display: block;
+    color: #C4C4C4;
+    font-size: 16px;
+    margin-top: 4px;
+}
+
+.page-overview-title h1 small.country {
+    display: inline-block;
+}
+
+.page-overview-secondary {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    margin-top: 0;
+}
+
+.page-overview-secondary dl {
+    display: inline-block;
+    margin: 5px 12px 14px 0;
+    vertical-align: top;
+}
+
+.page-overview-secondary dl dd {
+    color: white;
+    font-size: 14px;
+}
+
+.page-overview-secondary dl dt {
+    color: rgba(255,255,255,0.6);
+    font-size: 12px;
+    font-weight: normal;
+    line-height: inherit;
+    margin-top: 4px;
+    text-transform: uppercase;
+}
+
+.match-record {
+    color: #979797;
+}
+
+.match-record .wins {
+    color: #A9CF54;
+}
+
+.match-record .sep {
+    padding: 0 2px;
+}
+
+.match-record .losses {
+    color: #C23C2A;
+}
+
+.match-record .draws {
+    color: #979797;
+}
+
+.page-menu {
+    position: relative;
+    margin: 0 0 6px 0;
+}
+
+.page-menu .menu-links {
+    background: #2a323a;
+    display: block;
+}
+
+.page-menu .menu-links ul {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+.page-menu .menu-links ul li {
+    display: inline-block;
+}
+
+.page-menu .menu-links ul li a {
+    display: block;
+    border-bottom: 2px solid transparent;
+    color: #C4C4C4;
+    padding: 8px 8px;
+}
+
+.page-menu .menu-links ul li.active a {
+    background: #252d34;
+    color: white;
+    border-bottom: 2px solid #ED3B1C;
+}
+
+.page-menu .menu-links ul li a:hover {
+    background: #252d34;
+    color: white;
+}
+
+section header .more i {
+    font-size: 11px;
+}
+
+section header .more a:hover {
+    color: #A9CF54;
 }

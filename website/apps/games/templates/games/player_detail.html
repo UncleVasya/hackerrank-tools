@@ -6,20 +6,57 @@
 {% endblock page_styles %}
 
 {% block content %}
-    <div class="row">
-        <div class="col-md-5">
-            <br>
-            <div class="labels">
-                <p> Name: </p>
-                <p> Country: </p>
+    <div class="page-overview">
+        <div class="page-overview-primary">
+            <div class="page-overview-avatar">
+                <a href="{% url 'games:player-detail' player.name %}">
+                    <img alt="{{ player.name }}">
+                </a>
             </div>
-
-            <div class="values">
-                <p> {{ player.name }} </p>
-                <p> {{ player.country }} </p>
+            <div class="page-overview-title">
+                <h1> {{ player.name }}
+                    <small class="country">({{ player.country }})</small>
+                    <small>Overview</small>
+                </h1>
             </div>
         </div>
-    </div> <!-- row -->
+
+        <div class="page-overview-secondary">
+            <dl>
+                <dd>
+                    <time datetime="2015-10-06T17:32:49+00:00" title="Tue, 06 Oct 2015 17:32:49 +0000"
+                          data-time-ago="2015-10-06T17:32:49+00:00">19 days ago
+                    </time>
+                </dd>
+                <dt>Last Match</dt>
+            </dl>
+            <dl>
+                <dd>
+                    <span class="match-record">
+                        <span class="wins">809</span>
+                        <span class="sep">-</span>
+                        <span class="losses">831</span>
+                        <span class="sep">-</span>
+                        <span class="draws">16</span>
+                    </span>
+                </dd>
+                <dt>Record</dt>
+            </dl>
+            <dl>
+                <dd>48.85%</dd>
+                <dt>Win Rate</dt>
+            </dl>
+        </div>
+    </div>
+    <div class="page-menu">
+        <nav class="menu-links">
+            <ul>
+                <li class="active"><a href="/players/175549053">Overview</a></li>
+                <li class=""><a href="/players/175549053/matches">Matches</a></li>
+                <li class=""><a href="/players/175549053/heroes">Heroes</a></li>
+            </ul>
+        </nav>
+    </div>
 
     {% include "games/bot_list.html" with bot_list=player.bot_set.all%}
 {% endblock %} <!-- content -->
