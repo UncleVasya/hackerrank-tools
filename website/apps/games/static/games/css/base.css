@@ -1,4 +1,4 @@
-section header{
+section header {
 	font-size: 16px;
 	color: white;
 	position: relative;
@@ -27,7 +27,7 @@ section header .more a {
     margin-left: 10px;
 }
 
-section article{
+section article {
 	box-shadow: 0 0 3px rgba(10,10,10,0.4);
 	border: 1px solid #242F39;
 	border-radius: 1px;
@@ -36,7 +36,7 @@ section article{
 	clear: right
 }
 
-section article p{
+section article p {
 	color: #cccccc;
 	padding: 4px
 }
@@ -45,7 +45,7 @@ section article a,
 section article a:visited,
 section article a:hover,
 section article a:active,
-section article a:focus{
+section article a:focus {
     color: #A9CF54;
 }
 
@@ -152,7 +152,7 @@ tbody tr:hover {
     color: #979797;
 }
 
-.match-record .wins {
+.match-record .wins, .match-row .win {
     color: #A9CF54;
 }
 
@@ -160,12 +160,20 @@ tbody tr:hover {
     padding: 0 2px;
 }
 
-.match-record .losses {
+.match-record .losses, .match-row .loss {
     color: #C23C2A;
 }
 
-.match-record .draws {
+.match-record .draws, .match-row .draw {
     color: #979797;
+}
+
+.match-row :not(.opponent) a,
+.match-row :not(.opponent) a:visited,
+.match-row :not(.opponent) a:hover,
+.match-row :not(.opponent) a:active,
+.match-row :not(.opponent) a:focus {
+    color: white;
 }
 
 .page-menu {

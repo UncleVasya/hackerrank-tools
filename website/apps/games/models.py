@@ -39,14 +39,28 @@ class Bot(models.Model):
 
 class Match(models.Model):
     game = models.ForeignKey(Game)
-    bots = models.ManyToManyField(Bot)
+    bots = models.ManyToManyField(Bot, through='Opponent')
     result = models.PositiveIntegerField()
     message = models.TextField()
     date = models.DateTimeField()
     hk_id = models.PositiveIntegerField(unique=True)  # id on hackerrank.com
 
+    class Meta:
+        ordering = ['-date']
+
+    def get_bots(self):
+        return self.bots.order_by('opponent__position')
+
+
+class Opponent(models.Model):
+    match = models.ForeignKey(Match)
+    bot = models.ForeignKey(Bot)
+    position = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ['position']
+
 
 class ParsingInfo(SingletonModel):
     oldest_parsed_match = models.PositiveIntegerField(null=True, blank=True)
     newest_parsed_match = models.PositiveIntegerField(null=True, blank=True)
-

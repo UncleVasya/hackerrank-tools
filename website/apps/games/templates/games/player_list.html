@@ -19,7 +19,7 @@
             </thead>
             <tbody>
             {% for player in player_list %}
-                {% url 'games:player-detail' player.name as player_url %}
+                {% url 'games:player-overview' player.name as player_url %}
 
                 <tr class="player_row">
                     <td> {{ forloop.counter }} </td>

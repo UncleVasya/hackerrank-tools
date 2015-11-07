@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 import time
 
 from apps.games.management.commands.const import API_URL, HACKERRANK_URL
-from apps.games.models import Game, Match, ParsingInfo, Bot
+from apps.games.models import Game, Match, ParsingInfo, Bot, Opponent
 
 URL = API_URL + 'games/%id%'
 
@@ -33,6 +33,8 @@ class Command(BaseCommand):
                             nargs='?', type=int, default=100, const=100)
         parser.add_argument('-b', '--backwards',
                             nargs='?', type=bool, default=False, const=False)
+        parser.add_argument('-f', '--forced',
+                            nargs='?', type=bool, default=False, const=False)
 
     def handle(self, *args, **options):
         latest_match = parsing.newest_parsed_match
@@ -42,7 +44,8 @@ class Command(BaseCommand):
                                           options['limit'])
             else:
                 matches = get_new_matches(latest_match + 1,
-                                          options['limit'])
+                                          options['limit'],
+                                          options['forced'])
         else:
             print '-----------------------'
             print 'No parsed data in DB yet.'
@@ -70,9 +73,10 @@ class Command(BaseCommand):
         print '-----------------------'
 
 
-def get_new_matches(match_id, limit=100):
+def get_new_matches(match_id, limit=100, forced=False):
     print '-----------------------'
     print 'GETTING %d NEW MATCHES' % limit
+    print 'forced: %s' % forced
     print '-----------------------'
 
     objects = []
@@ -84,6 +88,7 @@ def get_new_matches(match_id, limit=100):
 
         try:
             data = r.json()['model']
+            parsing.newest_parsed_match = match_id
 
             print '%s     ' % data['challenge_slug'],
             if Game.objects.filter(slug=data['challenge_slug']).exists():
@@ -98,9 +103,8 @@ def get_new_matches(match_id, limit=100):
                 print '[SKIPPED]'
         except:
             print '[NOT FOUND]'
-            break  # no more Matches
-
-        parsing.newest_parsed_match = match_id
+            if not forced:
+                break  # no more Matches
         match_id += 1
 
     parsing.save()
@@ -183,22 +187,33 @@ def get_broken_matches():
 def parse_match(data):
     print 'id: %d' % data['id']
 
-    match, _ = Match.objects.update_or_create(
-        hk_id=data['id'],
-        defaults={
-            'game': Game.objects.get(slug=data['challenge_slug']),
-            'result': data['result'],
-            'message': data['message'],
-            'date': datetime.datetime.fromtimestamp(int(data['updated_at']))
-        }
-    )
+    try:
+        match, _ = Match.objects.update_or_create(
+            hk_id=data['id'],
+            defaults={
+                'game': Game.objects.get(slug=data['challenge_slug']),
+                'result': data['result'],
+                'message': data['message'],
+                'date': datetime.datetime.fromtimestamp(int(data['updated_at']))
+            }
+        )
+    except Exception as e:
+        print 'Failed to parse.\n%s' % e
+        print '------------------------'
+        return
 
+    match.bots.clear()
     for bot_data in data['actors']:
         try:
-            match.bots.add(Bot.objects.get(
+            bot = Bot.objects.get(
                 game=match.game,
                 player__name=bot_data['hacker_username'],
-            ))
+            )
+            Opponent(
+                match=match,
+                bot=bot,
+                position=bot_data['actor']
+            ).save()
         except Exception as e:
             print 'WARNING: Can not add bot to match'
             print 'game: %s  player: %s' % (match.game, bot_data['hacker_username'])

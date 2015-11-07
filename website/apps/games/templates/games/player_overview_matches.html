@@ -1,0 +1,56 @@
+<section>
+<header>Latest matches
+    <div class="more">
+        <a href="/players/175549053/heroes">
+            <i class="fa fa-plus-square"></i> more
+        </a>
+    </div>
+</header>
+
+<article>
+    <div class="table-responsive table-borderless">
+        <table class="table table-borderless">
+            <thead>
+                <tr>
+                    <th>Opponent</th>
+                    <th>Result</th>
+                    <th>Game</th>
+                    <th>Date</th>
+                    <th>id</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for match in match_list %}
+                {% url 'games:match-detail' match.hk_id as match_url %}
+                {% url 'games:game-detail' match.game.slug as game_url %}
+                {% url 'games:player-overview' match.opponent_name as opponent__url %}
+
+                <tr class="match-row">
+                    <td class="opponent">
+                        <a href="{{ opponent__url }}"> {{ match.opponent_name }} </a>
+                    </td>
+
+                    {% if match.result == 0 %}
+                        <td class="draw">
+                    {% elif match.result == match.opponent.position %}
+                        <td class="loss">
+                    {% else %}
+                        <td class="win">
+                    {% endif %}
+                        {{ match.result_text }}
+                    </td>
+
+                    <td>
+                        <a href="{{ game_url }}"> {{ match.game }} </a>
+                    </td>
+                    <td> {{ match.date }} </td>
+                    <td>
+                        <a href="{{ match_url }}"> {{ match.hk_id }} </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+</section>

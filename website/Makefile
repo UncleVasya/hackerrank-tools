@@ -80,7 +80,7 @@ update_bots:
 #
 update_matches:
 	@echo Updating Match list from hackerrank.com...
-	$(manage) update_matches --limit ${limit} --backwards ${backwards}
+	$(manage) update_matches --limit ${limit} --backwards ${backwards} --forced ${forced}
 
 myscript:
 	$(manage) myscript

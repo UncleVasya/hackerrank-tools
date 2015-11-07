@@ -9,7 +9,7 @@
     <div class="page-overview">
         <div class="page-overview-primary">
             <div class="page-overview-avatar">
-                <a href="{% url 'games:player-detail' player.name %}">
+                <a href="{% url 'games:player-overview' player.name %}">
                     <img alt="{{ player.name }}">
                 </a>
             </div>
@@ -33,17 +33,17 @@
             <dl>
                 <dd>
                     <span class="match-record">
-                        <span class="wins">809</span>
+                        <span class="wins">{{ wins }}</span>
                         <span class="sep">-</span>
-                        <span class="losses">831</span>
+                        <span class="losses">{{ losses }}</span>
                         <span class="sep">-</span>
-                        <span class="draws">16</span>
+                        <span class="draws">{{ draws }}</span>
                     </span>
                 </dd>
                 <dt>Record</dt>
             </dl>
             <dl>
-                <dd>48.85%</dd>
+                <dd>{{ winrate|floatformat:2 }}%</dd>
                 <dt>Win Rate</dt>
             </dl>
         </div>
@@ -58,5 +58,6 @@
         </nav>
     </div>
 
-    {% include "games/bot_list.html" with bot_list=player.bot_set.all%}
+    {% include "games/bot_list.html" with bot_list=player.bot_set.all %}
+    {% include "games/player_overview_matches.html" %}
 {% endblock %} <!-- content -->

@@ -1,7 +1,7 @@
 from decimal import Decimal
 from django.db.models import Prefetch, Max, Count, Sum, Case, When
 from django.views.generic import ListView, DetailView
-from apps.games.models import Game, Player, Bot, Match
+from apps.games.models import Game, Player, Bot, Match, Opponent
 
 
 class GameList(ListView):
@@ -72,11 +72,64 @@ class PlayerList(ListView):
         return queryset
 
 
-class PlayerDetail(DetailView):
+class PlayerOverview(DetailView):
+    model = Player
     slug_field = 'name__iexact'
+    template_name = 'games/player_overview.html'
 
     queryset = Player.objects.prefetch_related(
         Prefetch('bot_set', queryset=Bot.objects.select_related('game')))
+
+    def get_object(self, queryset=None):
+        player = super(PlayerOverview, self).get_object()
+
+        player.matches = Match.objects.filter(
+            bots__player=player
+        ).prefetch_related(
+            Prefetch(
+                'opponent_set',
+                queryset=Opponent.objects.select_related('bot', 'bot__player')
+            )
+        ).select_related('game')
+
+        return player
+
+    def get_context_data(self, **kwargs):
+        context = super(PlayerOverview, self).get_context_data(**kwargs)
+
+        matches = self.object.matches
+
+        wins = losses = draws = winrate = 0
+        for match in matches:
+            opponents = list(match.opponent_set.all())
+            if opponents[0].bot.player == self.object:
+                match.opponent = opponents[1]
+            else:
+                match.opponent = opponents[0]
+            match.opponent_name = match.opponent.bot.player.name
+
+            if match.result == 0:
+                match.result_text = 'Draw'
+                draws += 1
+            elif match.result == match.opponent.position:
+                match.result_text = 'Lost match'
+                losses += 1
+            else:
+                match.result_text = 'Won match'
+                wins += 1
+
+        if matches:
+            winrate = float(wins) / len(matches) * 100
+
+        context.update({
+            'match_list': matches,
+            'wins': wins,
+            'losses': losses,
+            'draws': draws,
+            'winrate': winrate,
+        })
+
+        return context
 
 
 class MatchList(ListView):
