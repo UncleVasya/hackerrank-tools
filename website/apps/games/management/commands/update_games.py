@@ -40,7 +40,8 @@ class Command(BaseCommand):
                 defaults={
                     'name': game['name'],
                     'description': game['preview'],
-                    'difficulty': game['difficulty_name'],
+                    'difficulty': game['difficulty'],
+                    'difficulty_text': game['difficulty_name'],
                     'slug': game['slug'],
                 })
             if created:

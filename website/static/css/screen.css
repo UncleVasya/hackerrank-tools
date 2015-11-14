@@ -62,6 +62,45 @@ ol, ul {
     color: #ED3B1C;
 }
 
+div.footer-nav {
+    float: right;
+    margin: 18px 0 0 0;
+    position: relative;
+}
 
+.footer-nav ul li {
+    display: inline-block;
+}
+
+.footer-nav ul li a {
+    color: white;
+    padding: 6px 12px 6px 0;
+}
+
+.footer-nav ul li a:hover {
+    opacity: 0.6;
+}
+
+[data-link] {
+    cursor: pointer;
+}
+
+.container {
+    float: none;
+    margin: 0 auto;
+    max-width: 972px;
+}
+
+.sep {
+    color: #979797;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+section {
+    margin-bottom: 12px;
+}
 
 

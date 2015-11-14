@@ -1,0 +1,69 @@
+<section>
+<header>Most successful bots
+    <small>All Time</small>
+    <div class="more">
+        <a href="/players/175549053/heroes">
+            <i class="fa fa-plus-square"></i> more
+        </a>
+    </div>
+</header>
+
+<article>
+    <div class="table-responsive table-borderless">
+        <table class="table table-borderless">
+            <thead>
+                <tr>
+                    <th class="col-xs-3">Game</th>
+                    <th class="col-xs-3">Rank</th>
+                    <th class="col-xs-3">Game difficulty</th>
+                    <th class="col-xs-3">
+                        <span>Wins</span>
+                        <span class="sep">/</span>
+                        <span>Draws</span>
+                        <span class="sep">/</span>
+                        <span>Losses</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for bot in bot_list %}
+                {% url 'games:game-detail' bot.game.slug as game_url %}
+
+                <tr class="bot-row" data-link="{{ game_url }}">
+                    <td class="game">
+                        <a href="{{ game_url }}"> {{ bot.game.name }} </a>
+                        <div class="subtext">
+                            Total bots: {{ bot.game.bot_set.count }}
+                        </div>
+                    </td>
+                    <td>
+                        {{ bot.rank }}
+                        <div class="color-bar">
+                            <div class="rank" style="width: {{ bot.rank_percent }}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        {{ bot.game.difficulty_text }}
+                        <div class="color-bar">
+                            <div class="difficulty" style="width: {{ bot.difficulty_percent }}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <span>{{ bot.wins }}</span>
+                        <span class="sep">/</span>
+                        <span>{{ bot.draws }}</span>
+                        <span class="sep">/</span>
+                        <span>{{ bot.losses }}</span>
+                        <div class="color-bar">
+                            <div class="win" style="width: {{ bot.win_percent }}%"></div>
+                            <div class="draw" style="width: {{ bot.draw_percent }}%"></div>
+                            <div class="loss" style="width: {{ bot.loss_percent }}%"></div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+</section>

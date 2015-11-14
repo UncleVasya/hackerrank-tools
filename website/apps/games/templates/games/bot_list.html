@@ -19,10 +19,9 @@
                 {% elif player %}
                     <th>Game</th>
                 {% endif %}
-
+                    <th>Rank</th>
                     <th>Score</th>
                     <th>Language</th>
-                    <th>Submitted</th>
                     <th>Country</th>
                 </tr>
             </thead>
@@ -41,10 +40,9 @@
                         <a href="{{ url }}"> {{ bot.game.name }} </a>
                     </td>
                 {% endif %}
-
+                    <td> {{ bot.rank }} </td>
                     <td> {{ bot.score|floatformat:2 }} </td>
                     <td> {{ bot.language }} </td>
-                    <td> {{ bot.submitted_at }} </td>
                     <td> {{ bot.player.country }} </td>
                 </tr>
             {% endfor %}

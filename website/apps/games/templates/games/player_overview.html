@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
+{% block page_scripts %}
+    <script src="{% static 'games/js/base.js' %}"></script>
+{% endblock page_scripts %}
+
 {% block page_styles %}
     <link rel="stylesheet" href="{% static 'games/css/base.css' %}">
 {% endblock page_styles %}
@@ -8,9 +12,9 @@
 {% block content %}
     <div class="page-overview">
         <div class="page-overview-primary">
-            <div class="page-overview-avatar">
+            <div class="avatar">
                 <a href="{% url 'games:player-overview' player.name %}">
-                    <img alt="{{ player.name }}">
+                    <img src="{{ player.avatar }}" alt="{{ player.name }}">
                 </a>
             </div>
             <div class="page-overview-title">
@@ -24,8 +28,9 @@
         <div class="page-overview-secondary">
             <dl>
                 <dd>
-                    <time datetime="2015-10-06T17:32:49+00:00" title="Tue, 06 Oct 2015 17:32:49 +0000"
-                          data-time-ago="2015-10-06T17:32:49+00:00">19 days ago
+                    <time class="timeago"
+                          datetime="{{ match_list.first.date|date:"c" }}"
+                          title="{{ match_list.first.date }}">
                     </time>
                 </dd>
                 <dt>Last Match</dt>
@@ -35,9 +40,9 @@
                     <span class="match-record">
                         <span class="wins">{{ wins }}</span>
                         <span class="sep">-</span>
-                        <span class="losses">{{ losses }}</span>
-                        <span class="sep">-</span>
                         <span class="draws">{{ draws }}</span>
+                        <span class="sep">-</span>
+                        <span class="losses">{{ losses }}</span>
                     </span>
                 </dd>
                 <dt>Record</dt>
@@ -58,6 +63,6 @@
         </nav>
     </div>
 
-    {% include "games/bot_list.html" with bot_list=player.bot_set.all %}
+    {% include "games/player_overview_bots.html" %}
     {% include "games/player_overview_matches.html" %}
 {% endblock %} <!-- content -->

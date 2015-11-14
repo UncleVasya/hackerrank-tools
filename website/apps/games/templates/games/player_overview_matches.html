@@ -8,45 +8,80 @@
 </header>
 
 <article>
-    <div class="table-responsive table-borderless">
+    <div class="table-responsive table-borderless center-block">
         <table class="table table-borderless">
             <thead>
                 <tr>
-                    <th>Opponent</th>
-                    <th>Result</th>
-                    <th>Game</th>
-                    <th>Date</th>
-                    <th>id</th>
+                    <th class="col-xs-3">Opponent</th>
+                    <th class="col-xs-2">Result</th>
+                    <th class="col-xs-2">Game</th>
+                    <th class="col-xs-2">Win chance</th>
+                    <th class="col-xs-3">Rank Me<span class="sep">/</span>Him</th>
+{#                    <th>Score Me/Him</th>#}
                 </tr>
             </thead>
             <tbody>
             {% for match in match_list %}
                 {% url 'games:match-detail' match.hk_id as match_url %}
                 {% url 'games:game-detail' match.game.slug as game_url %}
-                {% url 'games:player-overview' match.opponent_name as opponent__url %}
+                {% url 'games:player-overview' match.opponent_name as opponent_url %}
 
-                <tr class="match-row">
+                <tr class="match-row" data-link="{{ match_url }}">
                     <td class="opponent">
-                        <a href="{{ opponent__url }}"> {{ match.opponent_name }} </a>
+                        <div class="avatar">
+                            <a href="{{ opponent_url }}">
+                                <img src="{{ match.opponent.bot.player.avatar }}">
+                            </a>
+                        </div>
+                        <a href="{{ opponent_url }}"> {{ match.opponent_name }} </a>
+                        <div class="subtext">
+                            {{ match.opponent.bot.player.country }}
+                        </div>
                     </td>
 
+                    <td>
                     {% if match.result == 0 %}
-                        <td class="draw">
+                        <div class="draw">
                     {% elif match.result == match.opponent.position %}
-                        <td class="loss">
+                        <div class="loss">
                     {% else %}
-                        <td class="win">
+                        <div class="win">
                     {% endif %}
-                        {{ match.result_text }}
+                            {{ match.result_text }}
+                        </div>
+                        <time class="timeago subtext"
+                              datetime="{{ match.date|date:"c" }}"
+                              title="{{ match.date }}">
+                            {{ match.date }}
+                        </time>
                     </td>
 
                     <td>
                         <a href="{{ game_url }}"> {{ match.game }} </a>
                     </td>
-                    <td> {{ match.date }} </td>
                     <td>
-                        <a href="{{ match_url }}"> {{ match.hk_id }} </a>
+                        {{ match.win_chance|floatformat:2 }}%
+                        <div class="color-bar">
+                            <div style="width: {{ match.win_chance }}%"></div>
+                        </div>
                     </td>
+                    <td>
+                        <span>{{ match.player.bot.rank }}</span>
+                        <span class="sep">/</span>
+                        <span>{{ match.opponent.bot.rank }}</span>
+                        <div class="color-bar">
+                            <div class="player" style="width: {{ match.player_rank }}%"></div>
+                            <div class="opponent" style="width: {{ match.opponent_rank }}%"></div>
+                        </div>
+                    </td>
+{#                    <td>#}
+{#                        {{ match.player.bot.score|floatformat:2 }} |#}
+{#                        {{ match.opponent.bot.score|floatformat:2 }}#}
+{#                        <div class="color-bar">#}
+{#                            <div class="player" style="width: {{ matchstats.stats.player_score }}%"></div>#}
+{#                            <div class="opponent" style="width: {{ match.stats.opponent_score }}%"></div>#}
+{#                        </div>#}
+{#                    </td>#}
                 </tr>
             {% endfor %}
             </tbody>

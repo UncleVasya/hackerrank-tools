@@ -5,7 +5,8 @@ from solo.models import SingletonModel
 class Game(models.Model):
     name = models.CharField(max_length=200, unique=True)
     description = models.TextField(null=True, blank=True)
-    difficulty = models.CharField(max_length=200, null=True)
+    difficulty = models.FloatField(null=True)
+    difficulty_text = models.CharField(max_length=200, null=True)
     slug = models.CharField(max_length=200, unique=True)
 
     class Meta:
@@ -18,6 +19,7 @@ class Game(models.Model):
 class Player(models.Model):
     name = models.CharField(max_length=200, unique=True)
     country = models.CharField(max_length=200, null=True)
+    avatar = models.URLField()
 
     class Meta:
         ordering = ['pk']
@@ -29,9 +31,12 @@ class Player(models.Model):
 class Bot(models.Model):
     game = models.ForeignKey(Game)
     player = models.ForeignKey(Player)
+    rank = models.PositiveIntegerField()
     score = models.DecimalField(max_digits=15, decimal_places=12)
     language = models.CharField(max_length=200)
-    submitted_at = models.CharField(max_length=200)
+
+    class Meta:
+        ordering = ['rank']
 
     def __unicode__(self):
         return u'%s (%s)' % (self.player, self.game)

@@ -36,6 +36,7 @@ section article {
 	clear: right
 }
 
+/* Nothing uses it currently */
 section article p {
 	color: #cccccc;
 	padding: 4px
@@ -61,7 +62,18 @@ table {
 }
 
 tbody tr {
+    padding: 5px 4px;
     background-color: rgba(255, 255, 255, 0.08);
+}
+
+.table>tbody>tr>td,
+.table>tbody>tr>th,
+.table>tfoot>tr>td,
+.table>tfoot>tr>th,
+.table>thead>tr>td,
+.table>thead>tr>th {
+    line-height: 15px;
+    padding: 5px 4px;
 }
 
 tbody tr:nth-child(2n) {
@@ -81,13 +93,13 @@ tbody tr:hover {
     margin: 13px 0 0 0;
 }
 
-.page-overview-avatar {
+.page-overview .avatar {
     display: inline-block;
     margin-right: 8px;
     vertical-align: top;
 }
 
-.page-overview-avatar img {
+.page-overview .avatar img {
     width: 62px;
     height: 62px;
     display: block;
@@ -221,3 +233,62 @@ section header .more i {
 section header .more a:hover {
     color: #A9CF54;
 }
+
+.subtext {
+    font-size: 11px;
+    font-weight: 200;
+    color: rgba(255,255,255,0.6);
+    padding-top: 2px;
+    min-height: 14px;
+    vertical-align: top;
+}
+
+table .avatar {
+    float: left;
+    display: inline-block;
+    margin-right: 7px;
+    vertical-align: top;
+}
+
+table .avatar img {
+    width: 30px;
+    height: 30px;
+    display: block;
+}
+
+.color-bar {
+    height: 4px;
+    margin-top: 3px;
+    width: 98%;
+    clear: both;
+}
+
+.color-bar div {
+    background: white;
+    display: inline-block;
+    height: 4px;
+    vertical-align: top;
+}
+
+.color-bar .player,
+.color-bar .win {
+    background: #A9CF54;
+}
+
+.color-bar .opponent,
+.color-bar .loss {
+    background: #EA030E;
+}
+
+.color-bar .draw {
+    background: #979797;
+}
+
+.color-bar .rank {
+    background: #FBB829;
+}
+
+.color-bar .difficulty {
+    background: #76B8A6;
+}
+

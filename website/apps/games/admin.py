@@ -9,7 +9,7 @@ class BotInline(admin.TabularInline):
     model = Bot
     extra = 0
 
-    fields = ['player', 'score', 'language', 'submitted_at']
+    fields = ['player', 'score', 'language']
     readonly_fields = ['player']
 
     def get_queryset(self, request):  # performance optimisation
@@ -66,11 +66,14 @@ class GameAdmin(admin.ModelAdmin):
     model = Game
 
     fieldsets = [
-        (None, {'fields': [('name', 'difficulty', 'slug'), 'description']}),
+        (None, {'fields': [
+            ('name', 'difficulty_text', 'difficulty', 'slug'),
+            'description'
+        ]}),
     ]
     inlines = [BotInline]
 
-    list_display = ('name', 'difficulty', 'description')
+    list_display = ('name', 'difficulty_text', 'description')
 
 
 class BotAdmin(admin.ModelAdmin):

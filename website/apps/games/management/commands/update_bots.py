@@ -93,6 +93,7 @@ def update_player(bot):
         name=bot['hacker'],
         defaults={
             'country': bot['country'],
+            'avatar': bot['avatar'].split('\\')[0]
         }
     )
 
@@ -102,7 +103,7 @@ def update_bot(bot, game, player):
         game=game,
         player=player,
         defaults={
+            'rank': bot['rank'],
             'score': bot['score'],
             'language': bot['language'],
-            'submitted_at': bot.get('submitted_at', 'years ago'),
         })
