@@ -1,28 +1,43 @@
+{% extends "games/player_detail.html" %}
+
+{% block player-page-title %}Bots{% endblock %}
+
+{% block player-content %}
 <section>
-<header>Most successful bots
-    <small>All Time</small>
-    <div class="more">
-        <a href="{% url 'games:player-bots' player.name %}">
-            <i class="fa fa-plus-square"></i> more
-        </a>
-    </div>
+<header>Player bots
+    <small>All</small>
 </header>
 
+<footer>
+    <nav>
+        {% with request.resolver_match.url_name as page %}
+        <ul>
+            <li class="{% if page == 'player-bots' %}active{% endif %}">
+                {% url 'games:player-bots' player as url %}
+                <a href="{{ url }}">Most Successful</a></li>
+
+            <li class="{% if page == 'player-bots-active' %}active{% endif %}">
+                {% url 'games:player-bots-active' player as url %}
+                <a href="{{ url }}">Most Active</a></li>
+
+            <li class="{% if page == 'player-bots-challenging' %}active{% endif %}">
+                {% url 'games:player-bots-challenging' player as url %}
+                <a href="{{ url }}">Most Challenging</a></li>
+        </ul>
+        {% endwith %}
+    </nav>
+</footer>
+
 <article>
+    {% block player-bots-content %}
     <div class="table-responsive table-borderless">
         <table class="table table-borderless">
             <thead>
                 <tr>
                     <th class="col-xs-3">Game</th>
                     <th class="col-xs-3">Rank</th>
-                    <th class="col-xs-3">Game difficulty</th>
-                    <th class="col-xs-3">
-                        <span>Wins</span>
-                        <span class="sep">/</span>
-                        <span>Draws</span>
-                        <span class="sep">/</span>
-                        <span>Losses</span>
-                    </th>
+                    <th class="col-xs-3">Score</th>
+                    <th class="col-xs-3">Winrate</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,21 +58,15 @@
                         </div>
                     </td>
                     <td>
-                        {{ bot.game.difficulty_text }}
+                        {{ bot.score|floatformat:2 }}
                         <div class="color-bar">
-                            <div class="difficulty" style="width: {{ bot.difficulty_percent }}%"></div>
+                            <div class="player" style="width: {{ bot.score_percent }}%"></div>
                         </div>
                     </td>
                     <td>
-                        <span>{{ bot.wins }}</span>
-                        <span class="sep">/</span>
-                        <span>{{ bot.draws }}</span>
-                        <span class="sep">/</span>
-                        <span>{{ bot.losses }}</span>
+                        {{ bot.win_percent|floatformat:2 }}%
                         <div class="color-bar">
                             <div class="win" style="width: {{ bot.win_percent }}%"></div>
-                            <div class="draw" style="width: {{ bot.draw_percent }}%"></div>
-                            <div class="loss" style="width: {{ bot.loss_percent }}%"></div>
                         </div>
                     </td>
                 </tr>
@@ -65,5 +74,7 @@
             </tbody>
         </table>
     </div>
+    {% endblock player-bots-content %}
 </article>
 </section>
+{% endblock player-content %}

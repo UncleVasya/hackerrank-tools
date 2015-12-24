@@ -1,0 +1,48 @@
+{% extends "games/player_bots.html" %}
+
+{% block player-bots-content %}
+<div class="table-responsive table-borderless">
+    <table class="table table-borderless">
+        <thead>
+            <tr>
+                <th class="col-xs-3">Game</th>
+                <th class="col-xs-3">Game Difficulty</th>
+                <th class="col-xs-3">Bot Rank</th>
+                <th class="col-xs-3">Total Bots</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for bot in bot_list %}
+            {% url 'games:game-detail' bot.game.slug as game_url %}
+
+            <tr class="bot-row" data-link="{{ game_url }}">
+                <td class="game">
+                    <a href="{{ game_url }}"> {{ bot.game.name }} </a>
+                    <div class="subtext">
+                        Score: {{ bot.score|floatformat:2 }}
+                    </div>
+                </td>
+                <td>
+                    {{ bot.game.difficulty_text }}
+                    <div class="color-bar">
+                        <div class="difficulty" style="width: {{ bot.difficulty_percent }}%"></div>
+                    </div>
+                </td>
+                <td>
+                    {{ bot.rank }}
+                    <div class="color-bar">
+                        <div class="rank" style="width: {{ bot.rank_percent }}%"></div>
+                    </div>
+                </td>
+                <td>
+                    {{ bot.game.bot_set.count }}
+                    <div class="color-bar">
+                        <div class="bots" style="width: {{ bot.game_bots_percent }}%"></div>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock player-bots-content %}

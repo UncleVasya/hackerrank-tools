@@ -1,3 +1,11 @@
+section a,
+section a:visited,
+section a:hover,
+section a:active,
+section a:focus {
+    color: #A9CF54;
+}
+
 section header {
 	font-size: 16px;
 	color: white;
@@ -27,6 +35,43 @@ section header .more a {
     margin-left: 10px;
 }
 
+section footer {
+    margin: 0 0 12px 0;
+}
+
+section footer nav {
+    margin: 0 0 -12px;
+    padding: 0;
+}
+
+section footer nav ul {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+section footer nav ul li {
+    margin: 0 0 -3px -2px;
+    padding: 2px 2px 0;
+    display: inline-block;
+}
+
+section footer nav ul li a {
+    padding: 9px 7px 9px 7px;
+    margin-right: 10px;
+    text-shadow: none;
+    height: 38px;
+}
+
+section footer nav ul li.active a {
+    box-shadow: 0 -2px 2px rgba(10,10,10,0.4);
+    background: #242F39;
+}
+
+section footer nav ul li>a, section footer nav ul li div {
+    display: block;
+}
+
 section article {
 	box-shadow: 0 0 3px rgba(10,10,10,0.4);
 	border: 1px solid #242F39;
@@ -40,14 +85,6 @@ section article {
 section article p {
 	color: #cccccc;
 	padding: 4px
-}
-
-section article a,
-section article a:visited,
-section article a:hover,
-section article a:active,
-section article a:focus {
-    color: #A9CF54;
 }
 
 .table-borderless,
@@ -276,7 +313,8 @@ table .avatar img {
 }
 
 .color-bar .opponent,
-.color-bar .loss {
+.color-bar .loss,
+.color-bar .bots{
     background: #EA030E;
 }
 
@@ -284,7 +322,7 @@ table .avatar img {
     background: #979797;
 }
 
-.color-bar .rank {
+.color-bar .rank, .color-bar .matches {
     background: #FBB829;
 }
 

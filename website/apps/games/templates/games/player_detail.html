@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load staticfiles %}
 
 {% block page_scripts %}
@@ -10,17 +10,19 @@
 {% endblock page_styles %}
 
 {% block content %}
+    {% url 'games:player-overview' player.name as player_url %}
+
     <div class="page-overview">
         <div class="page-overview-primary">
             <div class="avatar">
-                <a href="{% url 'games:player-overview' player.name %}">
+                <a href="{{ player_url }}">
                     <img src="{{ player.avatar }}" alt="{{ player.name }}">
                 </a>
             </div>
             <div class="page-overview-title">
                 <h1> {{ player.name }}
                     <small class="country">({{ player.country }})</small>
-                    <small>Overview</small>
+                    <small>{% block player-page-title %}Overview{% endblock %}</small>
                 </h1>
             </div>
         </div>
@@ -29,7 +31,7 @@
             <dl>
                 <dd>
                     <time class="timeago"
-                          datetime="{{ match_list.first.date|date:"c" }}"
+                          datetime="{{ match_list.first.date|date:'c' }}"
                           title="{{ match_list.first.date }}">
                     </time>
                 </dd>
@@ -54,15 +56,27 @@
         </div>
     </div>
     <div class="page-menu">
+        {% url 'games:player-matches' player.name as player_matches_url %}
+        {% url 'games:player-bots' player.name as player_bots_url %}
+
         <nav class="menu-links">
+            {% with request.resolver_match.url_name as page %}
             <ul>
-                <li class="active"><a href="/players/175549053">Overview</a></li>
-                <li class=""><a href="/players/175549053/matches">Matches</a></li>
-                <li class=""><a href="/players/175549053/heroes">Heroes</a></li>
+                <li class="{% if page == 'player-overview' %}active{% endif %}">
+                    <a href="{{ player_url }}">Overview</a></li>
+
+                <li class="{% if 'player-bots' in page %}active{% endif %}">
+                    <a href="{{ player_bots_url }}">Bots</a></li>
+
+                <li class="{% if page == 'player-matches' %}active{% endif %}">
+                    <a href="{{ player_matches_url }}">Matches</a></li>
             </ul>
+            {% endwith %}
         </nav>
     </div>
 
-    {% include "games/player_overview_bots.html" %}
-    {% include "games/player_overview_matches.html" %}
-{% endblock %} <!-- content -->
+    {% block player-content %}
+        {% include 'games/player_overview_bots.html' %}
+        {% include 'games/player_overview_matches.html' %}
+    {% endblock player-content %}
+{% endblock content %}
