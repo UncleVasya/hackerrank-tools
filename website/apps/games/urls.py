@@ -1,6 +1,6 @@
 from django.conf.urls import url
 from apps.games.views import GameList, GameDetail, MatchList, MatchDetail, PlayerBots, PlayerBotsActive, \
-    PlayerBotsChallenging
+    PlayerBotsChallenging, PlayerMatches
 from apps.games.views import PlayerList, PlayerOverview
 
 urlpatterns = [
@@ -25,7 +25,7 @@ urlpatterns = [
         name='player-bots-challenging'),
 
 
-    url(r'^players/(?P<slug>[-\w]+)/matches/$', PlayerBots.as_view(),
+    url(r'^players/(?P<slug>[-\w]+)/matches/$', PlayerMatches.as_view(),
         name='player-matches'),
 
     url(r'^matches/$', MatchList.as_view(),

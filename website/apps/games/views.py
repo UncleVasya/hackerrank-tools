@@ -114,6 +114,7 @@ class PlayerDetail(DetailView):
                 match.player, match.opponent = opponents
             else:
                 match.player, match.opponent = opponents[::-1]  # reversed
+            match.opponent_name = match.opponent.bot.player.name
 
             # match result
             if match.result == 0:
@@ -145,32 +146,36 @@ class PlayerDetail(DetailView):
         return context
 
 
+def add_matches_stats(matches):
+    for match in matches:
+        # opponents stats: relative rank (%)
+        game_bots = match.game.bot_set.count()
+        player_rank = float(match.player.bot.rank) / game_bots * 100
+        opponent_rank = float(match.opponent.bot.rank) / game_bots * 100
+        rank_delta = (player_rank - opponent_rank) / 2
+        match.player_rank = 50 - rank_delta
+        match.opponent_rank = 50 + rank_delta
+
+        # opponents stats: relative score (%)
+        leader_score = match.game.bot_set.first().score
+        player_score = match.player.bot.score / leader_score * 100
+        opponent_score = match.opponent.bot.score / leader_score * 100
+        score_delta = (player_score - opponent_score) / 2
+        match.player_score = 50 + score_delta
+        match.opponent_score = 50 - score_delta
+
+        # opponents stats: win chance (%)
+        total_score = match.player.bot.score + match.opponent.bot.score
+        match.win_chance = match.player.bot.score / total_score * 100
+
+
 class PlayerOverview(PlayerDetail):
     def get_context_data(self, **kwargs):
         context = super(PlayerOverview, self).get_context_data(**kwargs)
 
         # matches stats
         matches = self.object.matches
-        for match in matches:
-            # opponents stats: relative rank (%)
-            game_bots = match.game.bot_set.count()
-            player_rank = float(match.player.bot.rank) / game_bots * 100
-            opponent_rank = float(match.opponent.bot.rank) / game_bots * 100
-            rank_delta = (player_rank - opponent_rank) / 2
-            match.player_rank = 50 - rank_delta
-            match.opponent_rank = 50 + rank_delta
-
-            # opponents stats: relative score (%)
-            leader_score = match.game.bot_set.first().score
-            player_score = match.player.bot.score / leader_score * 100
-            opponent_score = match.opponent.bot.score / leader_score * 100
-            score_delta = (player_score - opponent_score) / 2
-            match.player_score = 50 + score_delta
-            match.opponent_score = 50 - score_delta
-
-            # opponents stats: win chance (%)
-            total_score = match.player.bot.score + match.opponent.bot.score
-            match.win_chance = match.player.bot.score / total_score * 100
+        add_matches_stats(matches)
 
         # bots stats
         bots = self.object.bot_set.all()
@@ -282,6 +287,22 @@ class PlayerBotsChallenging(PlayerDetail):
 
         context.update({
             'bot_list': sorted(bots, key=lambda bot: -bot.difficulty_percent),
+        })
+
+        return context
+
+
+class PlayerMatches(PlayerDetail):
+    template_name = 'games/player_matches.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(PlayerMatches, self).get_context_data(**kwargs)
+
+        matches = self.object.matches
+        add_matches_stats(matches)
+
+        context.update({
+            'match_list': matches,
         })
 
         return context

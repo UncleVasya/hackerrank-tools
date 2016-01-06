@@ -56,8 +56,8 @@
         </div>
     </div>
     <div class="page-menu">
-        {% url 'games:player-matches' player.name as player_matches_url %}
         {% url 'games:player-bots' player.name as player_bots_url %}
+        {% url 'games:player-matches' player.name as player_matches_url %}
 
         <nav class="menu-links">
             {% with request.resolver_match.url_name as page %}

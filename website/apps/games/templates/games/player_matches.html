@@ -1,14 +1,16 @@
+{% extends "games/player_detail.html" %}
+
+{% block player-page-title %}Matches{% endblock %}
+
+{% block player-content %}
 <section>
-<header>Latest matches
-    <div class="more">
-        <a href="{% url 'games:player-matches' player.name %}">
-            <i class="fa fa-plus-square"></i> more
-        </a>
-    </div>
+<header>Player matches
+    <small>All</small>
 </header>
 
 <article>
-    <div class="table-responsive table-borderless center-block">
+    <div class="table-responsive table-borderless">
+        <div class="table-responsive table-borderless center-block">
         <table class="table table-borderless">
             <thead>
                 <tr>
@@ -80,3 +82,4 @@
     </div>
 </article>
 </section>
+{% endblock player-content %}
