@@ -12,24 +12,25 @@ class GameList(ListView):
     def get_queryset(self):
         queryset = super(GameList, self).get_queryset()
 
-        # data prefetch greatly reduces number of DB queries
-        # (from 60 to 4 for this view)
-        queryset = queryset.prefetch_related(
-            Prefetch(
-                'bot_set',
-                queryset=Bot.objects.select_related('player'),
-                to_attr='bots',
-            )
-        ).annotate(
-            max_score=Max('bot__score'),
+        queryset = queryset.annotate(
             bot_count=Count('bot'),
         )
 
-        for game in queryset:
-            game.leader = next(bot for bot in game.bots
-                               if bot.score == game.max_score)
-
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(GameList, self).get_context_data(**kwargs)
+        games = context['game_list']
+
+        game_bots_max = max([game.bot_count for game in games])
+        game_matches_max = max([game.match_set.count() for game in games])
+        for game in games:
+            game.leader = game.bot_set.first().player
+            game.difficulty_percent = (1 - game.difficulty) * 100
+            game.bots_percent = float(game.bot_count) / game_bots_max * 100
+            game.matches_percent = float(game.match_set.count()) / game_matches_max * 100
+
+        return context
 
 
 class GameDetail(DetailView):

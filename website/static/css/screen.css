@@ -17,6 +17,10 @@ ol, ul {
     list-style: none;
 }
 
+.container-main {
+    min-height: 600px;
+}
+
 .menu-primary {
     background: #242F39;
     position: relative;
@@ -100,6 +104,7 @@ div.footer-nav {
 }
 
 section {
+    margin-top: 6px;
     margin-bottom: 12px;
 }
 

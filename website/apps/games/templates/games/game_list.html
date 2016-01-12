@@ -1,47 +1,82 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
+{% block page_scripts %}
+    <script src="{% static 'games/js/base.js' %}"></script>
+{% endblock page_scripts %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{% static 'games/css/base.css' %}">
+{% endblock page_styles %}
+
 {% block content %}
-    <h1> Games list</h1>
-    <br>
+
+<div class="page-overview">
+    <div class="page-overview-primary">
+        <div class="page-overview-title">
+            <h1> Games
+                <small>Overview</small>
+            </h1>
+        </div>
+    </div>
+</div>
+
+<section>
+<article>
     <div class="table-responsive">
-        <table class="table table-bordered table-hover">
+        <table class="table table-borderless">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Bots</th>
-                    <th>Leader</th>
-                    <th>Difficulty</th>
+                    <th>Game</th>
+                    <th>Best bot</th>
+                    <th>Bots total</th>
+                    <th>Matches parsed</th>
+                    <th>Game difficulty</th>
                 </tr>
             </thead>
             <tbody>
             {% for game in game_list %}
                 {% url 'games:game-detail' game.slug as game_url %}
-                {% url 'games:player-detail' game.leader.player.name as leader_url %}
+                {% url 'games:player-overview' game.leader.name as leader_url %}
 
-                {# color row accordingly to game difficulty #}
-                {% if game.difficulty == "Difficult" %}
-                    <tr class="game_row warning">
-                {% elif game.difficulty == "Expert" %}
-                    <tr class="game_row danger">
-                {% else %}
-                    <tr class="game_row success">
-                {% endif %}
-                        <td> {{ forloop.counter }} </td>
-                        <td>
-                            <a href="{{ game_url }}"> {{ game.name }} </a>
-                        </td>
-                        <td> {{ game.bot_count }} </td>
-                        <td>
-                            <a href="{{ leader_url }}"> {{ game.leader.player.name }} </a>
-                        </td>
-                        <td> {{ game.difficulty}} </td>
-                    </tr>
+                <tr class="game-row">
+                    <td>
+                        <a href="{{ game_url }}"> {{ game.name }} </a>
+                    </td>
+                    <td>
+                        <div class="avatar">
+                            <a href="{{ leader_url }}">
+                                <img src="{{ game.leader.avatar }}">
+                            </a>
+                        </div>
+                        <a href="{{ leader_url }}"> {{ game.leader }} </a>
+                        <div class="subtext">
+                            {{ game.leader.country }}
+                        </div>
+                    </td>
+                    <td>
+                        {{ game.bot_set.count }}
+                        <div class="color-bar">
+                            <div class="bots" style="width: {{ game.bots_percent }}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        {{ game.match_set.count }}
+                        <div class="color-bar">
+                            <div class="matches" style="width: {{ game.matches_percent }}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        {{ game.difficulty_text}}
+                        <div class="color-bar">
+                            <div class="difficulty" style="width: {{ game.difficulty_percent }}%"></div>
+                        </div>
+                    </td>
+                </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
+</article>
+</section>
 {% endblock %}
-
-
