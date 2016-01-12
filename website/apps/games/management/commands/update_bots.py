@@ -68,16 +68,25 @@ def get_bots_data(game):
 
 
 def parse_bots_data(game, objects):
-    bots_added = players_added = 0
-
+    # filter out duplicates (practice and non-practice versions of same bot)
+    names = set()
+    newlist = []
     for bot in objects:
+        if bot['hacker'] not in names:
+            newlist.append(bot)
+            names.add(bot['hacker'])
+    objects = newlist
+
+    bots_added = players_added = 0
+    for rank, bot in enumerate(objects, 1):
         # bot owner
         player, created = update_player(bot)
         if created:
             players_added += 1
 
         # bot itself
-        _, created = update_bot(bot, game, player)
+        _, created = update_bot(bot, game, player, rank)
+
         if created:
             bots_added += 1
 
@@ -98,12 +107,12 @@ def update_player(bot):
     )
 
 
-def update_bot(bot, game, player):
+def update_bot(bot, game, player, rank):
     return Bot.objects.update_or_create(
         game=game,
         player=player,
         defaults={
-            'rank': bot['rank'],
+            'rank': rank,
             'score': bot['score'],
             'language': bot['language'],
         })
