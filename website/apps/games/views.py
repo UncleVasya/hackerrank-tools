@@ -54,24 +54,56 @@ class PlayerList(ListView):
                 to_attr='bots'
             )
         ).annotate(
-            score=Sum('bot__score'),
             bot_count=Count('bot'),
+            score=Sum('bot__score'),
         )
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(PlayerList, self).get_context_data(**kwargs)
+
+        # TODO: remove this limit when pagination is done
+        context['player_list'] = context['player_list'][:100]
+
+        players = context['player_list']
 
         games = Game.objects.annotate(max_score=Max('bot__score'))
 
-        for player in queryset:
+        # absolute stats
+        for player in players:
             player.top1 = player.top10 = 0
 
             for bot in player.bots:
                 game = next(x for x in games if x.pk == bot.game.pk)
 
-                if bot.score == game.max_score:
+                if bot.rank == 1:
                     player.top1 += 1
                 if bot.score >= game.max_score * Decimal(0.9):
                     player.top10 += 1  # top 10% of score for this game
 
-        return queryset
+        # relative stats (for graphs)
+        score_max = max([player.score for player in players])
+        top1_max = max([player.top1 for player in players])
+        top10_max = max([player.top10 for player in players])
+
+        players_info = players.annotate(bot_count=Count('bot'))
+        bots_max = players_info.aggregate(Max('bot_count'))['bot_count__max']
+        for player, player_info in zip(players, players_info):
+            player.bot_count = player_info.bot_count
+            player.bots_percent = float(player.bot_count) / bots_max * 100
+
+        players_info = Player.objects.annotate(match_count=Count('bot__match'))
+        matches_max = players_info.aggregate(Max('match_count'))['match_count__max']
+        players_info = dict(players_info.values_list('pk', 'match_count'))
+        for player in players:
+            player.score_percent = Decimal(player.score) / score_max * 100
+            player.top1_percent = float(player.top1) / top1_max * 100
+            player.top10_percent = float(player.top10) / top10_max * 100
+            player.match_count = players_info[player.pk]
+            player.matches_percent = float(player.match_count) / matches_max * 100
+
+        return context
 
 
 # This view is used as a base class for other views,

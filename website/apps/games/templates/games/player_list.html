@@ -1,20 +1,39 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
+{% block page_scripts %}
+    <script src="{% static 'games/js/base.js' %}"></script>
+{% endblock page_scripts %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{% static 'games/css/base.css' %}">
+{% endblock page_styles %}
+
 {% block content %}
-    <h1> Players: </h1>
-    <br>
+
+<div class="page-overview">
+    <div class="page-overview-primary">
+        <div class="page-overview-title">
+            <h1> Players
+                <small>Overview</small>
+            </h1>
+        </div>
+    </div>
+</div>
+
+<section>
+<article>
     <div class="table-responsive">
-        <table class="table table-bordered table-hover">
+        <table class="table table-borderless">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Player</th>
-                    <th>Bots</th>
-                    <th>1st place </th>
-                    <th>Top 10%</th>
-                    <th>Score</th>
-                    <th>Country</th>
+                    <th class="cell-centered">Rank</th>
+                    <th class="col-xs-3">Player</th>
+                    <th class="col-xs-3">Score</th>
+                    <th class="col-xs-3">Bots</th>
+                    <th class="col-xs-1">1st place </th>
+                    <th class="col-xs-1">Top 10%</th>
+                    <th class="col-xs-1">Matches</th>
                 </tr>
             </thead>
             <tbody>
@@ -22,20 +41,55 @@
                 {% url 'games:player-overview' player.name as player_url %}
 
                 <tr class="player_row">
-                    <td> {{ forloop.counter }} </td>
-                    <td>
-                        <a href="{{ player_url }}"> {{ player.name }} </a>
+                    <td class="cell-centered">
+                        {{ forloop.counter }}
                     </td>
-                    <td> {{ player.bot_count }} </td>
-                    <td> {{ player.top1 }} </td>
-                    <td> {{ player.top10 }} </td>
-                    <td> {{ player.score|floatformat:2 }} </td>
-                    <td> {{ player.country}} </td>
+                    <td>
+                        <div class="avatar">
+                            <a href="{{ player_url }}">
+                                <img src="{{ player.avatar }}">
+                            </a>
+                        </div>
+                        <a href="{{ player_url }}"> {{ player.name }} </a>
+                        <div class="subtext">
+                            {{ player.country }}
+                        </div>
+                    </td>
+                    <td>
+                        {{ player.score|floatformat:2 }}
+                        <div class="color-bar">
+                            <div class="score" style="width: {{ player.score_percent }}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        {{ player.bot_count }}
+                        <div class="color-bar">
+                            <div class="bots" style="width: {{ player.bots_percent }}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        {{ player.top1 }}
+                        <div class="color-bar">
+                            <div class="top1" style="width: {{ player.top1_percent }}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        {{ player.top10 }}
+                        <div class="color-bar">
+                            <div class="top10" style="width: {{ player.top10_percent }}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        {{ player.match_count }}
+                        <div class="color-bar">
+                            <div class="matches" style="width: {{ player.matches_percent }}%"></div>
+                        </div>
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
+</article>
+</section>
 {% endblock %}
-
-

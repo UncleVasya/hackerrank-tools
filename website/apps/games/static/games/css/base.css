@@ -309,7 +309,8 @@ table .avatar img {
 }
 
 .color-bar .player,
-.color-bar .win {
+.color-bar .win,
+.color-bar .score {
     background: #A9CF54;
 }
 
@@ -327,7 +328,11 @@ table .avatar img {
     background: #FBB829;
 }
 
-.color-bar .difficulty {
+.color-bar .difficulty,
+.color-bar .top10 {
     background: #76B8A6;
 }
 
+.color-bar .top1 {
+    background: #F26522;
+}
