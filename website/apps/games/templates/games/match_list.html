@@ -1,18 +1,37 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
+{% block page_scripts %}
+    <script src="{% static 'games/js/base.js' %}"></script>
+{% endblock page_scripts %}
+
+{% block page_styles %}
+    <link rel="stylesheet" href="{% static 'games/css/base.css' %}">
+{% endblock page_styles %}
+
 {% block content %}
-    <h1> Matches: </h1>
-    <br>
+
+<div class="page-overview">
+    <div class="page-overview-primary">
+        <div class="page-overview-title">
+            <h1> Matches
+                <small>Overview</small>
+            </h1>
+        </div>
+    </div>
+</div>
+
+<section>
+<article>
     <div class="table-responsive">
-        <table class="table table-bordered table-hover">
+        <table class="table table-borderless">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>id</th>
-                    <th>Date</th>
-                    <th>Game</th>
-                    <th colspan="2">Opponents</th>
+                    <th class="col-xs-2">Match ID</th>
+                    <th class="col-xs-2">Game</th>
+                    <th class="col-xs-3">Player 1</th>
+                    <th class="col-xs-3">Player 2</th>
+                    <th class="col-xs-2">Relative strength (%)</th>
                 </tr>
             </thead>
             <tbody>
@@ -20,33 +39,60 @@
                 {% url 'games:match-detail' match.hk_id as match_url %}
                 {% url 'games:game-detail' match.game.slug as game_url %}
 
-                <tr class="match_row">
-                    <td> {{ forloop.counter }} </td>
+                <tr class="match-row" data-link="{{ match_url }}">
                     <td>
-                        <a href="{{ match_url }}"> {{ match.hk_id }} </a>
+                        <div>
+                            <a class="match_id" href="{{ match_url }}">
+                                {{ match.hk_id }}
+                            </a>
+                        </div>
+                        <time class="timeago subtext"
+                              datetime="{{ match.date|date:"c" }}"
+                              title="{{ match.date }}">
+                            {{ match.date }}
+                        </time>
                     </td>
-                    <td> {{ match.date }} </td>
                     <td>
-                        <a href="{{ game_url }}"> {{ match.game }} </a>
+                        <a class="link-white" href="{{ game_url }}">
+                            {{ match.game }}
+                        </a>
                     </td>
 
-                    {% for bot in match.bots.all %}
-                        {% url 'games:player-detail' bot.player.name as player_url %}
+                    {% for opponent in match.opponent_set.all %}
+                        {% url 'games:player-overview' opponent.bot.player.name as player_url %}
 
-                        {% if match.result == 0 %}
-                            <td class="warning">
-                        {% elif match.result == forloop.counter %}
-                            <td class="success">
-                        {% else %}
-                            <td class="danger">
-                        {% endif %}
-
-                            <a href="{{ player_url }}"> {{ bot.player }} </a>
+                        <td class="opponent">
+                            <div class="avatar">
+                                <a href="{{ player_url }}">
+                                    <img src="{{ opponent.bot.player.avatar }}">
+                                </a>
+                            </div>
+                            <a href="{{ player_url }}">
+                                {{ opponent.bot.player.name }}
+                                {% if match.result == forloop.counter %}
+                                    <i class="fa fa-check"></i>
+                                {% endif %}
+                            </a>
+                            <div class="subtext">
+                                {{ opponent.bot.player.country }}
+                            </div>
                         </td>
                     {% endfor %}
+
+                    <td>
+                        <span>{{ match.player_score|floatformat:0 }}</span>
+                        <span class="sep">/</span>
+                        <span>{{ match.opponent_score|floatformat:0 }}</span>
+                        <div class="color-bar">
+                            <div class="player" style="width: {{ match.player_score }}%"></div>
+                            <div class="opponent" style="width: {{ match.opponent_score }}%"></div>
+                        </div>
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
+</article>
+</section>
 {% endblock %}

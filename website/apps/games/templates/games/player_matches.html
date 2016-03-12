@@ -9,7 +9,7 @@
 </header>
 
 <article>
-    <div class="table-responsive table-borderless">
+    <div class="table-responsive">
         <table class="table table-borderless">
             <thead>
                 <tr>
@@ -57,7 +57,9 @@
                     </td>
 
                     <td>
-                        <a href="{{ game_url }}"> {{ match.game }} </a>
+                        <a class="link-white" href="{{ game_url }}">
+                            {{ match.game }}
+                        </a>
                     </td>
                     <td>
                         {{ match.win_chance|floatformat:2 }}%

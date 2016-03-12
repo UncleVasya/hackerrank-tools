@@ -81,7 +81,7 @@ section article {
 	clear: right
 }
 
-/* Nothing uses it currently */
+/* Nothing uses this currently */
 section article p {
 	color: #cccccc;
 	padding: 4px
@@ -92,6 +92,10 @@ section article p {
 .table-borderless tbody tr th,
 .table-borderless thead tr th {
     border: none;
+}
+
+.table-responsive {
+    overflow-y: hidden;
 }
 
 table {
@@ -218,11 +222,11 @@ tbody tr:hover {
     color: #979797;
 }
 
-.match-row :not(.opponent) a,
-.match-row :not(.opponent) a:visited,
-.match-row :not(.opponent) a:hover,
-.match-row :not(.opponent) a:active,
-.match-row :not(.opponent) a:focus {
+a.link-white,
+a.link-white:visited,
+a.link-white:hover,
+a.link-white:active,
+a.link-white:focus {
     color: white;
 }
 
@@ -324,15 +328,30 @@ table .avatar img {
     background: #979797;
 }
 
-.color-bar .rank, .color-bar .matches {
+.color-bar .rank {
     background: #FBB829;
 }
 
-.color-bar .difficulty,
+.color-bar .matches {
+    background: #FBB829;
+}
+
+.color-bar .difficulty {
+    background: #76B8A6;
+}
+
 .color-bar .top10 {
     background: #76B8A6;
 }
 
 .color-bar .top1 {
     background: #F26522;
+}
+
+.color-bar .player1 {
+    background: #76B8A6;
+}
+
+.color-bar .player2 {
+    background: #FBB829;
 }

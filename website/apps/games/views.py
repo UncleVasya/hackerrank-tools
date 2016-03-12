@@ -348,14 +348,29 @@ class MatchList(ListView):
     def get_queryset(self):
         queryset = super(MatchList, self).get_queryset()
 
-        queryset = queryset.select_related('game').prefetch_related(
+        queryset = queryset.prefetch_related(
             Prefetch(
-                'bots',
-                queryset=Bot.objects.select_related('player'),
+                'opponent_set',
+                queryset=Opponent.objects.select_related('bot', 'bot__player')
+            )
+        ).prefetch_related(
+            Prefetch(
+                'game',
+                queryset=Game.objects.prefetch_related('bot_set')
             )
         )
 
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(MatchList, self).get_context_data(**kwargs)
+
+        matches = context['match_list']
+        for match in matches:
+            match.player, match.opponent = list(match.opponent_set.all())
+        add_matches_stats(matches)
+
+        return context
 
 
 class MatchDetail(DetailView):
