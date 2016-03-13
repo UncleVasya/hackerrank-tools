@@ -380,7 +380,22 @@ class MatchDetail(DetailView):
         'game'
     ).prefetch_related(
         Prefetch(
-            'bots',
-            queryset=Bot.objects.select_related('player')
+            'opponent_set',
+            queryset=Opponent.objects.select_related('bot', 'bot__player')
         )
     )
+
+    def get_context_data(self, **kwargs):
+        context = super(MatchDetail, self).get_context_data(**kwargs)
+
+        match = self.object
+
+        game_bots = match.game.bot_set.count()
+        leader_score = match.game.bot_set.first().score
+        for opponent in match.opponent_set.all():
+            bot = opponent.bot
+            bot.rank_percent = float(bot.rank) / game_bots * 100
+            bot.rank_percent = 100 - bot.rank_percent
+            bot.score_percent = bot.score / leader_score * 100
+
+        return context

@@ -1,33 +1,115 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load staticfiles %}
+
+{% load filters %}
+
+{% block page_scripts %}
+    <script src="{% static 'games/js/base.js' %}"></script>
+{% endblock page_scripts %}
 
 {% block page_styles %}
     <link rel="stylesheet" href="{% static 'games/css/base.css' %}">
 {% endblock page_styles %}
 
 {% block content %}
+    {% url 'games:match-overview' match.hk_id as match_url %}
+
+    <div class="page-overview">
+        <div class="page-overview-primary">
+            <div class="page-overview-title">
+                <h1>
+                    Match {{ match.hk_id }}
+                    <small>{% block player-page-title %}Overview{% endblock %}</small>
+                </h1>
+            </div>
+        </div>
+
+        <div class="page-overview-secondary">
+            <dl>
+                <dd>{{ match.game.name }}</dd>
+                <dt>Game</dt>
+            </dl>
+            <dl>
+                <dd>
+                    <time class="timeago"
+                          datetime="{{ match.date|date:'c' }}"
+                          title="{{ match.date }}">
+                    </time>
+                </dd>
+                <dt>Match played</dt>
+            </dl>
+        </div>
+    </div>
+
+    <div class="match-result">
+        {% if match.result == 0 %}
+            <div class="draw">Draw</div>
+        {% elif match.result == 1 %}
+            <div class="player1">{{ match.opponent_set.all.0.bot.player.name }} Victory</div>
+        {% else %}
+            <div class="player2">{{ match.opponent_set.all.1.bot.player.name }} Victory</div>
+        {% endif %}
+    </div>
+
     <div class="row">
-        <div class="col-md-5">
-            <br>
-            <div class="labels">
-                <p> Game: </p>
-                <p> Date: </p>
-                <p> Result: </p>
-            </div>
+    {% for opponent in match.opponent_set.all %}
+        {% url 'games:player-overview' opponent.bot.player.name as player_url %}
 
-            <div class="values">
-                <p> {{ match.game.name }} </p>
-                <p> {{ match.date }} </p>
-                <p> {{ match.result }} </p>
-            </div>
+        <div class="col-md-6">
+            <section class="match-opponent player{{ forloop.counter }}">
+                <header>
+                    <a href="{{ player_url }}">
+                        {{ opponent.bot.player.name }}
+                    </a>
+                    <div class="subtext">
+                        {{ opponent.bot.player.country }}
+                    </div>
+                </header>
+                <article>
+                    <div class="avatar">
+                        <a href="{{ player_url }}">
+                            <img src="{{ opponent.bot.player.avatar }}">
+                        </a>
+                    </div>
+
+                    <div class="table-responsive match-opponent-stats">
+                        <table class="table table-borderless">
+                            <tbody>
+                                <tr>
+                                    <td class="col-md-3">Rank</td>
+                                    <td class="col-md-2">
+                                        {{ opponent.bot.rank }}
+                                    </td>
+                                    <td>
+                                        <div class="color-bar">
+                                            <div class="player{{ forloop.counter }}" style="width: {{ opponent.bot.rank_percent }}%"></div>
+                                            <div style="width:{{ opponent.bot.rank_percent|remaining }}%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Score</td>
+                                    <td>
+                                        {{ opponent.bot.score|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        <div class="color-bar">
+                                            <div class="player{{ forloop.counter }}" style="width: {{ opponent.bot.score_percent }}%"></div>
+                                            <div style="width:{{ opponent.bot.score_percent|remaining }}%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Language</td>
+                                    <td colspan="2">{{ opponent.bot.language }}</td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            </section>
         </div>
-
-         <div class=" col-md-7">
-            <br>
-            <p class="labels"> Message: </p>
-            {{ match.message|linebreaks }}
-        </div>
-    </div> <!-- row -->
-
-     {% include "games/bot_list.html" with bot_list=match.bots.all %}
+    {% endfor %}
+    </div>
 {% endblock %} <!-- content -->

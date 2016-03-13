@@ -349,9 +349,65 @@ table .avatar img {
 }
 
 .color-bar .player1 {
-    background: #76B8A6;
+    background: #92A525;
 }
 
 .color-bar .player2 {
-    background: #FBB829;
+    background: #C23C2A;
+}
+
+.match-result {
+    font-size: 1.5em;
+    font-weight: 800;
+    line-height: 2em;
+    vertical-align: middle;
+    text-align: center;
+    text-shadow: 1px 1px 5px #000;
+    text-transform: uppercase;
+}
+
+.match-result .player1 {
+    color: #92A525;
+}
+
+.match-result .player2 {
+    color: #C23C2A;
+}
+
+.match-result .draw {
+    color: #FBB829;
+}
+
+section.match-opponent.player1 header a {
+    color: #92A525;
+}
+
+section.match-opponent.player2 header a {
+    color: #C23C2A;
+}
+
+section.match-opponent.player2 header {
+    text-align: right;
+}
+
+.match-opponent .avatar {
+    vertical-align: top;
+}
+
+.match-opponent .avatar img {
+    width: 75px;
+    height: 75px;
+    display: block;
+}
+
+section.match-opponent article {
+    display: flex;
+}
+
+.match-opponent-stats {
+    width: 100%;
+}
+
+.match-opponent-stats table > tbody > tr > td {
+    padding-left: 8px;
 }
