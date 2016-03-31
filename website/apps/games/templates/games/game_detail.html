@@ -1,31 +1,52 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 {% load staticfiles %}
+
+{% block page_scripts %}
+    <script src="{% static 'games/js/base.js' %}"></script>
+{% endblock page_scripts %}
 
 {% block page_styles %}
     <link rel="stylesheet" href="{% static 'games/css/base.css' %}">
 {% endblock page_styles %}
 
 {% block content %}
-    <div class="row">
-        <div class="col-md-5">
-            <br>
-            <div class="labels">
-                <p> Name: </p>
-                <p> Difficulty: </p>
-            </div>
+    {% url 'games:game-overview' game.name as game_url %}
 
-            <div class="values">
-                <p> {{ game.name }} </p>
-                <p> {{ game.difficulty }} </p>
+    <div class="page-overview">
+        <div class="page-overview-primary">
+            <div class="avatar">
+                <a href="{{ game_url }}">
+                </a>
+            </div>
+            <div class="page-overview-title">
+                <h1>
+                    <a href="{{ game_url }}">{{ game.name }}</a>
+                    <small>{% block player-page-title %}Overview{% endblock %}</small>
+                </h1>
             </div>
         </div>
 
-         <div class=" col-md-7">
-            <br>
-            <p class="labels"> Description: </p>
-            {{ game.description|linebreaks }}
+        <div class="page-overview-secondary">
+            <dl>
+                <dd>
+                    <time class="timeago"
+                          datetime="{{ match_list.first.date|date:'c' }}"
+                          title="{{ match_list.first.date }}">
+                    </time>
+                </dd>
+                <dt>Last Match</dt>
+            </dl>
+            <dl>
+                <dd>{{ match_list.length }}</dd>
+                <dt>Matches played</dt>
+            </dl>
+            <dl>
+                <dd>{{ game.difficulty_text }}</dd>
+                <dt>Difficulty</dt>
+            </dl>
         </div>
-    </div> <!-- row -->
+    </div>
 
-     {% include "games/bot_list.html" with bot_list=game.bot_set.all %}
+    {% include "games/game_overview_bots.html" with bot_list=game.bot_set.all %}
+    {% include "games/game_overview_matches.html" with match_list=game.matches %}
 {% endblock %} <!-- content -->

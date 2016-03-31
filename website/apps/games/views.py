@@ -33,11 +33,88 @@ class GameList(ListView):
         return context
 
 
-class GameDetail(DetailView):
+class GameOverview(DetailView):
+    model = Game
     slug_field = 'slug__iexact'  # case-insensitive match
 
-    queryset = Game.objects.prefetch_related(  # optimized query
-        Prefetch('bot_set', queryset=Bot.objects.select_related('player')))
+    def __init__(self, **kwargs):
+        super(GameOverview, self).__init__(**kwargs)
+        self.bot_stats = defaultdict(lambda: defaultdict(int))
+
+    def get_queryset(self):
+        queryset = super(GameOverview, self).get_queryset()
+
+        queryset = queryset.prefetch_related(
+            Prefetch(
+                'bot_set',
+                queryset=Bot.objects.annotate(match_count=Count('match'))
+                                    .select_related('player')
+            )
+        )
+
+        return queryset
+
+    def get_object(self, queryset=None):
+        game = super(GameOverview, self).get_object()
+
+        game.matches = Match.objects.filter(
+            game=game
+        ).prefetch_related(
+            Prefetch(
+                'opponent_set',
+                queryset=Opponent.objects.select_related('bot', 'bot__player')
+            )
+        )
+
+        return game
+
+    def get_context_data(self, **kwargs):
+        context = super(GameOverview, self).get_context_data()
+
+        bots = self.object.bot_set.all()
+        bot_stats = self.bot_stats
+        leader_score = bots.first().score
+
+        # matches stats
+        matches = self.object.matches
+        for match in matches:
+            opponents = list(match.opponent_set.all())
+            if match.result == 0:
+                for opponent in opponents:
+                    bot_stats[opponent.bot]['draws'] += 1
+            else:
+                winner, loser = opponents if match.result == 1 else opponents[::-1]
+                bot_stats[winner.bot]['wins'] += 1
+                bot_stats[loser.bot]['losses'] += 1
+
+        # matches stats: opponents relative score (%)
+        for match in matches:
+            match.player, match.opponent = list(match.opponent_set.all())
+
+            player_score = match.player.bot.score / leader_score * 100
+            opponent_score = match.opponent.bot.score / leader_score * 100
+            score_delta = (player_score - opponent_score) / 2
+            match.player_score = 50 + score_delta
+            match.opponent_score = 50 - score_delta
+
+        # bots stats
+        for bot in bots:
+            stats = bot_stats[bot]
+            match_count = bot.match_count
+
+            bot.score_percent = bot.score / leader_score * 100
+
+            bot.wins = stats['wins']
+            bot.draws = stats['draws']
+            bot.losses = stats['losses']
+
+            bot.win_percent = bot.draw_percent = bot.loss_percent = 0
+            if match_count:
+                bot.win_percent = float(bot.wins) / match_count * 100
+                bot.draw_percent = float(bot.draws) / match_count * 100
+                bot.loss_percent = float(bot.losses) / match_count * 100
+
+        return context
 
 
 class PlayerList(ListView):

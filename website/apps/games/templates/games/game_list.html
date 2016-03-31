@@ -36,7 +36,7 @@
             </thead>
             <tbody>
             {% for game in game_list %}
-                {% url 'games:game-detail' game.slug as game_url %}
+                {% url 'games:game-overview' game.slug as game_url %}
                 {% url 'games:player-overview' game.leader.name as leader_url %}
 
                 <tr class="game-row">

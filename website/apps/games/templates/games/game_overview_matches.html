@@ -1,0 +1,75 @@
+<section>
+<header>Latest matches
+{#    <div class="more">#}
+{#        <a href="{% url 'games:player-matches' player.name %}">#}
+{#            <i class="fa fa-plus-square"></i> more#}
+{#        </a>#}
+{#    </div>#}
+</header>
+
+<article>
+    <div class="table-responsive">
+        <table class="table table-borderless">
+            <thead>
+                <tr>
+                    <th class="col-xs-2">Match ID</th>
+                    <th class="col-xs-3">Player 1</th>
+                    <th class="col-xs-3">Player 2</th>
+                    <th class="col-xs-2">Relative strength (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for match in match_list %}
+                {% url 'games:match-detail' match.hk_id as match_url %}
+
+                <tr class="match-row" data-link="{{ match_url }}">
+                    <td>
+                        <div>
+                            <a class="match_id" href="{{ match_url }}">
+                                {{ match.hk_id }}
+                            </a>
+                        </div>
+                        <time class="timeago subtext"
+                              datetime="{{ match.date|date:"c" }}"
+                              title="{{ match.date }}">
+                            {{ match.date }}
+                        </time>
+                    </td>
+
+                    {% for opponent in match.opponent_set.all %}
+                        {% url 'games:player-overview' opponent.bot.player.name as player_url %}
+
+                        <td class="opponent">
+                            <div class="avatar">
+                                <a href="{{ player_url }}">
+                                    <img src="{{ opponent.bot.player.avatar }}">
+                                </a>
+                            </div>
+                            <a href="{{ player_url }}">
+                                {{ opponent.bot.player.name }}
+                                {% if match.result == forloop.counter %}
+                                    <i class="fa fa-check"></i>
+                                {% endif %}
+                            </a>
+                            <div class="subtext">
+                                {{ opponent.bot.player.country }}
+                            </div>
+                        </td>
+                    {% endfor %}
+
+                    <td>
+                        <span>{{ match.player_score|floatformat:0 }}</span>
+                        <span class="sep">/</span>
+                        <span>{{ match.opponent_score|floatformat:0 }}</span>
+                        <div class="color-bar">
+                            <div class="player" style="width: {{ match.player_score }}%"></div>
+                            <div class="opponent" style="width: {{ match.opponent_score }}%"></div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+</section>

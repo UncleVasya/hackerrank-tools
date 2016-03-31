@@ -1,0 +1,75 @@
+<section>
+<header>Leaderboard
+    <small>Top 15</small>
+    <div class="more">
+{#        <a href="{% url 'games:game-bots' game.name %}">#}
+{#            <i class="fa fa-plus-square"></i> more#}
+{#        </a>#}
+    </div>
+</header>
+
+<article>
+    <div class="table-responsive table-borderless">
+        <table class="table table-borderless">
+            <thead>
+                <tr>
+                    <th class="col-xs-3">Player</th>
+                    <th class="col-xs-1">Rank</th>
+                    <th class="col-xs-3">Score</th>
+                    <th class="col-xs-1">Language</th>
+                    <th class="col-xs-4">
+                        <span>Wins</span>
+                        <span class="sep">/</span>
+                        <span>Draws</span>
+                        <span class="sep">/</span>
+                        <span>Losses</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for bot in bot_list %}
+                {% url 'games:player-overview' bot.player.name as player_url %}
+
+                <tr class="bot-row" data-link="{{ player_url }}">
+                    <td class="player">
+                        <div class="avatar">
+                            <a href="{{ player_url }}">
+                                <img src="{{ bot.player.avatar }}">
+                            </a>
+                        </div>
+                        <a href="{{ player_url }}"> {{ bot.player.name }} </a>
+                        <div class="subtext">
+                            {{ bot.player.country }}
+                        </div>
+                    </td>
+                    <td>
+                        {{ bot.rank }}
+                    </td>
+                    <td>
+                        {{ bot.score|floatformat:2 }}
+                        <div class="color-bar">
+                            <div class="score" style="width: {{ bot.score_percent }}%"></div>
+                        </div>
+                    </td>
+                    <td>
+                        {{ bot.language }}
+                    </td>
+                    <td>
+                        <span>{{ bot.wins }}</span>
+                        <span class="sep">/</span>
+                        <span>{{ bot.draws }}</span>
+                        <span class="sep">/</span>
+                        <span>{{ bot.losses }}</span>
+                        <div class="color-bar">
+                            <div class="win" style="width: {{ bot.win_percent }}%"></div>
+                            <div class="draw" style="width: {{ bot.draw_percent }}%"></div>
+                            <div class="loss" style="width: {{ bot.loss_percent }}%"></div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</article>
+</section>
