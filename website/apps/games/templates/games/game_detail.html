@@ -28,25 +28,26 @@
 
         <div class="page-overview-secondary">
             <dl>
+                <dd>{{ game.difficulty_text }}</dd>
+                <dt>Difficulty</dt>
+            </dl>
+            <dl>
                 <dd>
                     <time class="timeago"
                           datetime="{{ match_list.first.date|date:'c' }}"
                           title="{{ match_list.first.date }}">
+                        -----
                     </time>
                 </dd>
                 <dt>Last Match</dt>
             </dl>
             <dl>
-                <dd>{{ match_list.length }}</dd>
-                <dt>Matches played</dt>
-            </dl>
-            <dl>
-                <dd>{{ game.difficulty_text }}</dd>
-                <dt>Difficulty</dt>
+                <dd>{{ game.match_set.count }}</dd>
+                <dt>Matches parsed</dt>
             </dl>
         </div>
     </div>
 
-    {% include "games/game_overview_bots.html" with bot_list=game.bot_set.all %}
-    {% include "games/game_overview_matches.html" with match_list=game.matches %}
+    {% include "games/game_overview_bots.html" %}
+    {% include "games/game_overview_matches.html" %}
 {% endblock %} <!-- content -->

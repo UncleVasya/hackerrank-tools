@@ -1,6 +1,6 @@
 <section>
 <header>Leaderboard
-    <small>Top 15</small>
+    <small>Top 10</small>
     <div class="more">
 {#        <a href="{% url 'games:game-bots' game.name %}">#}
 {#            <i class="fa fa-plus-square"></i> more#}
@@ -13,8 +13,8 @@
         <table class="table table-borderless">
             <thead>
                 <tr>
+                    <th class="col-xs-1 cell-centered">Rank</th>
                     <th class="col-xs-3">Player</th>
-                    <th class="col-xs-1">Rank</th>
                     <th class="col-xs-3">Score</th>
                     <th class="col-xs-1">Language</th>
                     <th class="col-xs-4">
@@ -31,6 +31,9 @@
                 {% url 'games:player-overview' bot.player.name as player_url %}
 
                 <tr class="bot-row" data-link="{{ player_url }}">
+                    <td class="cell-centered">
+                        {{ bot.rank }}
+                    </td>
                     <td class="player">
                         <div class="avatar">
                             <a href="{{ player_url }}">
@@ -41,9 +44,6 @@
                         <div class="subtext">
                             {{ bot.player.country }}
                         </div>
-                    </td>
-                    <td>
-                        {{ bot.rank }}
                     </td>
                     <td>
                         {{ bot.score|floatformat:2 }}
