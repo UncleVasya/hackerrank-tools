@@ -33,39 +33,22 @@ class GameList(ListView):
         return context
 
 
-class GameOverview(DetailView):
+class GameDetail(DetailView):
     model = Game
     slug_field = 'slug__iexact'  # case-insensitive match
 
-    bots_limit = 10
-    matches_limit = 15
-
-    def __init__(self, **kwargs):
-        super(GameOverview, self).__init__(**kwargs)
-        self.bot_stats = defaultdict(lambda: defaultdict(int))
-
-    def get_queryset(self):
-        queryset = super(GameOverview, self).get_queryset()
-
-        return queryset
-
     def get_object(self, queryset=None):
-        game = super(GameOverview, self).get_object()
+        game = super(GameDetail, self).get_object()
 
         game.bots = Bot.objects.filter(game=game)\
             .select_related('player')\
             .annotate(match_count=Count('match'))\
             .prefetch_related(
                 Prefetch(
-                    'match_set',
-                    queryset=Match.objects.prefetch_related(
-                        Prefetch(
-                            'opponent_set',
-                            queryset=Opponent.objects.select_related('bot')
-                        )
-                    )
+                    'opponent_set',
+                    queryset=Opponent.objects.select_related('match')
                 )
-            )
+        )
 
         game.matches = Match.objects.filter(game=game)\
             .prefetch_related(
@@ -78,48 +61,56 @@ class GameOverview(DetailView):
         return game
 
     def get_context_data(self, **kwargs):
-        context = super(GameOverview, self).get_context_data()
+        context = super(GameDetail, self).get_context_data()
 
         game = self.object
 
-        bots = game.bots[:self.bots_limit]
-        bots = list(bots)  # evaluate queryset
-        bot_stats = self.bot_stats
-        leader_score = bots[0].score
+        context.update({
+            'bots_count': game.bot_set.count(),
+            'leader_score': game.bot_set.first().score,
+            'last_match': game.match_set.first()
+        })
 
-        # matches stats
-        for bot in bots:
-            for match in bot.match_set.all():
-                if hasattr(match, 'processed'):
-                    continue
+        return context
 
-                opponents = list(match.opponent_set.all())
-                if match.result == 0:
-                    for opponent in opponents:
-                        bot_stats[opponent.bot]['draws'] += 1
-                else:
-                    winner, loser = opponents if match.result == 1 else opponents[::-1]
-                    bot_stats[winner.bot]['wins'] += 1
-                    bot_stats[loser.bot]['losses'] += 1
 
-                match.processed = True
+def calc_bots_stats(bots):
+    for bot in bots:
+        # count wins/draws/losses
+        bot.wins = bot.draws = bot.losses = 0
+        for opponent in bot.opponent_set.all():
+            match = opponent.match
+            if match.result == 0:
+                bot.draws += 1
+            elif match.result == opponent.position:
+                bot.wins += 1
+            else:
+                bot.losses += 1
+
+        # calc percentages
+        bot.win_percent = bot.draw_percent = bot.loss_percent = 0
+        match_count = bot.match_count
+        if match_count:
+            bot.win_percent = float(bot.wins) / match_count * 100
+            bot.draw_percent = float(bot.draws) / match_count * 100
+            bot.loss_percent = float(bot.losses) / match_count * 100
+
+
+class GameOverview(GameDetail):
+    bots_limit = 10
+    matches_limit = 15
+
+    def get_context_data(self, **kwargs):
+        context = super(GameOverview, self).get_context_data()
+
+        game = self.object
+        leader_score = context['leader_score']
 
         # bots stats
+        bots = game.bots[:self.bots_limit]
+        calc_bots_stats(bots)
         for bot in bots:
-            stats = bot_stats[bot]
-            match_count = bot.match_count
-
             bot.score_percent = bot.score / leader_score * 100
-
-            bot.wins = stats['wins']
-            bot.draws = stats['draws']
-            bot.losses = stats['losses']
-
-            bot.win_percent = bot.draw_percent = bot.loss_percent = 0
-            if match_count:
-                bot.win_percent = float(bot.wins) / match_count * 100
-                bot.draw_percent = float(bot.draws) / match_count * 100
-                bot.loss_percent = float(bot.losses) / match_count * 100
 
         # matches stats
         matches = game.matches[:self.matches_limit]
@@ -136,6 +127,27 @@ class GameOverview(DetailView):
         context.update({
             'bot_list': bots,
             'match_list': matches,
+        })
+
+        return context
+
+
+class GameBots(GameDetail):
+    template_name = 'games/game_bots.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(GameBots, self).get_context_data(**kwargs)
+
+        game = self.object
+        bots = game.bots
+        leader_score = context['leader_score']
+
+        calc_bots_stats(bots)
+        for bot in bots:
+            bot.score_percent = bot.score / leader_score * 100
+
+        context.update({
+            'bot_list': bots,
         })
 
         return context

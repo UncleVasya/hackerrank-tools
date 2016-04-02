@@ -1,15 +1,32 @@
+{% extends "games/game_detail.html" %}
+
+{% block game-page-title %}Bots{% endblock %}
+
+{% block game-content %}
 <section>
-<header>Leaderboard
-    <small>Top 10</small>
-    <div class="more">
-{#        <a href="{% url 'games:game-bots' game.name %}">#}
-{#            <i class="fa fa-plus-square"></i> more#}
-{#        </a>#}
-    </div>
+<header>Game bots
+    <small>All</small>
 </header>
 
+<footer>
+    <nav>
+        {% with request.resolver_match.url_name as page %}
+        <ul>
+            <li class="{% if page == 'game-bots' %}active{% endif %}">
+                {% url 'games:game-bots' game as url %}
+                <a href="{{ url }}">Most Successful</a></li>
+
+            <li class="{% if page == 'game-bots-active' %}active{% endif %}">
+                {% url 'games:game-bots-active' game as url %}
+                <a href="{{ url }}">Most Active</a></li>
+        </ul>
+        {% endwith %}
+    </nav>
+</footer>
+
 <article>
-    <div class="table-responsive table-borderless">
+    {% block game-bots-content %}
+    <div class="table-responsive">
         <table class="table table-borderless">
             <thead>
                 <tr>
@@ -17,18 +34,12 @@
                     <th class="col-xs-3">Player</th>
                     <th class="col-xs-3">Score</th>
                     <th class="col-xs-2">Language</th>
-                    <th class="col-xs-3">
-                        <span>Wins</span>
-                        <span class="sep">/</span>
-                        <span>Draws</span>
-                        <span class="sep">/</span>
-                        <span>Losses</span>
-                    </th>
+                    <th class="col-xs-3">Winrate</th>
                 </tr>
             </thead>
             <tbody>
             {% for bot in bot_list %}
-                {% url 'games:player-overview' bot.player.name as player_url %}
+                {% url 'games:player-detail' bot.player.name as player_url %}
 
                 <tr class="bot-row" data-link="{{ player_url }}">
                     <td class="cell-centered">
@@ -48,22 +59,16 @@
                     <td>
                         {{ bot.score|floatformat:2 }}
                         <div class="color-bar">
-                            <div class="score" style="width: {{ bot.score_percent }}%"></div>
+                            <div class="player" style="width: {{ bot.score_percent }}%"></div>
                         </div>
                     </td>
                     <td>
                         {{ bot.language }}
                     </td>
                     <td>
-                        <span>{{ bot.wins }}</span>
-                        <span class="sep">/</span>
-                        <span>{{ bot.draws }}</span>
-                        <span class="sep">/</span>
-                        <span>{{ bot.losses }}</span>
+                        {{ bot.win_percent|floatformat:2 }}% {{ bot.wins }} / {{ bot.match_count }}
                         <div class="color-bar">
                             <div class="win" style="width: {{ bot.win_percent }}%"></div>
-                            <div class="draw" style="width: {{ bot.draw_percent }}%"></div>
-                            <div class="loss" style="width: {{ bot.loss_percent }}%"></div>
                         </div>
                     </td>
                 </tr>
@@ -71,5 +76,7 @@
             </tbody>
         </table>
     </div>
+    {% endblock game-bots-content %}
 </article>
 </section>
+{% endblock game-content %}

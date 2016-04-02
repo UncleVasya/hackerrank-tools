@@ -10,7 +10,7 @@
 {% endblock page_styles %}
 
 {% block content %}
-    {% url 'games:game-overview' game.name as game_url %}
+    {% url 'games:game-overview' game.slug as game_url %}
 
     <div class="page-overview">
         <div class="page-overview-primary">
@@ -34,20 +34,47 @@
             <dl>
                 <dd>
                     <time class="timeago"
-                          datetime="{{ match_list.first.date|date:'c' }}"
-                          title="{{ match_list.first.date }}">
-                        -----
+                          datetime="{{ last_match.date|date:'c' }}"
+                          title="{{last_match.date }}">
+                        {{ last_match.date|date:'c'|default:'-' }}
                     </time>
                 </dd>
                 <dt>Last Match</dt>
             </dl>
             <dl>
+                <dd>{{ bots_count }}</dd>
+                <dt>Bots</dt>
+            </dl>
+            <dl>
                 <dd>{{ game.match_set.count }}</dd>
-                <dt>Matches parsed</dt>
+                <dt>Matches</dt>
             </dl>
         </div>
     </div>
 
-    {% include "games/game_overview_bots.html" %}
-    {% include "games/game_overview_matches.html" %}
-{% endblock %} <!-- content -->
+    <div class="page-menu">
+        {% url 'games:game-bots' game.slug as game_bots_url %}
+        {% url 'games:game-matches' game.slug as game_matches_url %}
+
+        <nav class="menu-links">
+            {% with request.resolver_match.url_name as page %}
+            <ul>
+                <li class="{% if page == 'game-overview' %}active{% endif %}">
+                    <a href="{{ game_url }}">Overview</a></li>
+
+                <li class="{% if 'game-bots' in page %}active{% endif %}">
+                    <a href="{{ game_bots_url }}">Bots</a></li>
+
+                <li class="{% if page == 'game-matches' %}active{% endif %}">
+                    <a href="{{ game_matches_url }}">Matches</a></li>
+            </ul>
+            {% endwith %}
+        </nav>
+    </div>
+
+    {% block game-content %}
+        {% include "games/game_overview_bots.html" %}
+        {% include "games/game_overview_matches.html" %}
+    {% endblock game-content %}
+
+{% endblock %} {# content #}
