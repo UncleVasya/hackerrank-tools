@@ -2,9 +2,9 @@
 <header>Leaderboard
     <small>Top 10</small>
     <div class="more">
-{#        <a href="{% url 'games:game-bots' game.name %}">#}
-{#            <i class="fa fa-plus-square"></i> more#}
-{#        </a>#}
+        <a href="{% url 'games:game-bots' game.slug %}">
+            <i class="fa fa-plus-square"></i> more
+        </a>
     </div>
 </header>
 

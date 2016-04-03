@@ -95,6 +95,17 @@ def calc_bots_stats(bots):
             bot.loss_percent = float(bot.losses) / match_count * 100
 
 
+def calc_relative_strength(match, leader_score):
+    match.player, match.opponent = list(match.opponent_set.all())
+
+    # opponents relative score (%)
+    player_score = match.player.bot.score / leader_score * 100
+    opponent_score = match.opponent.bot.score / leader_score * 100
+    score_delta = (player_score - opponent_score) / 2
+    match.player_score = 50 + score_delta
+    match.opponent_score = 50 - score_delta
+
+
 class GameOverview(GameDetail):
     bots_limit = 10
     matches_limit = 15
@@ -114,14 +125,7 @@ class GameOverview(GameDetail):
         # matches stats
         matches = game.matches[:self.matches_limit]
         for match in matches:
-            match.player, match.opponent = list(match.opponent_set.all())
-
-            # opponents relative score (%)
-            player_score = match.player.bot.score / leader_score * 100
-            opponent_score = match.opponent.bot.score / leader_score * 100
-            score_delta = (player_score - opponent_score) / 2
-            match.player_score = 50 + score_delta
-            match.opponent_score = 50 - score_delta
+            calc_relative_strength(match, leader_score)
 
         context.update({
             'bot_list': bots,
@@ -171,6 +175,26 @@ class GameBotsActive(GameDetail):
 
         context.update({
             'bot_list': sorted(bots, key=lambda bot: -bot.matches_percent),
+        })
+
+        return context
+
+
+class GameMatches(GameDetail):
+    template_name = 'games/game_matches.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(GameMatches, self).get_context_data(**kwargs)
+
+        game = self.object
+        matches = game.matches
+        leader_score = game.bot_set.first().score
+
+        for match in matches:
+            calc_relative_strength(match, leader_score)
+
+        context.update({
+            'match_list': matches,
         })
 
         return context

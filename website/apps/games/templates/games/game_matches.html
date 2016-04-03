@@ -1,10 +1,11 @@
+{% extends "games/game_detail.html" %}
+
+{% block game-page-title %}Matches{% endblock %}
+
+{% block game-content %}
 <section>
-<header>Latest matches
-    <div class="more">
-        <a href="{% url 'games:game-matches' game.slug %}">
-            <i class="fa fa-plus-square"></i> more
-        </a>
-    </div>
+<header>Game matches
+    <small>All</small>
 </header>
 
 <article>
@@ -73,3 +74,4 @@
     </div>
 </article>
 </section>
+{% endblock game-content %}

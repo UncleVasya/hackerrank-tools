@@ -33,6 +33,7 @@
                     <time class="timeago"
                           datetime="{{ match_list.first.date|date:'c' }}"
                           title="{{ match_list.first.date }}">
+                        {{ last_match.date|date:'c'|default:'-' }}
                     </time>
                 </dd>
                 <dt>Last Match</dt>
