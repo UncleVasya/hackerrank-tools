@@ -1,0 +1,60 @@
+{% extends "games/game_bots.html" %}
+
+{% block game-bots-content %}
+<div class="table-responsive">
+    <table class="table table-borderless">
+        <thead>
+            <tr>
+                <th class="col-xs-3">Player</th>
+                <th class="col-xs-3">Matches Played</th>
+                <th class="col-xs-2">Wins</th>
+                <th class="col-xs-2">Draws</th>
+                <th class="col-xs-2">Losses</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for bot in bot_list %}
+            {% url 'games:player-detail' bot.player.name as player_url %}
+
+            <tr class="bot-row" data-link="{{ player_url }}">
+                <td class="player">
+                    <div class="avatar">
+                        <a href="{{ player_url }}">
+                            <img src="{{ bot.player.avatar }}">
+                        </a>
+                    </div>
+                    <a href="{{ player_url }}"> {{ bot.player.name }} </a>
+                    <div class="subtext">
+                        {{ bot.player.country }}
+                    </div>
+                </td>
+                <td>
+                {{ bot.match_count }}
+                <div class="color-bar">
+                    <div class="matches" style="width: {{ bot.matches_percent }}%"></div>
+                </div>
+            </td>
+            <td>
+                {{ bot.wins }}
+                <div class="color-bar">
+                    <div class="win" style="width: {{ bot.win_percent }}%"></div>
+                </div>
+            </td>
+            <td>
+                {{ bot.draws }}
+                <div class="color-bar">
+                    <div class="draw" style="width: {{ bot.draw_percent }}%"></div>
+                </div>
+            </td>
+            <td>
+                {{ bot.losses }}
+                <div class="color-bar">
+                    <div class="loss" style="width: {{ bot.loss_percent }}%"></div>
+                </div>
+            </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock game-bots-content %}

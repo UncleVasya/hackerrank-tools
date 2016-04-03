@@ -67,7 +67,6 @@ class GameDetail(DetailView):
 
         context.update({
             'bots_count': game.bot_set.count(),
-            'leader_score': game.bot_set.first().score,
             'last_match': game.match_set.first()
         })
 
@@ -104,7 +103,7 @@ class GameOverview(GameDetail):
         context = super(GameOverview, self).get_context_data()
 
         game = self.object
-        leader_score = context['leader_score']
+        leader_score = game.bot_set.first().score
 
         # bots stats
         bots = game.bots[:self.bots_limit]
@@ -140,7 +139,7 @@ class GameBots(GameDetail):
 
         game = self.object
         bots = game.bots
-        leader_score = context['leader_score']
+        leader_score = game.bot_set.first().score
 
         calc_bots_stats(bots)
         for bot in bots:
@@ -148,6 +147,30 @@ class GameBots(GameDetail):
 
         context.update({
             'bot_list': bots,
+        })
+
+        return context
+
+
+class GameBotsActive(GameDetail):
+    template_name = 'games/game_bots_active.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(GameBotsActive, self).get_context_data(**kwargs)
+
+        game = self.object
+        bots = game.bots
+
+        matches_max = game.bot_set.all() \
+            .annotate(match_count=Count('match')) \
+            .aggregate(Max('match_count'))['match_count__max']
+
+        calc_bots_stats(bots)
+        for bot in bots:
+            bot.matches_percent = float(bot.match_count) / matches_max * 100
+
+        context.update({
+            'bot_list': sorted(bots, key=lambda bot: -bot.matches_percent),
         })
 
         return context
