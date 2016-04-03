@@ -35,7 +35,7 @@
                         <a href="{{ url }}"> {{ bot.player.name }} </a>
                     </td>
                 {% elif player %}
-                    {% url 'games:game-detail' bot.game.slug as url %}
+                    {% url 'games:game-overview' bot.game.slug as url %}
                     <td>
                         <a href="{{ url }}"> {{ bot.game.name }} </a>
                     </td>

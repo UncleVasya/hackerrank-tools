@@ -14,7 +14,7 @@
         </thead>
         <tbody>
         {% for bot in bot_list %}
-            {% url 'games:game-detail' bot.game.slug as game_url %}
+            {% url 'games:game-overview' bot.game.slug as game_url %}
 
             <tr class="bot-row" data-link="{{ game_url }}">
                 <td class="game">
@@ -23,7 +23,7 @@
                         Total bots: {{ bot.game.bot_set.count }}
                     </div>
                 </td>
-                 <td>
+                <td>
                     {{ bot.match_set.count }}
                     <div class="color-bar">
                         <div class="matches" style="width: {{ bot.matches_percent }}%"></div>

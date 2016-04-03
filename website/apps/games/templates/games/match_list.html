@@ -37,7 +37,7 @@
             <tbody>
             {% for match in match_list %}
                 {% url 'games:match-detail' match.hk_id as match_url %}
-                {% url 'games:game-detail' match.game.slug as game_url %}
+                {% url 'games:game-overview' match.game.slug as game_url %}
 
                 <tr class="match-row" data-link="{{ match_url }}">
                     <td>
