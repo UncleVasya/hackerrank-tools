@@ -7,28 +7,43 @@ from apps.games.models import Game, Player, Bot, Match, Opponent
 
 class GameList(ListView):
     model = Game
-    ordering = ['-bot_count']  # see annotates below
-
-    def get_queryset(self):
-        queryset = super(GameList, self).get_queryset()
-
-        queryset = queryset.annotate(
-            bot_count=Count('bot'),
-        )
-
-        return queryset
 
     def get_context_data(self, **kwargs):
         context = super(GameList, self).get_context_data(**kwargs)
         games = context['game_list']
 
-        game_bots_max = max([game.bot_count for game in games])
-        game_matches_max = max([game.match_set.count() for game in games])
+        # get bot counts for every game
+        bot_counts = Bot.objects.values_list('game')\
+            .annotate(bot_count=Count('*'))\
+            .order_by()
+        bot_counts = defaultdict(int, bot_counts)
+
         for game in games:
-            game.leader = game.bot_set.first().player
+            game.bot_count = bot_counts[game.id]
+
+        # get match counts for every game
+        match_counts = Match.objects.all().values_list('game')\
+            .annotate(match_count=Count('*'))\
+            .order_by()
+        match_counts = defaultdict(int, match_counts)
+
+        for game in games:
+            game.match_count = match_counts[game.id]
+
+        leaders = Bot.objects.filter(rank=1).select_related('player')
+        leaders = {bot.game_id: bot.player for bot in leaders}
+
+        game_bots_max = max([game.bot_count for game in games])
+        game_matches_max = max([game.match_count for game in games])
+        for game in games:
+            game.leader = leaders[game.id]
             game.difficulty_percent = (1 - game.difficulty) * 100
             game.bots_percent = float(game.bot_count) / game_bots_max * 100
-            game.matches_percent = float(game.match_set.count()) / game_matches_max * 100
+            game.matches_percent = float(game.match_count) / game_matches_max * 100
+
+        context.update({
+            'game_list': sorted(games, key=lambda game: -game.bot_count),
+        })
 
         return context
 
