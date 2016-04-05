@@ -1,7 +1,8 @@
 from collections import defaultdict
 from decimal import Decimal
-from django.db.models import Prefetch, Max, Count, Sum, Case, When
+from django.db.models import Prefetch, Max, Count, Sum
 from django.views.generic import ListView, DetailView
+from pure_pagination import Paginator, PageNotAnInteger
 from apps.games.models import Game, Player, Bot, Match, Opponent
 
 
@@ -540,10 +541,24 @@ class MatchList(ListView):
     def get_context_data(self, **kwargs):
         context = super(MatchList, self).get_context_data(**kwargs)
 
+        try:
+            page = self.request.GET.get('page', 1)
+        except PageNotAnInteger:
+            page = 1
+
         matches = context['match_list']
+
+        page = Paginator(matches, 50).page(page)
+
+        matches = page.object_list
         for match in matches:
-            match.player, match.opponent = list(match.opponent_set.all())
+            match.player, match.opponent = match.opponent_set.all()
         add_matches_stats(matches)
+
+        context.update({
+            'match_list': matches,
+            'page': page,
+        })
 
         return context
 

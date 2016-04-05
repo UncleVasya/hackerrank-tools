@@ -8,3 +8,4 @@ whitenoise==1.0.6
 requests==2.5.3
 django-debug-toolbar==1.4
 django-solo==1.1.0
+django-pure-pagination==0.3.0
