@@ -226,11 +226,9 @@ class PlayerList(ListView):
         queryset = queryset.prefetch_related(
             Prefetch(
                 'bot_set',
-                queryset=Bot.objects.select_related('game'),
                 to_attr='bots'
             )
         ).annotate(
-            bot_count=Count('bot'),
             score=Sum('bot__score'),
         )
 
@@ -238,46 +236,82 @@ class PlayerList(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(PlayerList, self).get_context_data(**kwargs)
-
-        # TODO: remove this limit when pagination is done
-        context['player_list'] = context['player_list'][:100]
-
         players = context['player_list']
 
+        # used to check if bot is in Top 10% by score
         games = Game.objects.annotate(max_score=Max('bot__score'))
+
+        # calc overall best results
+        bots_max = Player.objects\
+            .annotate(bot_count=Count('bot'))\
+            .aggregate(Max('bot_count'))['bot_count__max']
+
+        matches_max = Player.objects\
+            .annotate(match_count=Count('bot__match'))\
+            .aggregate(Max('match_count'))['match_count__max']
+
+        score_max = Player.objects\
+            .annotate(score=Sum('bot__score'))\
+            .aggregate(Max('score'))['score__max']
+
+        top1_max = Bot.objects.filter(rank=1).values('player_id')\
+            .annotate(top1_count=Count('*'))\
+            .aggregate(Max('top1_count'))['top1_count__max']
+
+        top10_counts = defaultdict(int)
+        for bot in Bot.objects.all():
+            game = next(x for x in games if x.id == bot.game_id)
+            if bot.score >= game.max_score * Decimal(0.9):
+                top10_counts[bot.player_id] += 1  # top 10% by score on this game
+        top10_max = max(top10_counts.values())
+
+        # paginate
+        page_num = self.request.GET.get('page', 1)
+        page = Paginator(players, 50).page(page_num)
+        players = page.object_list
+
+        player_ids = [player.id for player in players]
 
         # absolute stats
         for player in players:
             player.top1 = player.top10 = 0
 
             for bot in player.bots:
-                game = next(x for x in games if x.pk == bot.game.pk)
+                game = next(x for x in games if x.pk == bot.game_id)
 
                 if bot.rank == 1:
                     player.top1 += 1
                 if bot.score >= game.max_score * Decimal(0.9):
                     player.top10 += 1  # top 10% of score for this game
 
-        # relative stats (for graphs)
-        score_max = max([player.score for player in players])
-        top1_max = max([player.top1 for player in players])
-        top10_max = max([player.top10 for player in players])
-
-        players_info = players.annotate(bot_count=Count('bot'))
-        bots_max = players_info.aggregate(Max('bot_count'))['bot_count__max']
-        for player, player_info in zip(players, players_info):
-            player.bot_count = player_info.bot_count
+        bot_counts = Bot.objects.order_by()\
+            .filter(player__in=player_ids)\
+            .values('player')\
+            .annotate(bot_count=Count('*'))\
+            .values_list('player', 'bot_count')
+        bot_counts = dict(bot_counts)
+        for player in players:
+            player.bot_count = bot_counts[player.id]
             player.bots_percent = float(player.bot_count) / bots_max * 100
 
-        players_info = Player.objects.annotate(match_count=Count('bot__match'))
-        matches_max = players_info.aggregate(Max('match_count'))['match_count__max']
-        players_info = dict(players_info.values_list('pk', 'match_count'))
+        match_counts = Opponent.objects.order_by()\
+            .filter(bot__player__in=player_ids)\
+            .values('bot__player')\
+            .annotate(match_count=Count('*'))\
+            .values_list('bot__player', 'match_count')
+        match_counts = defaultdict(int, match_counts)
+
         for player in players:
             player.score_percent = Decimal(player.score) / score_max * 100
             player.top1_percent = float(player.top1) / top1_max * 100
             player.top10_percent = float(player.top10) / top10_max * 100
-            player.match_count = players_info[player.pk]
+            player.match_count = match_counts[player.id]
             player.matches_percent = float(player.match_count) / matches_max * 100
+
+        context.update({
+            'player_list': players,
+            'page': page,
+        })
 
         return context
 
@@ -540,17 +574,12 @@ class MatchList(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(MatchList, self).get_context_data(**kwargs)
-
-        try:
-            page = self.request.GET.get('page', 1)
-        except PageNotAnInteger:
-            page = 1
-
         matches = context['match_list']
 
-        page = Paginator(matches, 50).page(page)
-
+        page_num = self.request.GET.get('page', 1)
+        page = Paginator(matches, 50).page(page_num)
         matches = page.object_list
+
         for match in matches:
             match.player, match.opponent = match.opponent_set.all()
         add_matches_stats(matches)

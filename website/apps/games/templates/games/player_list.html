@@ -23,6 +23,7 @@
 
 <section>
 <article>
+    {{ page.render }}
     <div class="table-responsive">
         <table class="table table-borderless">
             <thead>
@@ -42,7 +43,7 @@
 
                 <tr class="player_row">
                     <td class="cell-centered">
-                        {{ forloop.counter }}
+                        {{ page.start_index|add:forloop.counter0 }}
                     </td>
                     <td>
                         <div class="avatar">
@@ -89,6 +90,9 @@
             {% endfor %}
             </tbody>
         </table>
+    </div>
+    <div id="pagination">
+        {{ page.render }}
     </div>
 </article>
 </section>
