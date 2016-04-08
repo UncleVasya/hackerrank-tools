@@ -112,4 +112,24 @@ section {
     text-align: center;
 }
 
+nav.pagination {
+    margin: 12px 0;
+}
 
+nav.pagination span {
+    display: inline-block;
+    text-align: center;
+    margin: 5px 0 0;
+}
+
+nav.pagination span a {
+    height: 100%;
+    padding: 8px 10px;
+    display: block;
+}
+
+nav.pagination .page-current {
+    color: #FFF;
+    background: #2E3740 none repeat scroll 0 0;
+    padding: 8px 10px;
+}

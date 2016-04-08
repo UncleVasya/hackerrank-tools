@@ -267,7 +267,7 @@ class PlayerList(ListView):
 
         # paginate
         page_num = self.request.GET.get('page', 1)
-        page = Paginator(players, 50).page(page_num)
+        page = Paginator(players, 50, request=self.request).page(page_num)
         players = page.object_list
 
         player_ids = [player.id for player in players]
@@ -310,7 +310,7 @@ class PlayerList(ListView):
 
         context.update({
             'player_list': players,
-            'page': page,
+            'pagination': page,
         })
 
         return context
@@ -586,7 +586,7 @@ class MatchList(ListView):
 
         context.update({
             'match_list': matches,
-            'page': page,
+            'pagination': page,
         })
 
         return context

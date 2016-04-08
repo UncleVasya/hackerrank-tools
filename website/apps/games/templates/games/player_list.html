@@ -23,7 +23,8 @@
 
 <section>
 <article>
-    {{ page.render }}
+    {% include 'pagination.html' with page_obj=pagination %}
+
     <div class="table-responsive">
         <table class="table table-borderless">
             <thead>
@@ -91,9 +92,8 @@
             </tbody>
         </table>
     </div>
-    <div id="pagination">
-        {{ page.render }}
-    </div>
+
+    {% include 'pagination.html' with page_obj=pagination %}
 </article>
 </section>
 {% endblock %}
