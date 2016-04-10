@@ -1,3 +1,7 @@
+<div class="pagination-info">
+    {{ pagination.start_index }} - {{ pagination.end_index }} of {{ pagination.paginator.count }}
+</div>
+
 <nav class="pagination">
     {% if page_obj.has_previous %}
         <span>

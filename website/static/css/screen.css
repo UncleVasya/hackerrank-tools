@@ -141,3 +141,9 @@ nav.pagination .page-current {
     background: #2E3740 none repeat scroll 0 0;
     padding: 8px 10px;
 }
+
+.pagination-info {
+    float: right;
+    margin: 15px 4px 0 0;
+    color: #D9D9D9;
+}
