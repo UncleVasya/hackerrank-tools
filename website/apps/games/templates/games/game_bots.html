@@ -13,11 +13,11 @@
         {% with request.resolver_match.url_name as page %}
         <ul>
             <li class="{% if page == 'game-bots' %}active{% endif %}">
-                {% url 'games:game-bots' game as url %}
+                {% url 'games:game-bots' game.slug as url %}
                 <a href="{{ url }}">Most Successful</a></li>
 
             <li class="{% if page == 'game-bots-active' %}active{% endif %}">
-                {% url 'games:game-bots-active' game as url %}
+                {% url 'games:game-bots-active' game.slug as url %}
                 <a href="{{ url }}">Most Active</a></li>
         </ul>
         {% endwith %}
@@ -39,7 +39,7 @@
             </thead>
             <tbody>
             {% for bot in bot_list %}
-                {% url 'games:player-detail' bot.player.name as player_url %}
+                {% url 'games:player-overview' bot.player.name as player_url %}
 
                 <tr class="bot-row" data-link="{{ player_url }}">
                     <td class="cell-centered">

@@ -14,7 +14,7 @@
         </thead>
         <tbody>
         {% for bot in bot_list %}
-            {% url 'games:player-detail' bot.player.name as player_url %}
+            {% url 'games:player-overview' bot.player.name as player_url %}
 
             <tr class="bot-row" data-link="{{ player_url }}">
                 <td class="player">
