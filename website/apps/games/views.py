@@ -156,9 +156,14 @@ class GameBots(GameDetail):
 
     def get_context_data(self, **kwargs):
         context = super(GameBots, self).get_context_data(**kwargs)
-
         game = self.object
         bots = game.bots
+
+        # paginate
+        page_num = self.request.GET.get('page', 1)
+        page = Paginator(bots, 50, request=self.request).page(page_num)
+        bots = page.object_list
+
         leader_score = game.bot_set.first().score
 
         calc_bots_stats(bots)
@@ -167,6 +172,7 @@ class GameBots(GameDetail):
 
         context.update({
             'bot_list': bots,
+            'pagination': page,
         })
 
         return context
@@ -177,9 +183,13 @@ class GameBotsActive(GameDetail):
 
     def get_context_data(self, **kwargs):
         context = super(GameBotsActive, self).get_context_data(**kwargs)
-
         game = self.object
-        bots = game.bots
+        bots = game.bots.order_by('-match_count')
+
+        # paginate
+        page_num = self.request.GET.get('page', 1)
+        page = Paginator(bots, 50, request=self.request).page(page_num)
+        bots = page.object_list
 
         matches_max = game.bot_set.all() \
             .annotate(match_count=Count('match')) \
@@ -190,7 +200,8 @@ class GameBotsActive(GameDetail):
             bot.matches_percent = float(bot.match_count) / matches_max * 100
 
         context.update({
-            'bot_list': sorted(bots, key=lambda bot: -bot.matches_percent),
+            'bot_list': bots,
+            'pagination': page,
         })
 
         return context
@@ -201,9 +212,14 @@ class GameMatches(GameDetail):
 
     def get_context_data(self, **kwargs):
         context = super(GameMatches, self).get_context_data(**kwargs)
-
         game = self.object
         matches = game.matches
+
+        # paginate
+        page_num = self.request.GET.get('page', 1)
+        page = Paginator(matches, 50, request=self.request).page(page_num)
+        matches = page.object_list
+
         leader_score = game.bot_set.first().score
 
         for match in matches:
@@ -211,6 +227,7 @@ class GameMatches(GameDetail):
 
         context.update({
             'match_list': matches,
+            'pagination': page,
         })
 
         return context
@@ -540,12 +557,18 @@ class PlayerMatches(PlayerDetail):
 
     def get_context_data(self, **kwargs):
         context = super(PlayerMatches, self).get_context_data(**kwargs)
-
         matches = self.object.matches
+
+        # paginate
+        page_num = self.request.GET.get('page', 1)
+        page = Paginator(matches, 50, request=self.request).page(page_num)
+        matches = page.object_list
+
         add_matches_stats(matches)
 
         context.update({
             'match_list': matches,
+            'pagination': page,
         })
 
         return context
@@ -577,7 +600,7 @@ class MatchList(ListView):
         matches = context['match_list']
 
         page_num = self.request.GET.get('page', 1)
-        page = Paginator(matches, 50).page(page_num)
+        page = Paginator(matches, 50, request=self.request).page(page_num)
         matches = page.object_list
 
         for match in matches:

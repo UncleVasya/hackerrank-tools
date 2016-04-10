@@ -25,6 +25,8 @@
 </footer>
 
 <article>
+    {% include 'pagination.html' with page_obj=pagination %}
+
     {% block game-bots-content %}
     <div class="table-responsive">
         <table class="table table-borderless">
@@ -77,6 +79,8 @@
         </table>
     </div>
     {% endblock game-bots-content %}
+
+    {% include 'pagination.html' with page_obj=pagination %}
 </article>
 </section>
 {% endblock game-content %}
