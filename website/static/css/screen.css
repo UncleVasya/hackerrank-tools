@@ -85,6 +85,10 @@ div.footer-nav {
     opacity: 0.6;
 }
 
+section footer nav ul li a:hover {
+    color: #FFF;
+}
+
 [data-link] {
     cursor: pointer;
 }
@@ -126,6 +130,10 @@ nav.pagination span a {
     height: 100%;
     padding: 8px 10px;
     display: block;
+}
+
+nav.pagination span a:hover{
+	background:#2E3740
 }
 
 nav.pagination .page-current {
