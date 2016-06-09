@@ -197,7 +197,9 @@ class GameBotsActive(GameDetail):
 
         calc_bots_stats(bots)
         for bot in bots:
-            bot.matches_percent = float(bot.match_count) / matches_max * 100
+            bot.matches_percent = 0
+            if matches_max:
+                bot.matches_percent = float(bot.match_count) / matches_max * 100
 
         context.update({
             'bot_list': bots,
@@ -506,7 +508,10 @@ class PlayerBotsActive(PlayerDetail):
         matches_max = max([bot.opponent_set.count() for bot in bots])
         for bot in bots:
             match_count = bot.match_set.count()
-            bot.matches_percent = float(match_count) / matches_max * 100
+
+            bot.matches_percent = 0
+            if matches_max:
+                bot.matches_percent = float(match_count) / matches_max * 100
 
             stats = self.bot_stats[bot.game]
 
