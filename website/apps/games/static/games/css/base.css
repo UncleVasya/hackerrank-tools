@@ -411,3 +411,14 @@ section.match-opponent article {
 .match-opponent-stats table > tbody > tr > td {
     padding-left: 8px;
 }
+
+.replay-caption {
+    font-size: 1.5em;
+    font-weight: 800;
+    line-height: 2em;
+    color: #76B8A6;
+    margin-bottom: 12px;
+    vertical-align: middle;
+    text-align: center;
+    text-shadow: 1px 1px 5px #000;
+}
