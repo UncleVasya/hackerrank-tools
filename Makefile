@@ -21,3 +21,14 @@ run:
 #
 deploy:
 	git subtree push --prefix website heroku master
+
+#
+# Uploads packed website folder on heroku.
+# Useful when push via git has issues.
+#
+deploy_archive:
+ifndef APP
+	python website/deploy_archive.py -a hktools-staging
+else
+	python website/deploy_archive.py -a $(APP)
+endif

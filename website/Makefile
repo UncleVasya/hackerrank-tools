@@ -42,7 +42,7 @@ shell:
 # Makes and applies migrations for all apps or just APP_NAME
 #
 migrate:
-ifndef APP_NAME
+ifndef APP
 	@echo Making migrations...
 	$(manage) makemigrations
 
@@ -51,11 +51,11 @@ ifndef APP_NAME
 
 	@echo Done
 else
-	@echo Making migrations for $(APP_NAME)...
-	$(manage) makemigrations $(APP_NAME)
+	@echo Making migrations for $(APP)...
+	$(manage) makemigrations $(APP)
 
-	@echo Applying migrations for $(APP_NAME)...
-	$(manage) migrate $(APP_NAME)
+	@echo Applying migrations for $(APP)...
+	$(manage) migrate $(APP)
 
 	@echo Done
 endif
@@ -81,6 +81,17 @@ update_bots:
 update_matches:
 	@echo Updating Match list from hackerrank.com...
 	$(manage) update_matches --limit ${limit} --backwards ${backwards} --forced ${forced}
+
+#
+# Uploads packed website folder on heroku.
+# Useful when push via git has issues.
+#
+deploy_archive:
+ifndef APP
+	python deploy_archive.py -a hktools-staging
+else
+	python deploy_archive.py -a $(APP)
+endif
 
 myscript:
 	$(manage) myscript

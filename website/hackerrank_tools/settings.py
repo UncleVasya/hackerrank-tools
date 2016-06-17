@@ -102,15 +102,6 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
-    # GoL visualizer
-    (
-        'lifegame',
-        os.path.join(os.path.dirname(BASE_DIR), 'game-of-life/visualizer/js')
-    ),
-    (
-        'lifegame',
-        os.path.join(os.path.dirname(BASE_DIR), 'game-of-life/visualizer/data')
-    ),
 )
 
 # Simplified static file serving.

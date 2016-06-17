@@ -5,13 +5,13 @@
 
 {% block page_scripts %}
     <script src="{% static 'games/js/base.js' %}"></script>
-    <script src="{% static 'lifegame/visualizer.js' %}"></script>
+    <script src="{% static 'lifegame/js/visualizer.js' %}"></script>
 
     <!-- visualizer setup -->
     <script>
 		$(document).ready(function() {
             var options = new Options();
-            options.data_dir = '{% static 'lifegame/' %}';
+            options.data_dir = '{% static 'lifegame/data/' %}';
 
             var container = document.getElementById('vis-container');
             var w = container.offsetWidth;
