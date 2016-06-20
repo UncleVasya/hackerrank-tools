@@ -64,18 +64,25 @@ function Replay(params) {
 
         var cells = this.meta['replaydata']['cells'];
 
-        // initialize cells dying turn
-        for (n = 0; n < cells.length; n++) {
-            cells[n][4] = this.duration + LifeSimulator.SIM_LENGTH + 1;
-        }
-
-        // simulate universe
-        var active_players = 0;
+		// players who didn't crash or timed out
+		var active_players = 0;
         for (p = 0; p < this.players; ++p) {
             if (this.meta['status'][p] === 'survived') {
                 ++active_players;
             }
         }
+
+        // initialize cells dying turn
+		var dying_turn = this.duration + 1;
+		if (active_players > 1 || params.meta) {
+			// we'll be doing simulation
+			dying_turn += LifeSimulator.SIM_LENGTH;
+		}
+        for (n = 0; n < cells.length; n++) {
+            cells[n][4] = dying_turn;
+        }
+
+        // simulate universe
         if (active_players > 1 || params.meta) {
 			new LifeSimulator(cells, this.rows, this.cols, this.duration).simulate();
             this.duration += LifeSimulator.SIM_LENGTH;
