@@ -4,6 +4,7 @@ import requests
 
 from django.core.management.base import BaseCommand
 import time
+from apps.games.converters import convert_replay
 
 from apps.games.management.commands.const import API_URL, HACKERRANK_URL
 from apps.games.models import Game, Match, ParsingInfo, Bot, Opponent
@@ -194,7 +195,8 @@ def parse_match(data):
                 'game': Game.objects.get(slug=data['challenge_slug']),
                 'result': data['result'],
                 'message': data['message'],
-                'date': datetime.datetime.fromtimestamp(int(data['updated_at']))
+                'date': datetime.datetime.fromtimestamp(int(data['updated_at'])),
+                'replay': convert_replay(data),
             }
         )
     except Exception as e:

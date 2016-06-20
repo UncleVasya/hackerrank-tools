@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 from solo.models import SingletonModel
 
@@ -48,6 +49,7 @@ class Match(models.Model):
     result = models.PositiveIntegerField()
     message = models.TextField()
     date = models.DateTimeField()
+    replay = JSONField(null=True)
     hk_id = models.PositiveIntegerField(unique=True)  # id on hackerrank.com
 
     class Meta:

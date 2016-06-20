@@ -6,7 +6,7 @@
 import requests
 
 
-def lifegame_convert(source):
+def conway_convert(source):
     # hackerrank defaults
     rows = cols = 29
     turns_required = 80
@@ -60,3 +60,16 @@ def lifegame_convert(source):
         replay['playerturns'] = [turns-1, turns]
 
     return replay
+
+
+CONVERTERS = {
+    'conway': conway_convert,
+}
+
+
+def convert_replay(source):
+    game = source['challenge_slug']
+
+    if game in CONVERTERS:
+        return CONVERTERS[game](source)
+    return None

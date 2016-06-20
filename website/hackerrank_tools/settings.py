@@ -42,6 +42,7 @@ INSTALLED_APPS = (
     'apps.games',
     'debug_toolbar',
     'solo',
+    'jsonify',
 )
 
 MIDDLEWARE_CLASSES = (
