@@ -1,1 +1,0 @@
-web: gunicorn hackerrank_tools.wsgi --log-file -
