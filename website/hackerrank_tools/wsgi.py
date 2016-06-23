@@ -11,7 +11,7 @@ import os
 from django.core.wsgi import get_wsgi_application
 from whitenoise.django import DjangoWhiteNoise
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hackerrank_tools.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.hackerrank_tools.settings")
 
 virtenv = os.environ.get('OPENSHIFT_PYTHON_DIR', '.') + '/virtenv/'
 virtualenv = os.path.join(virtenv, 'bin/activate_this.py')
