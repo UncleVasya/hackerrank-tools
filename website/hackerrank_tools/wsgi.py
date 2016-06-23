@@ -8,10 +8,14 @@ https://docs.djangoproject.com/en/1.6/howto/deployment/wsgi/
 """
 
 import os
+from os.path import dirname
+from os.path import realpath
 from django.core.wsgi import get_wsgi_application
+import sys
 from whitenoise.django import DjangoWhiteNoise
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.hackerrank_tools.settings")
+sys.path.append(dirname(dirname(realpath(__file__))))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hackerrank_tools.settings")
 
 virtenv = os.environ.get('OPENSHIFT_PYTHON_DIR', '.') + '/virtenv/'
 virtualenv = os.path.join(virtenv, 'bin/activate_this.py')
