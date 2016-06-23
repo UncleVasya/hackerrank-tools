@@ -34,13 +34,22 @@ class GameList(ListView):
         leaders = Bot.objects.filter(rank=1).select_related('player')
         leaders = {bot.game_id: bot.player for bot in leaders}
 
-        game_bots_max = max([game.bot_count for game in games])
-        game_matches_max = max([game.match_count for game in games])
+        game_bots_max = game_matches_max = 0
+        if games:
+            game_bots_max = max([game.bot_count for game in games])
+            game_matches_max = max([game.match_count for game in games])
+
         for game in games:
             game.leader = leaders[game.id]
             game.difficulty_percent = (1 - game.difficulty) * 100
-            game.bots_percent = float(game.bot_count) / game_bots_max * 100
-            game.matches_percent = float(game.match_count) / game_matches_max * 100
+
+            game.bots_percent = 0
+            if game_bots_max:
+                game.bots_percent = float(game.bot_count) / game_bots_max * 100
+
+            game.matches_percent = 0
+            if game.game_matches_max:
+                game.matches_percent = float(game.match_count) / game_matches_max * 100
 
         context.update({
             'game_list': sorted(games, key=lambda game: -game.bot_count),
@@ -282,7 +291,10 @@ class PlayerList(ListView):
             game = next(x for x in games if x.id == bot.game_id)
             if bot.score >= game.max_score * Decimal(0.9):
                 top10_counts[bot.player_id] += 1  # top 10% by score on this game
-        top10_max = max(top10_counts.values())
+
+        top10_max = 0
+        if top10_counts:
+            top10_max = max(top10_counts.values())
 
         # paginate
         page_num = self.request.GET.get('page', 1)
