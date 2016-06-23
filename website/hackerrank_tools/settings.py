@@ -90,7 +90,7 @@ if os.environ.has_key('OPENSHIFT_REPO_DIR'):
     DATABASE_URL = 'postgres://%s:%s@%s:%s/%s' % (
         os.environ['OPENSHIFT_PG_DB_USERNAME'],
         os.environ['OPENSHIFT_PG_DB_PASSWORD'],
-        os.environ['OPENSHIFT_PG_HOST'],
+        os.environ['OPENSHIFT_PG_DB_HOST'],
         os.environ['OPENSHIFT_PG_DB_PORT'],
         os.environ['PGDATABASE'],
     )
