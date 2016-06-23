@@ -82,9 +82,21 @@ WSGI_APPLICATION = 'hackerrank_tools.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 
+DATABASE_URL = os.environ.get('DATABASE_URL', None)
+if os.environ.has_key('OPENSHIFT_REPO_DIR'):
+    # running on OpenShift
+    # TODO: create deploy hook to make $DATABASE_URL
+    # TODO: and this code will no longer be needed
+    DATABASE_URL = 'postgres://%s:%s@%s:%s' % (
+        os.environ['OPENSHIFT_PG_DB_USERNAME'],
+        os.environ['OPENSHIFT_PG_DB_PASSWORD'],
+        os.environ['OPENSHIFT_PG_HOST'],
+        os.environ['OPENSHIFT_PG_DB_PORT'],
+    )
+
 DATABASES = {
     # Parse database configuration from $DATABASE_URL
-    'default': dj_database_url.config()
+    'default': dj_database_url.parse(DATABASE_URL)
 }
 
 # Enable Connection Pooling (if desired)
