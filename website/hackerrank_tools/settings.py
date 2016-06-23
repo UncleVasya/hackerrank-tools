@@ -87,11 +87,12 @@ if os.environ.has_key('OPENSHIFT_REPO_DIR'):
     # running on OpenShift
     # TODO: create deploy hook to make $DATABASE_URL
     # TODO: and this code will no longer be needed
-    DATABASE_URL = 'postgres://%s:%s@%s:%s' % (
+    DATABASE_URL = 'postgres://%s:%s@%s:%s/%s' % (
         os.environ['OPENSHIFT_PG_DB_USERNAME'],
         os.environ['OPENSHIFT_PG_DB_PASSWORD'],
         os.environ['OPENSHIFT_PG_HOST'],
         os.environ['OPENSHIFT_PG_DB_PORT'],
+        os.environ['PGDATABASE'],
     )
 
 DATABASES = {
