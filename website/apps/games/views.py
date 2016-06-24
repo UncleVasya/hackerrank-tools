@@ -48,7 +48,7 @@ class GameList(ListView):
                 game.bots_percent = float(game.bot_count) / game_bots_max * 100
 
             game.matches_percent = 0
-            if game.game_matches_max:
+            if game_matches_max:
                 game.matches_percent = float(game.match_count) / game_matches_max * 100
 
         context.update({
