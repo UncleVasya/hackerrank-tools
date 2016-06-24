@@ -15,7 +15,7 @@ import sys
 from whitenoise.django import DjangoWhiteNoise
 
 sys.path.append(dirname(dirname(realpath(__file__))))
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hackerrank_tools.settings")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hackerrank_tools.settings')
 
 virtenv = os.environ.get('OPENSHIFT_PYTHON_DIR', '.') + '/virtenv/'
 virtualenv = os.path.join(virtenv, 'bin/activate_this.py')
