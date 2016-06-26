@@ -8,29 +8,19 @@
 	@$(MAKE) -f ../Makefile $@
 force: ;
 
-manage = foreman run python manage.py
+manage = python manage.py
 
 #
-# Launches website locally with Foreman
+# Launches website locally
 #
 run:
 	@echo Collecting static files...
 	$(manage) collectstatic --noinput
 
-	@echo Launching website with Foreman...
-	foreman start web
+	@echo Launching website...
+	$(manage) runserver
 
 	@echo Done
-
-#
-# Executes manage command with Foreman
-#
-manage:
-ifndef CMD
-	@echo Please, specify CMD=command argument to execute
-else
-	$(manage) $(CMD)
-endif
 
 #
 # Launches Django shell
@@ -83,16 +73,8 @@ update_matches:
 	$(manage) update_matches --limit ${limit} --backwards ${backwards} --forced ${forced}
 
 #
-# Uploads packed website folder on heroku.
-# Useful when push via git has issues.
+# Just a place to write scripts during development
 #
-deploy_archive:
-ifndef APP
-	python deploy_archive.py -a hktools-staging
-else
-	python deploy_archive.py -a $(APP)
-endif
-
 myscript:
 	$(manage) myscript
 

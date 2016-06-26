@@ -1,14 +1,17 @@
 dj-database-url==0.3.0
 Django==1.9
 django-postgrespool==0.3.0
-gunicorn==19.3.0
 psycopg2==2.6
 SQLAlchemy==1.0.4
+# TODO: update whitenoise, it is version 3+ now
 whitenoise==1.0.6
 requests==2.5.3
 django-solo==1.1.2
-globster==0.1.0
 django-jsonify==0.3.0
 
 git+git://github.com/unclevasya/django-pure-pagination.git@disablable_margins
 git+git://github.com/django-debug-toolbar/django-debug-toolbar.git
+
+# this is used only when working with Heroku
+gunicorn==19.3.0
+globster==0.1.0
