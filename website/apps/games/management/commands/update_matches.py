@@ -23,6 +23,9 @@ URL = API_URL + 'games/%id%'
 LOWER_BOUND = 5000000
 UPPER_BOUND = 6000000
 
+FORWARD = 1
+BACKWARDS = -1
+
 SLEEP_TIME = 1  # seconds between requests
 
 parsing = ParsingInfo.get_solo()
@@ -34,19 +37,21 @@ class Command(BaseCommand):
                             nargs='?', type=int, default=100, const=100)
         parser.add_argument('-b', '--backwards',
                             nargs='?', type=bool, default=False, const=False)
-        parser.add_argument('-f', '--forced',
-                            nargs='?', type=bool, default=False, const=False)
+        parser.add_argument('-f', '--fails_limit',
+                            nargs='?', type=int, default=5, const=5)
 
     def handle(self, *args, **options):
         latest_match = parsing.newest_parsed_match
         if latest_match:
             if options['backwards']:
-                matches = get_old_matches(parsing.oldest_parsed_match - 1,
-                                          options['limit'])
+                start = parsing.oldest_parsed_match - 1
+                direction = BACKWARDS
+
             else:
-                matches = get_new_matches(latest_match + 1,
-                                          options['limit'],
-                                          options['forced'])
+                start = latest_match + 1
+                direction = FORWARD
+            matches = get_matches(start, options['limit'],
+                                  options['fails_limit'], direction)
         else:
             print '-----------------------'
             print 'No parsed data in DB yet.'
@@ -58,7 +63,8 @@ class Command(BaseCommand):
             parsing.oldest_parsed_match = latest_match
             parsing.save()
 
-            matches = get_old_matches(latest_match, options['limit'])
+            matches = get_matches(latest_match, options['limit'],
+                                  options['fails_limit'], BACKWARDS)
 
         matches += get_broken_matches()
 
@@ -74,14 +80,16 @@ class Command(BaseCommand):
         print '-----------------------'
 
 
-def get_new_matches(match_id, limit=100, forced=False):
+def get_matches(match_id, limit=100, fails_limit=5, direction=FORWARD):
     print '-----------------------'
-    print 'GETTING %d NEW MATCHES' % limit
-    print 'forced: %s' % forced
+    print 'GETTING %d MATCHES' % limit
+    print 'direction: %d' % direction
+    print 'fails limit: %s' % fails_limit
     print '-----------------------'
 
     objects = []
-    while len(objects) < limit:
+    checked = failures = 0
+    while checked < limit and failures < fails_limit:
         print 'id: %d    ' % match_id,
 
         r = requests.get(URL.replace('%id%', str(match_id)))
@@ -95,58 +103,22 @@ def get_new_matches(match_id, limit=100, forced=False):
             if Game.objects.filter(slug=data['challenge_slug']).exists():
                 objects.append(data)
                 print '[ADDED]'
-
-                if len(objects) % 10 == 0:
-                    print '-----------------------'
-                    print 'matches added: %d' % len(objects)
-                    print '-----------------------'
             else:
                 print '[SKIPPED]'
         except:
             print '[NOT FOUND]'
-            if not forced:
-                break  # no more Matches
-        match_id += 1
+            failures += 1
+            print 'Failures: %d/%d' % (failures, fails_limit)
+            continue
 
-    parsing.save()
+        match_id += direction
+        checked += 1
+        failures = 0
 
-    return objects
-
-
-def get_old_matches(match_id, limit=100):
-    print '-----------------------'
-    print 'GETTING %d OLDER MATCHES' % limit
-    print '-----------------------'
-    print ' start id: %d \n limit: %d' % (match_id, limit)
-    print '-----------------------'
-
-    objects = []
-    while len(objects) < limit and match_id >= 0:
-        print 'id: %d    ' % match_id,
-
-        r = requests.get(URL.replace('%id%', str(match_id)))
-        time.sleep(SLEEP_TIME)  # let's be gentle with hackerrank.com
-
-        try:
-            data = r.json()['model']
-
-            print '%s     ' % data['challenge_slug'],
-
-            if Game.objects.filter(slug=data['challenge_slug']).exists():
-                objects.append(data)
-                print '[ADDED]'
-
-                if len(objects) % 10 == 0:
-                    print '-----------------------'
-                    print 'matches added: %d' % len(objects)
-                    print '-----------------------'
-            else:
-                print '[SKIPPED]'
-        except:
-            print '[NOT FOUND]'
-
-        parsing.oldest_parsed_match = match_id
-        match_id -= 1
+        if checked % 10 == 0 or len(objects) % 10 == 0:
+            print '-----------------------'
+            print 'checked: %d   added: %d' % (checked, len(objects))
+            print '-----------------------'
 
     parsing.save()
 
@@ -186,8 +158,6 @@ def get_broken_matches():
 
 
 def parse_match(data):
-    print 'id: %d' % data['id']
-
     try:
         match, _ = Match.objects.update_or_create(
             hk_id=data['id'],
@@ -200,6 +170,7 @@ def parse_match(data):
             }
         )
     except Exception as e:
+        print 'id: %d' % data['id']
         print 'Failed to parse.\n%s' % e
         print '------------------------'
         return
@@ -217,6 +188,7 @@ def parse_match(data):
                 position=bot_data['actor']
             ).save()
         except Exception as e:
+            print 'id: %d' % data['id']
             print 'WARNING: Can not add bot to match'
             print 'game: %s  player: %s' % (match.game, bot_data['hacker_username'])
             print 'exception: %s' % e
