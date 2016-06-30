@@ -1,6 +1,7 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from solo.models import SingletonModel
+from apps.games.managers import FullMatchManager
 
 
 class Game(models.Model):
@@ -51,6 +52,9 @@ class Match(models.Model):
     date = models.DateTimeField()
     replay = JSONField(null=True)
     hk_id = models.PositiveIntegerField(unique=True)  # id on hackerrank.com
+
+    objects = models.Manager()
+    full_objects = FullMatchManager()
 
     class Meta:
         ordering = ['-date']

@@ -23,7 +23,7 @@ class GameList(ListView):
             game.bot_count = bot_counts[game.id]
 
         # get match counts for every game
-        match_counts = Match.objects.all().values_list('game')\
+        match_counts = Match.full_objects.all().values_list('game')\
             .annotate(match_count=Count('*'))\
             .order_by()
         match_counts = defaultdict(int, match_counts)
@@ -75,7 +75,7 @@ class GameDetail(DetailView):
                 )
         )
 
-        game.matches = Match.objects.filter(game=game)\
+        game.matches = Match.full_objects.filter(game=game)\
             .prefetch_related(
                 Prefetch(
                     'opponent_set',
@@ -363,7 +363,7 @@ class PlayerDetail(DetailView):
     def get_object(self, queryset=None):
         player = super(PlayerDetail, self).get_object()
 
-        player.matches = Match.objects.filter(
+        player.matches = Match.full_objects.filter(
             bots__player=player
         ).prefetch_related(
             Prefetch(
@@ -596,7 +596,7 @@ class MatchList(ListView):
     ordering = ['-date']
 
     def get_queryset(self):
-        queryset = super(MatchList, self).get_queryset()
+        queryset = Match.full_objects.all()
 
         queryset = queryset.prefetch_related(
             Prefetch(
