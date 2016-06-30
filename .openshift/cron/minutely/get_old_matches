@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ ! -f $OPENSHIFT_DATA_DIR/last_run ]; then
+  touch $OPENSHIFT_DATA_DIR/last_run
+fi
+if [[ $(find $OPENSHIFT_DATA_DIR/last_run -mmin +9) ]]; then #run every 10 mins
+  rm -f $OPENSHIFT_DATA_DIR/last_run
+  touch $OPENSHIFT_DATA_DIR/last_run
+
+  # The command(s) that you want to run every 10 minutes
+  source $OPENSHIFT_PYTHON_DIR/virtenv/bin/activate
+  cd ${OPENSHIFT_REPO_DIR}/website
+  make update_matches backwards=true
+fi
