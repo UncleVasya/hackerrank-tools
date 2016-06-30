@@ -23,7 +23,7 @@ class GameList(ListView):
             game.bot_count = bot_counts[game.id]
 
         # get match counts for every game
-        match_counts = Match.full_objects.all().values_list('game')\
+        match_counts = Match.objects.all().values_list('game')\
             .annotate(match_count=Count('*'))\
             .order_by()
         match_counts = defaultdict(int, match_counts)
