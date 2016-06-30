@@ -1,4 +1,5 @@
 import datetime
+from django.core import management
 from django.db.models import Count
 import requests
 
@@ -197,12 +198,13 @@ def parse_match(data):
             print 'game: %s  player: %s' % (match.game, bot_data['hacker_username'])
             print 'exception: %s' % e
             print '-----------------------'
-            print 'To fix this:'
-            print '1) run update_bots command'
-            print '2) run update_matches again'
-            print '-----------------------'
+            print 'Updating bots for this game'
 
             match.bots.clear()
+
+            # time to update bots list for this game
+            management.call_command('update_bots',
+                                    games=[data['challenge_slug']])
             break
 
 
