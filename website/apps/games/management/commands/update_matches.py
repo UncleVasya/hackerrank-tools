@@ -97,7 +97,11 @@ def get_matches(match_id, limit=100, fails_limit=5, direction=FORWARD):
 
         try:
             data = r.json()['model']
-            parsing.newest_parsed_match = match_id
+
+            if direction == FORWARD:
+                parsing.newest_parsed_match = match_id
+            else:
+                parsing.oldest_parsed_match = match_id
 
             print '%s     ' % data['challenge_slug'],
             if Game.objects.filter(slug=data['challenge_slug']).exists():
