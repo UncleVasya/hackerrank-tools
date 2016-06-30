@@ -1,9 +1,9 @@
 #!/bin/bash
 
-if [ ! -f $OPENSHIFT_DATA_DIR/last_run ]; then
+if [ ! -f $OPENSHIFT_DATA_DIR/old_matches_lock ]; then
   touch $OPENSHIFT_DATA_DIR/old_matches_lock
 fi
-if [[ $(find $OPENSHIFT_DATA_DIR/last_run -mmin +9) ]]; then #run every 10 mins
+if [[ $(find $OPENSHIFT_DATA_DIR/old_matches_lock -mmin +9) ]]; then #run every 10 mins
   rm -f $OPENSHIFT_DATA_DIR/old_matches_lock
   touch $OPENSHIFT_DATA_DIR/old_matches_lock
 
