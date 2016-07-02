@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ ! -f $OPENSHIFT_DATA_DIR/update_bots_lock ]; then
+  touch $OPENSHIFT_DATA_DIR/update_bots_lock
+fi
+
+if [[ $(find $OPENSHIFT_DATA_DIR/update_bots_lock -mmin +$(( 12 * 60))) ]]; then
+  rm -f $OPENSHIFT_DATA_DIR/update_bots_lock
+  touch $OPENSHIFT_DATA_DIR/update_bots_lock
+
+  source $OPENSHIFT_PYTHON_DIR/virtenv/bin/activate
+  cd ${OPENSHIFT_REPO_DIR}/website
+  make update_bots
+fi
