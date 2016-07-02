@@ -98,29 +98,31 @@ def get_matches(match_id, limit=100, fails_limit=5, direction=FORWARD):
 
         try:
             data = r.json()['model']
-
-            if direction == FORWARD:
-                parsing.newest_parsed_match = match_id
-            else:
-                parsing.oldest_parsed_match = match_id
-
-            print '%s     ' % data['challenge_slug'],
-            if Game.objects.filter(slug=data['challenge_slug']).exists():
-                objects.append(data)
-                print '[ADDED]'
-            else:
-                print '[SKIPPED]'
         except:
             print '[NOT FOUND]'
             failures += 1
             print 'Failures: %d/%d' % (failures, fails_limit)
             continue
+        finally:
+            match_id += direction
+            checked += 1
 
-        match_id += direction
-        checked += 1
+        # match parsed successfully
         failures = 0
+        if direction == FORWARD:
+            parsing.newest_parsed_match = match_id
+        else:
+            parsing.oldest_parsed_match = match_id
 
-        if checked % 10 == 0 or len(objects) % 10 == 0:
+        # some output to the user
+        print '%s     ' % data['challenge_slug'],
+        if Game.objects.filter(slug=data['challenge_slug']).exists():
+            objects.append(data)
+            print '[ADDED]'
+        else:
+            print '[SKIPPED]'
+
+        if checked % 10 == 0:
             print '-----------------------'
             print 'checked: %d   added: %d' % (checked, len(objects))
             print '-----------------------'
