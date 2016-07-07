@@ -67,7 +67,8 @@ class Command(BaseCommand):
             matches = get_matches(latest_match, options['limit'],
                                   options['fails_limit'], BACKWARDS)
 
-        matches += get_broken_matches()
+        if not options['backwards']:
+            matches += get_broken_matches()
 
         print 'SAVING MATCHES'
         print '-----------------------'
