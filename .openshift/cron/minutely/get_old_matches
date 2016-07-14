@@ -10,5 +10,5 @@ if [[ $(find $OPENSHIFT_DATA_DIR/old_matches_lock -mmin +9) ]]; then #run every 
   # The command(s) that you want to run every 10 minutes
   source $OPENSHIFT_PYTHON_DIR/virtenv/bin/activate
   cd ${OPENSHIFT_REPO_DIR}/website
-  make update_matches backwards=true
+  make update_matches backwards=true fails_limit=200
 fi
