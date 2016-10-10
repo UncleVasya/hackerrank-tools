@@ -1,4 +1,5 @@
 import datetime
+from json import scanner
 from django.core import management
 from django.db.models import Count
 import requests
@@ -152,8 +153,11 @@ def get_broken_matches():
         r = requests.get(URL.replace('%id%', str(match.hk_id)))
         time.sleep(SLEEP_TIME)  # let's be gentle with hackerrank.com
 
-        data = r.json()['model']
-        objects.append(data)
+        try:
+            data = r.json()['model']
+            objects.append(data)
+        except scanner.JSONDecodeError:
+            match.delete()  # looks like match data is gone from hackerrank
 
         if len(objects) % 10 == 0:
             print '-----------------------'
