@@ -143,6 +143,8 @@ def get_broken_matches():
     ).filter(bots_num__lt=2)
 
     print ' matches to fix: %d' % matches.count()
+    matches = matches[:100]
+    print 'fixing this time: %d' % matches.count()
     print '-----------------------'
 
     objects = []
