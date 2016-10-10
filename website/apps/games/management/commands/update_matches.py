@@ -1,5 +1,4 @@
 import datetime
-from json import scanner
 from django.core import management
 from django.db.models import Count
 import requests
@@ -156,7 +155,7 @@ def get_broken_matches():
         try:
             data = r.json()['model']
             objects.append(data)
-        except scanner.JSONDecodeError:
+        except ValueError:
             match.delete()  # looks like match data is gone from hackerrank
 
         if len(objects) % 10 == 0:
