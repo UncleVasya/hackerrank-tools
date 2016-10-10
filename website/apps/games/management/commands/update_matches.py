@@ -67,9 +67,6 @@ class Command(BaseCommand):
             matches = get_matches(latest_match, options['limit'],
                                   options['fails_limit'], BACKWARDS)
 
-        if not options['backwards']:
-            matches += get_broken_matches()
-
         print 'SAVING MATCHES'
         print '-----------------------'
 
@@ -133,18 +130,18 @@ def get_matches(match_id, limit=100, fails_limit=5, direction=FORWARD):
     return objects
 
 
-def get_broken_matches():
+def fix_broken_matches(game):
     print '-----------------------'
     print 'GETTING MATCHES WITH MISSING BOTS'
+    print 'Game: %s' % game
     print '-----------------------'
 
-    matches = Match.objects.annotate(
-        bots_num=Count('bots')
-    ).filter(bots_num__lt=2)
+    matches = get_broken_matches(game)
 
-    print ' matches to fix: %d' % matches.count()
-    matches = matches[:100]
-    print 'fixing this time: %d' % matches.count()
+    broken_num = matches.count()
+    print ' matches to fix: %d' % broken_num
+    # matches = matches[:100]
+    # print ' fixing this time: %d' % matches.count()
     print '-----------------------'
 
     objects = []
@@ -167,7 +164,31 @@ def get_broken_matches():
 
     print '-----------------------'
 
-    return objects
+    for match in objects:
+        parse_match(match)
+
+    # matches that are still broken can not be fixed
+    unfixed = get_broken_matches(game)
+    unfixed_num = unfixed.count()
+    unfixed.delete()
+
+    print '-----------------------'
+    print 'DONE FIXING MATCHES'
+    print 'Game: %s' % game
+    print '-----------------------'
+    print ' fixed:   %5d' % (broken_num - unfixed_num)
+    print ' deleted: %5d' % unfixed_num
+
+
+def get_broken_matches(game):
+    matches = Match.objects.filter(game__slug=game)
+
+    # matches with less than 2 bots
+    matches = matches.annotate(
+        bots_num=Count('bots')
+    ).filter(bots_num__lt=2)
+
+    return matches
 
 
 def parse_match(data):
@@ -210,9 +231,6 @@ def parse_match(data):
 
             match.bots.clear()
 
-            # time to update bots list for this game
-            management.call_command('update_bots',
-                                    games=[data['challenge_slug']])
             break
 
 

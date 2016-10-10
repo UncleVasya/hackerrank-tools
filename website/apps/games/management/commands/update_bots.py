@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 import time
 
 from apps.games.management.commands.const import API_URL
+from apps.games.management.commands.update_matches import fix_broken_matches
 from apps.games.models import Game, Player, Bot
 
 URL = API_URL + 'challenges/%game%/leaderboard'  # %game% is a game slug
@@ -34,6 +35,10 @@ class Command(BaseCommand):
             players_added += result['players_added']
 
             print '----------------------------------'
+
+            # after leaderboard update it is a good time
+            # to try and fix broken matches
+            fix_broken_matches(game.slug)
 
         print 'bots parsed (total): %d' % bots_parsed
         print 'bots added (total): %d' % bots_added
